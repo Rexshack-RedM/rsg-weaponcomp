@@ -1,9 +1,9 @@
 Config = {}
 
-Config.Debug = true
+Config.Debug = false
 
 Config.CommandPermisions =  'admin' -- can use /customweapon
-Config.Notify =             'rnotify' -- 'ox_lib'
+Config.Notify =             'rnotify' -- 'ox_lib' or 'rnotify'
 Config.MenuData =           'rsg-menubase' -- menu_base' or 'rsg-menubase'
 
 Config.showStats =          true -- true / false can show stats
