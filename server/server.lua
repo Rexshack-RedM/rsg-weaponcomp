@@ -20,7 +20,7 @@ local function CheckVersion()
 
         --versionCheckPrint('success', ('Current Version: %s'):format(currentVersion))
         --versionCheckPrint('success', ('Latest Version: %s'):format(text))
-        
+
         if text == currentVersion then
             versionCheckPrint('success', 'You are running the latest version.')
         else
