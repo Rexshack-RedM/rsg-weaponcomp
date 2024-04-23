@@ -21,46 +21,37 @@ local readEngraving ={Components.LanguageWeapons[14], Components.LanguageWeapons
 ---------------
 -- BLOCK KEYS
 ---------------
-local BlockEnable = function ()  -- DISABLE BLOCK KEYS
-    DisableControlAction(2, 0xE6F612E4, false) -- [1]
-    DisableControlAction(2, 0x1CE6D9EB, false) -- [2]
-    DisableControlAction(2, 0x4F49CC4C, false) -- [3]
-    DisableControlAction(2, 0x8F9F9E58, false) -- [4]
-    DisableControlAction(2, 0xAB62E997, false) -- [5]
-    DisableControlAction(2, 0x07CE1E61, false) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
-    DisableControlAction(2, 0xF84FA74F, false) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
-    DisableControlAction(2, 0x26E9DC00, false) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
-    DisableControlAction(2, 0xDE794E3E, false) -- [Q] -- INPUT_COVER
-    DisableControlAction(2, 0xAC4BD4F1, false) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
-end
-
-local BlockDisable = function () -- BLOCK KEYS
-    -- DisableAllControlActions(0)
-    DisableControlAction(2, 0xE6F612E4, true) -- [1]
-    DisableControlAction(2, 0x1CE6D9EB, true) -- [2]
-    DisableControlAction(2, 0x4F49CC4C, true) -- [3]
-    DisableControlAction(2, 0x8F9F9E58, true) -- [4]
-    DisableControlAction(2, 0xAB62E997, true) -- [5]
-    DisableControlAction(2, 0x07CE1E61, true) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
-    DisableControlAction(2, 0xF84FA74F, true) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
-    DisableControlAction(2, 0x26E9DC00, true) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
-    DisableControlAction(2, 0xDE794E3E, true) -- [Q] -- INPUT_COVER
-    DisableControlAction(2, 0xAC4BD4F1, true) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
-end
-
 local ToggleBlockControl = function(bool)
     if bool then
         CreateThread(function()
             while true do
-                Wait(0)
-                BlockEnable() -- Desbloquear teclas
+                Wait(1)
+                DisableControlAction(2, 0xE6F612E4, true) -- [1]
+                DisableControlAction(2, 0x1CE6D9EB, true) -- [2]
+                DisableControlAction(2, 0x4F49CC4C, true) -- [3]
+                DisableControlAction(2, 0x8F9F9E58, true) -- [4]
+                DisableControlAction(2, 0xAB62E997, true) -- [5]
+                DisableControlAction(2, 0x07CE1E61, true) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
+                DisableControlAction(2, 0xF84FA74F, true) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
+                DisableControlAction(2, 0x26E9DC00, true) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
+                DisableControlAction(2, 0xDE794E3E, true) -- [Q] -- INPUT_COVER
+                DisableControlAction(2, 0xAC4BD4F1, true) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
             end
         end)
     else
         CreateThread(function()
             while true do
-                Wait(0)
-                BlockDisable()  -- Bloquear teclas
+                Wait(1)
+                DisableControlAction(2, 0xE6F612E4, false) -- [1]
+                DisableControlAction(2, 0x1CE6D9EB, false) -- [2]
+                DisableControlAction(2, 0x4F49CC4C, false) -- [3]
+                DisableControlAction(2, 0x8F9F9E58, false) -- [4]
+                DisableControlAction(2, 0xAB62E997, false) -- [5]
+                DisableControlAction(2, 0x07CE1E61, false) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
+                DisableControlAction(2, 0xF84FA74F, false) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
+                DisableControlAction(2, 0x26E9DC00, false) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
+                DisableControlAction(2, 0xDE794E3E, false) -- [Q] -- INPUT_COVER
+                DisableControlAction(2, 0xAC4BD4F1, false) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
             end
         end)
     end
