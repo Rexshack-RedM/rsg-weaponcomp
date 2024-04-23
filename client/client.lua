@@ -3,8 +3,9 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 -----------------------------------
 -- PLAYER DATA LOGGIN / CHECK  
 -----------------------------------
-local isLoggedIn = false
-local alreadyEquiped = false
+-- local isLoggedIn = false
+-- local alreadyEquiped = false
+
 local currentHash = nil
 local currentSerial = nil
 local currentName = nil
@@ -17,41 +18,58 @@ local readComponent = {Components.LanguageWeapons[1], Components.LanguageWeapons
 local readMaterial = {Components.LanguageWeapons[13], Components.LanguageWeapons[19], Components.LanguageWeapons[3], Components.LanguageWeapons[4], Components.LanguageWeapons[6], Components.LanguageWeapons[9], Components.LanguageWeapons[16], Components.LanguageWeapons[21], Components.LanguageWeapons[24], Components.LanguageWeapons[26], Components.LanguageWeapons[22], Components.LanguageWeapons[35], Components.LanguageWeapons[25], Components.LanguageWeapons[23], Components.LanguageWeapons[29], Components.LanguageWeapons[30], Components.LanguageWeapons[28], Components.LanguageWeapons[32], Components.LanguageWeapons[18]}
 local readEngraving ={Components.LanguageWeapons[14], Components.LanguageWeapons[20], Components.LanguageWeapons[40], Components.LanguageWeapons[17], Components.LanguageWeapons[15], Components.LanguageWeapons[12], Components.LanguageWeapons[42], Components.LanguageWeapons[33], Components.LanguageWeapons[8], Components.LanguageWeapons[34] }
 
------------------------------------
--- CONTROL KEYS
------------------------------------
-local BlockEnableControlKeys = function ()
-    DisableControlAction(0, 0xE6F612E4, false) -- [1]
-    DisableControlAction(0, 0x1CE6D9EB, false) -- [2]
-    DisableControlAction(0, 0x4F49CC4C, false) -- [3]
-    DisableControlAction(0, 0x8F9F9E58, false) -- [4]
-    DisableControlAction(0, 0xAB62E997, false) -- [5]
-    DisableControlAction(0, 0x07CE1E61, false) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
-    DisableControlAction(0, 0xF84FA74F, false) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
-    DisableControlAction(0, 0x26E9DC00, false) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
-    DisableControlAction(0, 0xDE794E3E, false) -- [Q] -- INPUT_COVER
-    DisableControlAction(0, 0xAC4BD4F1, false) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
+---------------
+-- BLOCK KEYS
+---------------
+local BlockEnable = function ()  -- DISABLE BLOCK KEYS
+    DisableControlAction(2, 0xE6F612E4, false) -- [1]
+    DisableControlAction(2, 0x1CE6D9EB, false) -- [2]
+    DisableControlAction(2, 0x4F49CC4C, false) -- [3]
+    DisableControlAction(2, 0x8F9F9E58, false) -- [4]
+    DisableControlAction(2, 0xAB62E997, false) -- [5]
+    DisableControlAction(2, 0x07CE1E61, false) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
+    DisableControlAction(2, 0xF84FA74F, false) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
+    DisableControlAction(2, 0x26E9DC00, false) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
+    DisableControlAction(2, 0xDE794E3E, false) -- [Q] -- INPUT_COVER
+    DisableControlAction(2, 0xAC4BD4F1, false) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
 end
 
-local BlockDisbleControlKeys = function ()
-    DisableAllControlActions(0)
-    DisableControlAction(0, 0xE6F612E4, true) -- [1]
-    DisableControlAction(0, 0x1CE6D9EB, true) -- [2]
-    DisableControlAction(0, 0x4F49CC4C, true) -- [3]
-    DisableControlAction(0, 0x8F9F9E58, true) -- [4]
-    DisableControlAction(0, 0xAB62E997, true) -- [5]
-    DisableControlAction(0, 0x07CE1E61, true) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
-    DisableControlAction(0, 0xF84FA74F, true) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
-    DisableControlAction(0, 0x26E9DC00, true) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
-    DisableControlAction(0, 0xDE794E3E, true) -- [Q] -- INPUT_COVER
-    DisableControlAction(0, 0xAC4BD4F1, true) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
+local BlockDisable = function () -- BLOCK KEYS
+    -- DisableAllControlActions(0)
+    DisableControlAction(2, 0xE6F612E4, true) -- [1]
+    DisableControlAction(2, 0x1CE6D9EB, true) -- [2]
+    DisableControlAction(2, 0x4F49CC4C, true) -- [3]
+    DisableControlAction(2, 0x8F9F9E58, true) -- [4]
+    DisableControlAction(2, 0xAB62E997, true) -- [5]
+    DisableControlAction(2, 0x07CE1E61, true) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
+    DisableControlAction(2, 0xF84FA74F, true) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
+    DisableControlAction(2, 0x26E9DC00, true) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
+    DisableControlAction(2, 0xDE794E3E, true) -- [Q] -- INPUT_COVER
+    DisableControlAction(2, 0xAC4BD4F1, true) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
+end
+
+local ToggleBlockControl = function(bool)
+    if bool then
+        CreateThread(function()
+            while true do
+                Wait(0)
+                BlockEnable() -- Desbloquear teclas
+            end
+        end)
+    else
+        CreateThread(function()
+            while true do
+                Wait(0)
+                BlockDisable()  -- Bloquear teclas
+            end
+        end)
+    end
 end
 
 -----------------------------------------
 -- Open Creator Weapon 
 -----------------------------------------
 RegisterNetEvent('rsg-weaponcomp:client:OpenCreatorWeapon', function()
-    -- if isLoggedIn then
         local weaponInHands = exports['rsg-weapons']:weaponInHands()
         local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
         local weaponName = Citizen.InvokeNative(0x89CF5FF3D363311E, weaponHash, Citizen.ResultAsString())
@@ -72,13 +90,10 @@ RegisterNetEvent('rsg-weaponcomp:client:OpenCreatorWeapon', function()
             TriggerServerEvent("rsg-weaponcomp:server:check_comps") -- CHECK COMPONENTS EQUIPED
             Wait(100)
             TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL SELECTION
+
             mainCompMenu() -- ENTER MENU
 
         end
-
-    -- else
-    --    lib.notify({ title = "You're not allowed!", type = 'error', duration = 5000 })
-    -- end
 end)
 
 -----------------------------------------
@@ -623,8 +638,7 @@ mainCompMenu = function()
 
     LocalPlayer.state:set("inv_busy", true, true) -- BLOCK INVENTORY
     FreezeEntityPosition(cache.ped, true) -- BLOCK PLAYER
-    Citizen.InvokeNative(0x4D51E59243281D80, PlayerId(), false, 0, true) -- DISABLE PLAYER CONTROLS
-    BlockDisbleControlKeys() -- BLOCK KEYS
+
 
     Wait(100)
 
@@ -642,6 +656,11 @@ mainCompMenu = function()
     MenuData.Open('default', GetCurrentResourceName(), 'main_weapons_creator_menu',
         {title = "Weapons Menu", subtext = 'Options ' .. currentName, align = "top-left", elements = elements, itemHeight = "4vh"},
         function(data, _)
+
+        -----------------------------------
+        -- CONTROL KEYS
+        -----------------------------------
+        ToggleBlockControl(true) -- BLOCK KEYS
 
         mainWeaponCompMenus[data.current.value](currentHash) -- MENU BUTTOMS
         TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection") -- CHECK COMPONENTS EQUIPED
@@ -985,7 +1004,52 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp,
     local selectedAdd = nil
     selectedAdd = selectedComp
     for category, component in ipairs(selectedAdd) do
-        if category then
+        if table_contains(readComponent, category) then
+
+            for i = 1, #selectedAdd do
+
+                if selectedAdd[i] ~= 0 then
+                    LoadModel(joaat(selectedAdd[i]))
+                end
+
+                Wait(0)
+                GiveWeaponComponentToEntity(cache.ped, joaat(selectedAdd[i]), currentHash, true)
+                Wait(0)
+
+                if selectedAdd[i] ~= 0 then
+                    SetModelAsNoLongerNeeded(joaat(selectedAdd[i]))
+                end
+
+            end
+
+	        -- DeleteEntity(wepobject)
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(component), true, true, true) -- RELOADING THE LIVE MODEL
+
+            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial) -- updateSQL
+
+        elseif table_contains(readMaterial, category) then
+
+            for i = 1, #selectedAdd do
+
+                if selectedAdd[i] ~= 0 then
+                    LoadModel(joaat(selectedAdd[i]))
+                end
+                Wait(0)
+                GiveWeaponComponentToEntity(cache.ped, joaat(selectedAdd[i]), currentHash, true)
+                Wait(0)
+
+                if selectedAdd[i] ~= 0 then
+                    SetModelAsNoLongerNeeded(joaat(selectedAdd[i]))
+                end
+
+            end
+
+	        -- DeleteEntity(wepobject)
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(component), true, true, true) -- RELOADING THE LIVE MODEL
+
+            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial) -- updateSQL
+
+        elseif table_contains(readEngraving, category) then
 
             for i = 1, #selectedAdd do
 
@@ -1152,7 +1216,7 @@ CustomCam = function()
         return
     else
         SetCamActive(weaponCamera, false)
-        DestroyCam(weaponCamera)
+        DestroyCam(weaponCamera, true)
         RenderScriptCams(true, true, 1000, true, true)
     end
 end
@@ -1183,7 +1247,7 @@ AddEventHandler("rsg-weaponcomp:client:StartCam", function()
     local timeShop = 1000
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
-    local interaction
+    local interaction = nil
     if IsWeaponOneHanded(currentHash) and weaponType == 'SHORTARM' then
         interaction = "SHORTARM_HOLD"
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'LONGARM' then
@@ -1196,7 +1260,7 @@ AddEventHandler("rsg-weaponcomp:client:StartCam", function()
         interaction = "SHORTARM_HOLD"
     end
 
-    if currentHash ~= -1569615261 then
+    if currentHash ~= -1569615261 and interaction ~= nil then
         StartTaskItemInteraction(cache.ped, currentHash, joaat(interaction), 0, 0, 0)
         while not IsPedRunningTaskItemInteraction(cache.ped) do
             Wait(timeShop)
@@ -1227,7 +1291,7 @@ AddEventHandler('rsg-weaponcomp:client:CustomCamera', function()
         interaction = "SHORTARM_HOLD_ENTER"
     end
 
-    if weaponHash ~= -1569615261 then
+    if weaponHash ~= -1569615261 and interaction ~= nil then
         StartTaskItemInteraction(cache.ped, weaponHash, joaat(interaction), 0, 0, 0)
         while IsPedRunningTaskItemInteraction(cache.ped) do
             Wait(timeShop)
@@ -1307,6 +1371,8 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local interaction = nil
+    local timeShop = 5000
+
     if IsWeaponOneHanded(currentHash) and weaponType == 'SHORTARM' then
         interaction = "SHORTARM_HOLD_EXIT"
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'LONGARM' then
@@ -1319,10 +1385,10 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
         interaction = ""
     end
 
-    if currentHash ~= -1569615261 then
+    if currentHash ~= -1569615261 and interaction ~= nil then
         StartTaskItemInteraction(cache.ped, currentHash, joaat(interaction), 0, 0, 0)
         while not IsPedRunningTaskItemInteraction(cache.ped) do
-            Wait(300)
+            Wait(timeShop)
         end
     end
 
@@ -1330,9 +1396,12 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     TriggerServerEvent("rsg-weaponcomp:server:check_comps")
 
     FreezeEntityPosition(cache.ped, false) -- DISABLE BLOCK PLAYER
+    ClearPedTasks(cache.ped)
+    ClearPedSecondaryTask(cache.ped)
+
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
-    Citizen.InvokeNative(0x4D51E59243281D80, PlayerId(), true, 0, false) -- ENABLE PLAYER CONTROLS
-    -- BlockEnableControlKeys() -- DISABLE BLOCK KEYS
+
+    ToggleBlockControl(false) -- BLOCK KEYS
 
     DoScreenFadeOut(500)
     Wait(1200)
@@ -1526,24 +1595,34 @@ end, false) ]]
 -- START AND STOP RESOURCE
 -----------------------------------
 AddEventHandler('RSGCore:Client:OnPlayerLoaded', function()
-    isLoggedIn = true
+    LocalPlayer.state:set("inv_busy", false, true)
     PlayerData = RSGCore.Functions.GetPlayerData()
+
+    Wait(5000)
+    TriggerServerEvent('rsg-weaponcomp:server:check_comps')
+
+end)
+
+AddEventHandler('onResourceStart', function(resourceName)
+    if GetCurrentResourceName() ~= resourceName then return end
+    TriggerEvent('RSGCore:client:OnPlayerLoaded')
 end)
 
 RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
-    isLoggedIn = false
+    LocalPlayer.state:set("inv_busy", true, true)
     PlayerData = {}
 end)
 
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
+
     MenuData.CloseAll()
     EndCam()
 
     FreezeEntityPosition(cache.ped , false) -- DISABLE BLOCK PLAYER
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
-    Citizen.InvokeNative(0x4D51E59243281D80, PlayerId(), true, 0, false) -- ENABLE PLAYER CONTROLS
-    BlockEnableControlKeys() -- DISABLE BLOCK KEYS
+
+    ToggleBlockControl(false) -- BLOCK KEYS
 
     UiStateMachineDestroy(-813354801) -- SHOW STATS
 
