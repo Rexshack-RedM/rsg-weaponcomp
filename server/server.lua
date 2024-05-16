@@ -87,7 +87,7 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price)
     local Player = RSGCore.Functions.GetPlayer(src)
     local currentCash = Player.Functions.GetMoney('cash')
 
-    if not tonumber(currentCash) < tonumber(price) then
+    if currentCash < tonumber(price) then
         TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $' .. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
         TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
         return
