@@ -190,7 +190,7 @@ RegisterServerEvent('rsg-weaponcomp:server:removeComponents', function(component
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if components == "{}" then
-        MySQL.Async.execute('UPDATE player_weapons SET components = NULL WHERE serial = @serial', {
+        MySQL.Async.execute('UPDATE player_weapons SET components = DEFAULT WHERE serial = @serial', {
             ['@serial'] = serial
         }, function(rowsChanged)
             if rowsChanged > 0 then
@@ -213,7 +213,7 @@ end)
 RegisterServerEvent('rsg-weaponcomp:server:removeComponents_selection', function(components, serial)
     local src = source
     if components == "{}" then
-        MySQL.Async.execute('UPDATE player_weapons SET components_before = NULL WHERE serial = @serial', {
+        MySQL.Async.execute('UPDATE player_weapons SET components_before = DEFAULT WHERE serial = @serial', {
             ['@serial'] = serial
         }, function()
             TriggerClientEvent('rsg-weaponcomp:client:LoadComponents_selection', src)
