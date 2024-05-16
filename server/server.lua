@@ -86,39 +86,18 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     local currentCash = Player.Functions.GetMoney('cash')
-    local cashItem = Player.Functions.GetItemByName("cash")
-    local cashAmount = cashItem.amount
-    local payment = Config.Payment
 
-    if payment == 'money' then
-        if not tonumber(currentCash) < tonumber(price) then
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $' .. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
-            TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
-            return
-        else
-            Player.Functions.RemoveMoney('cash', tonumber(price))
+    if not tonumber(currentCash) < tonumber(price) then
+        TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $' .. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
+        TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
+        return
+    else
+        Player.Functions.RemoveMoney('cash', tonumber(price))
 
-            if Config.Notify == 'rnotify' then
-                TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
-            elseif Config.Notify == 'ox_lib' then
-                TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
-            end
-        end
-
-    elseif payment == 'item' then
-        if not cashItem and not tonumber(cashAmount) < tonumber(price) then
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $' .. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
-            TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
-            return
-        else
-            Player.Functions.RemoveItem("cash", tonumber(price))
-            TriggerClientEvent('inventory:client:ItemBox', src, RSGCore.Shared.Items["cash"], "remove")
-
-            if Config.Notify == 'rnotify' then
-                TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
-            elseif Config.Notify == 'ox_lib' then
-                TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
-            end
+        if Config.Notify == 'rnotify' then
+            TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
+        elseif Config.Notify == 'ox_lib' then
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
         end
     end
 
