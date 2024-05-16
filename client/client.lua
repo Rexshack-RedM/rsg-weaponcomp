@@ -79,8 +79,8 @@ RegisterNetEvent('rsg-weaponcomp:client:OpenCreatorWeapon', function()
 
         if currentWep ~= nil and currentWep ~= 0 then
             TriggerServerEvent("rsg-weaponcomp:server:check_comps") -- CHECK COMPONENTS EQUIPED
+
             Wait(100)
-            TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL SELECTION
 
             mainCompMenu() -- ENTER MENU
 
@@ -305,7 +305,7 @@ local RemoveAllWeaponComponents = function()
     local weaponComponentStruct = DataView.ArrayBuffer(8 * 8)
     local boundleItemId = ItemdatabaseGetBundleId(currentHash)
 
-    print('boundleItemId', boundleInfoStruct, weaponComponentStruct,   boundleItemId)
+    -- print('boundleItemId', boundleInfoStruct, weaponComponentStruct, boundleItemId)
 
     if boundleItemId ~= 0 then
         local weaponComponentsCount = ItemdatabaseGetBundleItemCount(boundleItemId, boundleInfoStruct:Buffer())
@@ -354,6 +354,7 @@ local RemoveAllWeaponComponents = function()
             end
         end
     end
+
     Wait(200)
 end
 
@@ -445,18 +446,78 @@ end
 -----------------------------------
 -- Calculate Price
 -----------------------------------
-local CalculatePrice = function(selectedTable)
+
+--[[ local CalculatePrice = function(selectedTable)
     local price = 0
-    for k, _ in pairs(selectedTable) do
-        k = string.lower(k)
-        local componentPrice = Components.Price[k]
-        if componentPrice then
-            price = price + componentPrice
+    for category, hashname in pairs(selectedTable) do
+        for weaponType, weapons in pairs(Components.weapons_comp_list) do
+            for weaponName, categories in pairs(weapons) do
+                if categories[category] then
+                    for _, component in ipairs(categories[category]) do
+                        if component.hashname == hashname then
+                            price = price + component.price
+                        end
+                    end
+                end
+            end
         end
     end
+    Wait(100)
     return price
-end
+end ]]
 
+local CalculatePrice = function(selectedTable)
+    local priceComp = 0
+    local priceMat = 0
+    local priceEng = 0
+    -- Iterar sobre los componentes seleccionados en selectedTable
+    for category, hashname in pairs(selectedTable) do
+
+        -- Verificar si la categoría existe en Components.weapons_comp_list
+        for weaponType, weapons in pairs(Components.weapons_comp_list) do
+            for weaponName, categories in pairs(weapons) do
+                if categories[category] then
+                    -- Iterar sobre los componentes de esa categoría
+                    for _, component in ipairs(categories[category]) do
+                        -- Verificar si el hashname del componente coincide con el de selectedTable
+                        if component.hashname == hashname then
+                            -- Sumar el precio del componente
+                            priceComp = priceComp + component.price
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Verificar si la categoría corresponde a materiales
+        for weaponType, categories in pairs(Components.SharedComponents) do
+            if categories[category] then
+                for _, component in ipairs(categories[category]) do
+                    if component.hashname == hashname then
+                        -- Sumar el precio del componente
+                        priceMat = priceMat + component.price
+                    end
+                end
+            end
+        end
+
+        for weaponType, categories in pairs(Components.SharedEngravingsComponents) do
+            if categories[category] then
+                for _, component in ipairs(categories[category]) do
+                    if component.hashname == hashname then
+                        -- Sumar el precio del componente
+                        priceEng = priceEng + component.price
+                    end
+                end
+            end
+        end
+    end
+    print('totalprice', priceComp, priceMat, priceEng)
+    local totalprice = 0
+    totalprice = priceComp + priceMat + priceEng
+    Wait(100)
+    return totalprice
+end
 -----------------------------------------
 -- Serial weapon for take Slot inv / Evento para serializar el arma para tomar el espacio de inventario:
 -----------------------------------------
@@ -484,10 +545,11 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
         end
     end, wepSerial)
 
-    while next(componentsSql) == nil do
-        Wait(0)
-    end
 
+    while next(componentsSql) == nil do
+      Wait(0)
+    end
+    
     if Config.Debug then
         print( 'rsg-weaponcomp:client:LoadComponents"')
         print('weaponHash: ', weaponHash, 'weaponType: ', weaponType, 'component: ', json.encode(componentsSql)) -- table decode componentsPreSql
@@ -531,8 +593,12 @@ end)
 
 RegisterNetEvent("rsg-weaponcomp:client:LoadComponents_selection")
 AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
+    local weaponInHands = exports['rsg-weapons']:weaponInHands()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
-    local componentsPreSql = {}
+    local wepSerial = weaponInHands[weaponHash]
+
+    local componentsPreSql
+    componentsPreSql = componentsPreSql or {}
 
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
         if result and #result > 0 then
@@ -540,14 +606,17 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
                 componentsPreSql = json.decode(result[i].components_before) -- recibe all components to SQL
             end
         end
-    end, currentSerial)
+    end, wepSerial)
+
+    Wait(0)
 
     while next(componentsPreSql) == nil do
-        Wait(0)
+        Wait(50)
     end
 
     Wait(0)
 
+    print('do: ', json.encode(componentsPreSql)) -- table decode componentsPreSql
     for category, hashname in pairs(componentsPreSql) do
 
         if Config.Debug then
@@ -597,7 +666,7 @@ elseif Config.MenuData == 'menu_base' then
 end
 
 local creatorCache = nil
-local selectedComponents = nil -- Declaring the selected Components table outside the if block
+local selectedComponents = nil
 creatorCache = creatorCache or {} -- CREATOR CACHE FOR APPLY/REMOVE COMPONENTS
 selectedComponents = selectedComponents or {} -- Declaring the selected Components table outside the if block
 
@@ -635,23 +704,29 @@ mainCompMenu = function()
 
     TriggerEvent('rsg-weaponcomp:client:StartCam') -- NEED START CAM
 
+    local PriceMenu = nil
+    PriceMenu = tonumber(CalculatePrice(selectedComponents))
+
+    local RemoveMenu = nil
+    RemoveMenu = Config.RemovePrice
+
     local elements = {
         {label = 'Components', value = 'component',   desc = ""},
         {label = 'Materials',  value = 'material',   desc = ""}, 
         {label = 'Engravings', value = 'engraving',   desc = ""},
-        {label = 'Apply',  value = 'applycommponent',   desc = ""},
-        {label = 'Remove', value = 'removecommponent',   desc = ""},
+        {label = 'Apply $'.. PriceMenu,  value = 'applycommponent',   desc = ""},
+        {label = 'Remove $'..RemoveMenu, value = 'removecommponent',   desc = ""},
     }
 
-    -- local labelWaepon =  RSGCore.Shared.Items[].label
+    -- local labelWeapon =  RSGCore.Shared.Items['"'..currentName..'"'].label
     MenuData.Open('default', GetCurrentResourceName(), 'main_weapons_creator_menu',
-        {title = "Weapons Menu", subtext = 'Options ' .. currentName, align = "top-left", elements = elements, itemHeight = "4vh"},
+        {title = "Weapons Menu", subtext = 'Options ', align = "top-left", elements = elements, itemHeight = "4vh"},
         function(data, _)
 
         -----------------------------------
         -- CONTROL KEYS
         -----------------------------------
-        ToggleBlockControl(true) -- BLOCK KEYS
+        -- ToggleBlockControl(true) -- BLOCK KEYS
 
         mainWeaponCompMenus[data.current.value](currentHash) -- MENU BUTTOMS
         TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection") -- CHECK COMPONENTS EQUIPED
@@ -659,7 +734,9 @@ mainCompMenu = function()
     end, function(_, menu)
 
         menu.close()
-
+        PriceMenu = nil
+        RemoveMenu = nil
+        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
 
     end)
@@ -849,7 +926,7 @@ OpenMaterialMenu = function()
                     selectedComponents[selectedCategory] = selectedHash
                 end
 
-                print( 'data.current.materials[data.current.value].value', data.current.materials[data.current.value].value)
+                print( 'value', data.current.materials[data.current.value].value)
                 print( 'selectedComponents[selectedCategory]', selectedHash)
 
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
@@ -960,7 +1037,7 @@ OpenEngravingMenu = function()
                     selectedComponents[selectedCategory] = selectedHash
                 end
 
-                print( 'data.current.engravings[data.current.value].value', data.current.engravings[data.current.value].value)
+                print( 'value', data.current.engravings[data.current.value].value)
                 print( 'selectedComponents[selectedCategory]', selectedHash)
 
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
@@ -1074,14 +1151,14 @@ ButtomApplyAllComponents = function ()
     Wait(0)
     StartCam(c_zoom, c_offset)
     MenuData.CloseAll()
-    local currentPrice
+    local currentPrice = nil
 
     if currentSerial ~= nil and selectedComponents then
-        currentPrice = CalculatePrice(selectedComponents)
+        currentPrice = tonumber(CalculatePrice(selectedComponents))
 
-        if Config.Debug then
+        --if Config.Debug then
             print('currentPrice '.. currentPrice)
-        end
+        --end
 
         local options = {
             {   label = 'Do you want to proceed, sure?',
@@ -1112,7 +1189,6 @@ ButtomApplyAllComponents = function ()
             Wait(100)
             ApplyToAllWeaponComponent(currentSerial, selectedComponents, slotHash)
 
-            -- selectedComponents = {}  -- reset selected components
             TriggerEvent('rsg-weaponcomp:client:ExitCam')
         end
     else
@@ -1128,7 +1204,7 @@ ButtomRemoveAllComponents = function ()
     StartCam(c_zoom, c_offset)
     MenuData.CloseAll()
 
-    local currentRemove
+    local currentRemove = nil
     currentRemove = Config.RemovePrice
 
     local options = {
@@ -1147,10 +1223,11 @@ ButtomRemoveAllComponents = function ()
 
     if input[1] == 'yes' then
         TriggerServerEvent('rsg-weaponcomp:server:price', currentRemove)
-        Wait(100)
 
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents", {}, currentName, currentSerial) -- update SQL
-        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQ
+        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL
+        Wait(100)
+
         RemoveAllWeaponComponents()
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
     end
@@ -1385,6 +1462,7 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     EndCam()
     TriggerServerEvent("rsg-weaponcomp:server:check_comps")
+    -- TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL SELECTION
 
     FreezeEntityPosition(cache.ped, false) -- DISABLE BLOCK PLAYER
     ClearPedTasks(cache.ped)
@@ -1392,7 +1470,7 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
 
-    ToggleBlockControl(false) -- BLOCK KEYS
+    -- ToggleBlockControl(false) -- BLOCK KEYS
 
     DoScreenFadeOut(500)
     Wait(1200)
@@ -1613,7 +1691,7 @@ AddEventHandler('onResourceStop', function(resourceName)
     FreezeEntityPosition(cache.ped , false) -- DISABLE BLOCK PLAYER
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
 
-    ToggleBlockControl(false) -- BLOCK KEYS
+    -- ToggleBlockControl(false) -- BLOCK KEYS
 
     UiStateMachineDestroy(-813354801) -- SHOW STATS
 
