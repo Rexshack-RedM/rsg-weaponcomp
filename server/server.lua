@@ -165,10 +165,8 @@ AddEventHandler('rsg-weaponcomp:server:apply_weapon_components', function(compon
 
     -- DELETE CUSTOM TABLE
     Wait(100)
-    MySQL.Async.execute('UPDATE player_weapons SET components_before = NULL WHERE serial = @serial', {
-        ['@serial'] = serial
-    }, function()
-    end)
+    TriggerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, serial) -- update SQL
+
 end)
 
 RegisterNetEvent('rsg-weaponcomp:server:update_selection')
