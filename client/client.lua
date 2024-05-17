@@ -690,6 +690,9 @@ local mainWeaponCompMenus = {
     end
 }
 
+local PriceMenu = nil
+local RemoveMenu = nil
+
 mainCompMenu = function()
     MenuData.CloseAll()
     inStore = true
@@ -709,15 +712,13 @@ mainCompMenu = function()
 
     TriggerEvent('rsg-weaponcomp:client:StartCam') -- NEED START CAM
 
-    local PriceMenu = nil
-    local RemoveMenu = nil
 
     if selectedComponents ~= nil then
         PriceMenu = tonumber(CalculatePrice(YesselectedComponents))
         RemoveMenu = tonumber(CalculatePrice(NoselectedComponents)) * Config.RemovePrice
     else
-        PriceMenu = 0
-        RemoveMenu = tonumber(CalculatePrice(NoselectedComponents)) * Config.RemovePrice
+        PriceMenu = tonumber(0)
+        RemoveMenu = tonumber(CalculatePrice(NoselectedComponents)) * Config.RemovePrice -- (0 - 1) = 100% price custom
     end
 
     NoselectedComponents = nil
@@ -744,8 +745,6 @@ mainCompMenu = function()
 
         menu.close()
 
-        PriceMenu = nil
-        RemoveMenu = nil
         RemoveAllWeaponComponents()
 
         Wait(100)
@@ -1153,10 +1152,10 @@ ButtomApplyAllComponents = function ()
     Wait(0)
     StartCam(c_zoom, c_offset)
     MenuData.CloseAll()
-    local currentPrice = nil
+    local currentPrice = PriceMenu
 
     if currentSerial ~= nil and selectedComponents then
-        currentPrice = tonumber(CalculatePrice(selectedComponents))
+        -- currentPrice = tonumber(CalculatePrice(selectedComponents))
 
         if Config.Debug then print('currentPrice '.. currentPrice) end
 
@@ -1195,6 +1194,7 @@ ButtomApplyAllComponents = function ()
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
     end
     currentPrice = nil
+    PriceMenu = nil
 end
 
 ButtomRemoveAllComponents = function ()
@@ -1203,8 +1203,7 @@ ButtomRemoveAllComponents = function ()
     StartCam(c_zoom, c_offset)
     MenuData.CloseAll()
 
-    local currentRemove = nil
-    currentRemove = Config.RemovePrice
+    local currentRemove = RemoveMenu
 
     local options = {
         {   label = 'Do you want to proceed, sure?',
@@ -1232,6 +1231,7 @@ ButtomRemoveAllComponents = function ()
 
     end
     currentRemove = nil
+    RemoveMenu = nil
 end
 
 -----------------------------------
