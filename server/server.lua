@@ -103,7 +103,6 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price)
 
     Wait(1000)
     TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src)
-
 end)
 
 --------------------------------------------
@@ -165,7 +164,7 @@ AddEventHandler('rsg-weaponcomp:server:apply_weapon_components', function(compon
 
     -- DELETE CUSTOM TABLE
     Wait(100)
-    TriggerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, serial) -- update SQL
+    TriggerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", serial) -- update SQL
 
 end)
 
@@ -189,7 +188,7 @@ end)
 RegisterServerEvent('rsg-weaponcomp:server:removeComponents', function(components, weaponName, serial)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
-    if components == "{}" then
+    if components == "DEFAULT" then
         MySQL.Async.execute('UPDATE player_weapons SET components = DEFAULT WHERE serial = @serial', {
             ['@serial'] = serial
         }, function(rowsChanged)
@@ -212,7 +211,7 @@ end)
 
 RegisterServerEvent('rsg-weaponcomp:server:removeComponents_selection', function(components, serial)
     local src = source
-    if components == "{}" then
+    if components == "DEFAULT" then
         MySQL.Async.execute('UPDATE player_weapons SET components_before = DEFAULT WHERE serial = @serial', {
             ['@serial'] = serial
         }, function()

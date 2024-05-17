@@ -21,7 +21,7 @@ local readEngraving ={Components.LanguageWeapons[14], Components.LanguageWeapons
 ---------------
 -- BLOCK KEYS
 ---------------
-local ToggleBlockControl = function(bool)
+--[[ local ToggleBlockControl = function(bool)
     if bool then
         CreateThread(function()
             while true do
@@ -55,7 +55,7 @@ local ToggleBlockControl = function(bool)
             end
         end)
     end
-end
+end ]]
 
 -----------------------------------------
 -- Open Creator Weapon 
@@ -79,11 +79,8 @@ RegisterNetEvent('rsg-weaponcomp:client:OpenCreatorWeapon', function()
 
         if currentWep ~= nil and currentWep ~= 0 then
             TriggerServerEvent("rsg-weaponcomp:server:check_comps") -- CHECK COMPONENTS EQUIPED
-
             Wait(100)
-
             mainCompMenu() -- ENTER MENU
-
         end
 end)
 
@@ -296,6 +293,31 @@ local ApplyToSecondWeaponComponent = function(hash)
     end
 end
 
+local ApplyToThreeWeaponComponent = function(hash)
+    local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
+    local modelHash = Citizen.InvokeNative(0x59DE03442B6C9598, weaponHash) -- GetWeaponComponentTypeModel(
+
+    RequestWeaponAsset(joaat(weaponHash), 0, true)
+
+    if modelHash and modelHash ~= 0 then
+        if not HasModelLoaded(hash) then
+            LoadModel(joaat(hash))
+            while not HasModelLoaded(hash) do
+                Wait(COMPONENT_LOAD_WAIT_TIME)
+            end
+        end
+
+        if HasModelLoaded(hash) then
+            GiveWeaponComponentToEntity(cache.ped, joaat(hash), weaponHash, true)
+            SetModelAsNoLongerNeeded(hash) -- THE MODEL IS NO LONGER NEEDED
+
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(hash), true, true, true) -- RELOADING THE LIVE MODEL
+        end
+    else
+        GiveWeaponComponentToEntity(cache.ped, joaat(hash), weaponHash, true)
+    end
+end
+
 local RemoveAllWeaponComponents = function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local modelHash = Citizen.InvokeNative(0x59DE03442B6C9598, weaponHash) -- GetWeaponComponentTypeModel(
@@ -446,78 +468,56 @@ end
 -----------------------------------
 -- Calculate Price
 -----------------------------------
-
---[[ local CalculatePrice = function(selectedTable)
-    local price = 0
-    for category, hashname in pairs(selectedTable) do
-        for weaponType, weapons in pairs(Components.weapons_comp_list) do
-            for weaponName, categories in pairs(weapons) do
-                if categories[category] then
-                    for _, component in ipairs(categories[category]) do
-                        if component.hashname == hashname then
-                            price = price + component.price
-                        end
-                    end
-                end
-            end
-        end
-    end
-    Wait(100)
-    return price
-end ]]
-
 local CalculatePrice = function(selectedTable)
     local priceComp = 0
     local priceMat = 0
     local priceEng = 0
-    -- Iterar sobre los componentes seleccionados en selectedTable
-    for category, hashname in pairs(selectedTable) do
 
-        -- Verificar si la categoría existe en Components.weapons_comp_list
-        for weaponType, weapons in pairs(Components.weapons_comp_list) do
-            for weaponName, categories in pairs(weapons) do
+    if selectedTable ~= nil then
+        for category, hashname in pairs(selectedTable) do
+
+            for weaponType, weapons in pairs(Components.weapons_comp_list) do
+                for weaponName, categories in pairs(weapons) do
+                    if categories[category] then
+                        for _, component in ipairs(categories[category]) do
+                            if component.hashname == hashname then
+                                priceComp = priceComp + component.price
+                            end
+                        end
+                    end
+                end
+            end
+
+            for weaponType, categories in pairs(Components.SharedComponents) do
                 if categories[category] then
-                    -- Iterar sobre los componentes de esa categoría
                     for _, component in ipairs(categories[category]) do
-                        -- Verificar si el hashname del componente coincide con el de selectedTable
                         if component.hashname == hashname then
-                            -- Sumar el precio del componente
-                            priceComp = priceComp + component.price
+                            priceMat = priceMat + component.price
+                        end
+                    end
+                end
+            end
+
+            for weaponType, categories in pairs(Components.SharedEngravingsComponents) do
+                if categories[category] then
+                    for _, component in ipairs(categories[category]) do
+                        if component.hashname == hashname then
+                            priceEng = priceEng + component.price
                         end
                     end
                 end
             end
         end
-
-        -- Verificar si la categoría corresponde a materiales
-        for weaponType, categories in pairs(Components.SharedComponents) do
-            if categories[category] then
-                for _, component in ipairs(categories[category]) do
-                    if component.hashname == hashname then
-                        -- Sumar el precio del componente
-                        priceMat = priceMat + component.price
-                    end
-                end
-            end
-        end
-
-        for weaponType, categories in pairs(Components.SharedEngravingsComponents) do
-            if categories[category] then
-                for _, component in ipairs(categories[category]) do
-                    if component.hashname == hashname then
-                        -- Sumar el precio del componente
-                        priceEng = priceEng + component.price
-                    end
-                end
-            end
-        end
     end
-    print('totalprice', priceComp, priceMat, priceEng)
+
+    if Config.Debug then print('totalprice', priceComp, priceMat, priceEng) end
+
     local totalprice = 0
     totalprice = priceComp + priceMat + priceEng
     Wait(100)
     return totalprice
 end
+
 -----------------------------------------
 -- Serial weapon for take Slot inv / Evento para serializar el arma para tomar el espacio de inventario:
 -----------------------------------------
@@ -540,45 +540,48 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
         if result and #result > 0 then
             for i = 1, #result do
-                componentsSql = json.decode(result[i].components) -- recibe all components to SQL
+                componentsSql = json.decode(result[i].components)
             end
         end
     end, wepSerial)
 
+    Wait(0)
 
     while next(componentsSql) == nil do
       Wait(0)
     end
-    
+
+    Wait(0)
+
     if Config.Debug then
         print( 'rsg-weaponcomp:client:LoadComponents"')
         print('weaponHash: ', weaponHash, 'weaponType: ', weaponType, 'component: ', json.encode(componentsSql)) -- table decode componentsPreSql
     end
 
-    Wait(0)
-
     for category, hashname in pairs(componentsSql) do
 
-        if Config.Debug then
-            print('for category, hashname in pairs(componentsSql) do: ', category, hashname) -- table decode componentsPreSql
-        end
+        if Config.Debug then print('for category, hashname in pairs(componentsSql) do: ', category, hashname) end
 
         if table_contains(readComponent, category)  then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
             Wait(100)
             ApplyToFirstWeaponComponent(hashname)
         end
+
         Wait(0)
+
         if table_contains(readMaterial, category) then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
             Wait(100)
             ApplyToSecondWeaponComponent(hashname)
         end
+
         Wait(0)
+
         if table_contains(readEngraving, category) then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
             Wait(100)
-            ApplyToSecondWeaponComponent(hashname)
+            ApplyToThreeWeaponComponent(hashname)
         end
     end
 
@@ -603,7 +606,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
         if result and #result > 0 then
             for i = 1, #result do
-                componentsPreSql = json.decode(result[i].components_before) -- recibe all components to SQL
+                componentsPreSql = json.decode(result[i].components_before)
             end
         end
     end, wepSerial)
@@ -616,12 +619,11 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
     Wait(0)
 
-    print('do: ', json.encode(componentsPreSql)) -- table decode componentsPreSql
+    if Config.Debug then print('do: ', json.encode(componentsPreSql)) end
+
     for category, hashname in pairs(componentsPreSql) do
 
-        if Config.Debug then
-            print('for category, hashname in pairs(componentsPreSql) do: ', category, hashname) -- table decode componentsPreSql
-        end
+        if Config.Debug then print('for category, hashname in pairs(componentsPreSql) do: ', category, hashname) end
 
         if table_contains(readComponent, category)  then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
@@ -629,19 +631,23 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
             LoadModel(joaat(hashname))
             ApplyToFirstWeaponComponent(hashname)
         end
+
         Wait(0)
+
         if table_contains(readMaterial, category) then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
             Wait(100)
             LoadModel(joaat(hashname))
             ApplyToSecondWeaponComponent(hashname)
         end
+
         Wait(0)
+
         if table_contains(readEngraving, category) then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
             Wait(100)
             LoadModel(joaat(hashname))
-            ApplyToSecondWeaponComponent(hashname)
+            ApplyToThreeWeaponComponent(hashname)
         end
 
     end
@@ -673,6 +679,9 @@ selectedComponents = selectedComponents or {} -- Declaring the selected Componen
 local c_zoom = 1.5
 local c_offset = 0.15
 
+-----------------------------------
+-- MAIN MENU
+-----------------------------------
 local mainWeaponCompMenus = {
     ["component"] = function()
         OpenComponentMenu()
@@ -699,20 +708,19 @@ mainCompMenu = function()
     LocalPlayer.state:set("inv_busy", true, true) -- BLOCK INVENTORY
     FreezeEntityPosition(cache.ped, true) -- BLOCK PLAYER
 
-
     Wait(100)
 
     TriggerEvent('rsg-weaponcomp:client:StartCam') -- NEED START CAM
 
     local PriceMenu = nil
-    PriceMenu = tonumber(CalculatePrice(selectedComponents))
-
     local RemoveMenu = nil
+
+    PriceMenu = tonumber(CalculatePrice(selectedComponents))
     RemoveMenu = Config.RemovePrice
 
     local elements = {
         {label = 'Components', value = 'component',   desc = ""},
-        {label = 'Materials',  value = 'material',   desc = ""}, 
+        {label = 'Materials',  value = 'material',   desc = ""},
         {label = 'Engravings', value = 'engraving',   desc = ""},
         {label = 'Apply $'.. PriceMenu,  value = 'applycommponent',   desc = ""},
         {label = 'Remove $'..RemoveMenu, value = 'removecommponent',   desc = ""},
@@ -729,21 +737,27 @@ mainCompMenu = function()
         -- ToggleBlockControl(true) -- BLOCK KEYS
 
         mainWeaponCompMenus[data.current.value](currentHash) -- MENU BUTTOMS
-        TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection") -- CHECK COMPONENTS EQUIPED
+        TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
 
     end, function(_, menu)
 
         menu.close()
+
         PriceMenu = nil
         RemoveMenu = nil
-        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL
+
+        RemoveAllWeaponComponents()
+
+        Wait(100)
+
+        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
 
     end)
 end
 
 -----------------------------------
--- COMPONENTS SUB MENU WITH OPTIONS
+-- COMP/MAT/ENG SUB MENU WITH OPTIONS
 -----------------------------------
 OpenComponentMenu = function()
     local elements = {}
@@ -841,19 +855,6 @@ OpenMaterialMenu = function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local elements = {}
-    -- local equippedComponents = {}
-
-    -- for k, weaponData in pairs(Components.weapons_comp_list) do
-    --     if weaponData[currentName] then
-    --         for category, componentList in pairs(weaponData[currentName]) do
-    --             if next(componentList) ~= nil then
-    --                 for _, component in ipairs(componentList) do
-    --                     table.insert(equippedComponents, string.upper(component.category_hashname)) -- Convertir a mayúsculas
-    --                 end
-    --             end
-    --         end
-    --     end
-    -- end
 
     for category, materialList in pairs(Components.SharedComponents[weaponType] ) do
         if next(materialList) ~= nil then
@@ -987,7 +988,6 @@ OpenEngravingMenu = function()
             end
         end
     end
-    
 
     MenuData.Open('default', GetCurrentResourceName(), 'engraving_weapon_menu',
         {
@@ -1053,6 +1053,9 @@ OpenEngravingMenu = function()
     )
 end
 
+-----------------------------------
+-- UPDATE SELECTION
+-----------------------------------
 RegisterNetEvent('rsg-weaponcomp:client:update_selection')
 AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp, serial)
     --local wepobject = GetCurrentPedWeaponEntityIndex(cache.ped, 0) -- Returns weaponObject
@@ -1102,6 +1105,7 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp,
                 if selectedAdd[i] ~= 0 then
                     LoadModel(joaat(selectedAdd[i]))
                 end
+
                 Wait(0)
                 GiveWeaponComponentToEntity(cache.ped, joaat(selectedAdd[i]), currentHash, true)
                 Wait(0)
@@ -1177,9 +1181,9 @@ ButtomApplyAllComponents = function ()
 
         if input[1] == 'yes' then
 
+            TriggerServerEvent('rsg-weaponcomp:server:slot', currentSerial)
             TriggerServerEvent('rsg-weaponcomp:server:price', currentPrice)
 
-            TriggerServerEvent('rsg-weaponcomp:server:slot', currentSerial)
             RemoveAllWeaponComponents()
 
             Wait(100)
@@ -1194,7 +1198,6 @@ ButtomApplyAllComponents = function ()
     else
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
     end
-
     currentPrice = nil
 end
 
@@ -1224,12 +1227,13 @@ ButtomRemoveAllComponents = function ()
     if input[1] == 'yes' then
         TriggerServerEvent('rsg-weaponcomp:server:price', currentRemove)
 
-        TriggerServerEvent("rsg-weaponcomp:server:removeComponents", {}, currentName, currentSerial) -- update SQL
-        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL
         Wait(100)
-
         RemoveAllWeaponComponents()
+        TriggerServerEvent("rsg-weaponcomp:server:removeComponents", "DEFAULT", currentName, currentSerial) -- update SQL
+        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
+
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
+
     end
     currentRemove = nil
 end
@@ -1461,8 +1465,8 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     end
 
     EndCam()
+
     TriggerServerEvent("rsg-weaponcomp:server:check_comps")
-    -- TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", {}, currentSerial) -- update SQL SELECTION
 
     FreezeEntityPosition(cache.ped, false) -- DISABLE BLOCK PLAYER
     ClearPedTasks(cache.ped)
@@ -1471,6 +1475,8 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
 
     -- ToggleBlockControl(false) -- BLOCK KEYS
+
+    -- selectedComponents = nil
 
     DoScreenFadeOut(500)
     Wait(1200)
