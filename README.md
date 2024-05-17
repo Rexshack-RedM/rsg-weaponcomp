@@ -16,14 +16,15 @@ Basically it would be doing a debug, I think I am very organized and my programm
 # in config, 
 - 2 notify = 'rnotify' (for send the player, and all errors in ox_lib) or all in 'ox_lib'
 - 2 menus = 'menu_base' and 'rsg-basemenu'
-- system price in data
+- Config.RemovePrice (0 - 1) = 100 % cost remove base price
 - can show stats in /w_inspect
 - Config permision command acces menu
 
 # in Data/weaponlist
 - change prices and locales categorie for names in menu
 - all data for components, material and engraving
-
+- system price in data
+  
 # Admin
 
 ```
