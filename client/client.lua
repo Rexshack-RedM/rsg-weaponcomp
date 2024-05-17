@@ -654,15 +654,14 @@ elseif Config.MenuData == 'menu_base' then
 end
 
 local creatorCache = nil
-local selectedComponents = {} or nil
+local selectedComponents = nil
 creatorCache = creatorCache or {} -- CREATOR CACHE FOR APPLY/REMOVE COMPONENTS
 selectedComponents = selectedComponents or {} -- Declaring the selected Components table outside the if block
 
-
 local YesselectedComponents = nil
-YesselectedComponents = YesselectedComponents or {} -- Declaring the selected Components table outside the if block
+YesselectedComponents = YesselectedComponents or {} -- Declaring the price
 local NoselectedComponents = nil
-NoselectedComponents = NoselectedComponents or {} -- Declaring the selected Components table outside the if block
+NoselectedComponents = NoselectedComponents or {} -- Declaring the price remove
 
 
 local c_zoom = 1.5
@@ -722,7 +721,7 @@ mainCompMenu = function()
     end
 
     NoselectedComponents = nil
-    YesselectedComponents = nil
+    YesselectedComponents = nil -- finish price mathematics
 
     local elements = {
         {label = 'Components', value = 'component',   desc = ""},
