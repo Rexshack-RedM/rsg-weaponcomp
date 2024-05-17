@@ -7,7 +7,7 @@ Config.Notify =             'rnotify' -- 'ox_lib' or 'rnotify'
 Config.MenuData =           'rsg-menubase' -- menu_base' or 'rsg-menubase'
 
 Config.showStats =          true -- true / false can show stats
-Config.RemovePrice =        50 -- $ cost remove component
+Config.RemovePrice =        1.2 -- (0 - 1) = 100 % cost remove component 120%
 Config.animationSave =      10000 -- apply components
 
 -------------------------

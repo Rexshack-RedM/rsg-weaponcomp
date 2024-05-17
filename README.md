@@ -1,5 +1,6 @@
 ## ADD OPTION IN YOUR MENU FOR MODIFY COMP WEAPON
-# Basically it would be doing a debug, I think I am very organized and my programming is easy to read
+
+Basically it would be doing a debug, I think I am very organized and my programming is easy to read
 - open event
 - basic functions
 - functions apply
@@ -14,16 +15,16 @@
 
 # in config, 
 - 2 notify = 'rnotify' (for send the player, and all errors in ox_lib) or all in 'ox_lib'
-- 2 payment cash = 'item' or cash 'money'
 - 2 menus = 'menu_base' and 'rsg-basemenu'
-- Config price =  remove components
+- Config.RemovePrice (0 - 1) = 100 % cost remove base price
 - can show stats in /w_inspect
 - Config permision command acces menu
 
 # in Data/weaponlist
 - change prices and locales categorie for names in menu
 - all data for components, material and engraving
-
+- system price in data
+  
 # Admin
 
 ```
@@ -68,7 +69,6 @@ TriggerClientEvent('rsg-weaponcomp:client:OpenCreatorWeapon', src)
 - [ttv_artmines_playz](https://github.com/Artmines/),
 - [philmcraken](https://github.com/mrskunky69/),
 - [jackp_](https://github.com/Jewsie/),
-- [dev.luke](),
 - [Sadicius](https://github.com/Sadicius),
 - and there are many others...
 

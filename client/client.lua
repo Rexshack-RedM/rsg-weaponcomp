@@ -10,6 +10,7 @@ local currentHash = nil
 local currentSerial = nil
 local currentName = nil
 local currentWep = nil
+local inStore = false
 
 --------------
 -- LIST POSSIBLES CATEGORYES
@@ -21,41 +22,43 @@ local readEngraving ={Components.LanguageWeapons[14], Components.LanguageWeapons
 ---------------
 -- BLOCK KEYS
 ---------------
---[[ local ToggleBlockControl = function(bool)
-    if bool then
-        CreateThread(function()
-            while true do
-                Wait(1)
-                DisableControlAction(2, 0xE6F612E4, true) -- [1]
-                DisableControlAction(2, 0x1CE6D9EB, true) -- [2]
-                DisableControlAction(2, 0x4F49CC4C, true) -- [3]
-                DisableControlAction(2, 0x8F9F9E58, true) -- [4]
-                DisableControlAction(2, 0xAB62E997, true) -- [5]
-                DisableControlAction(2, 0x07CE1E61, true) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
-                DisableControlAction(2, 0xF84FA74F, true) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
-                DisableControlAction(2, 0x26E9DC00, true) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
-                DisableControlAction(2, 0xDE794E3E, true) -- [Q] -- INPUT_COVER
-                DisableControlAction(2, 0xAC4BD4F1, true) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
-            end
-        end)
-    else
-        CreateThread(function()
-            while true do
-                Wait(1)
-                DisableControlAction(2, 0xE6F612E4, false) -- [1]
-                DisableControlAction(2, 0x1CE6D9EB, false) -- [2]
-                DisableControlAction(2, 0x4F49CC4C, false) -- [3]
-                DisableControlAction(2, 0x8F9F9E58, false) -- [4]
-                DisableControlAction(2, 0xAB62E997, false) -- [5]
-                DisableControlAction(2, 0x07CE1E61, false) -- [MOUSE LEFT CLICK] -- INPUT_ATTACK
-                DisableControlAction(2, 0xF84FA74F, false) -- [MOUSE RIGHT CLICK] -- INPUT_AIM
-                DisableControlAction(2, 0x26E9DC00, false) -- [Z] -- INPUT_GAME_MENU_TAB_LEFT_SECONDARY
-                DisableControlAction(2, 0xDE794E3E, false) -- [Q] -- INPUT_COVER
-                DisableControlAction(2, 0xAC4BD4F1, false) -- [OpenWheelMenu] -- DISABLE WEAPON_WHEEL_MENU
-            end
-        end)
+--[[ ]]
+CreateThread(function()
+    while true do
+        Wait(1)
+        if inStore then
+            DisableControlAction(0, 0x295175BF, true) -- Disable break
+            DisableControlAction(0, 0x6E9734E8, true) -- Disable suicide
+            DisableControlAction(0, 0xD8F73058, true) -- Disable aiminair
+            DisableControlAction(0, 0x4CC0E2FE, true) -- B key
+            DisableControlAction(0, 0xDE794E3E, true) -- Cover
+            DisableControlAction(0, 0x06052D11, true) -- Cover
+            DisableControlAction(0, 0x5966D52A, true) -- Cover
+            DisableControlAction(0, 0xCEFD9220, true) -- Cover
+            DisableControlAction(0, 0xC75C27B0, true) -- Cover
+            DisableControlAction(0, 0x41AC83D1, true) -- Cover
+            DisableControlAction(0, 0xADEAF48C, true) -- Cover
+            DisableControlAction(0, 0x9D2AEA88, true) -- Cover
+            DisableControlAction(0, 0xE474F150, true) -- Cover
+            DisableControlAction(0, 0xB2F377E8, true) -- Attack
+            DisableControlAction(0, 0xC1989F95, true) -- Attack 2
+            DisableControlAction(0, 0x07CE1E61, true) -- Melee Attack 1
+            DisableControlAction(0, 0xF84FA74F, true) -- MOUSE2
+            DisableControlAction(0, 0xCEE12B50, true) -- MOUSE3
+            DisableControlAction(0, 0x8FFC75D6, true) -- Shift
+            DisableControlAction(0, 0xD9D0E1C0, true) -- SPACE
+            DisableControlAction(0, 0xF3830D8E, true) -- J
+            DisableControlAction(0, 0x80F28E95, true) -- L
+            DisableControlAction(0, 0xDB096B85, true) -- CTRL
+            DisableControlAction(0, 0xE30CD707, true) -- R
+            DisableControlAction(0, 0xAC4BD4F1, true) -- [OpenWheelMenu]
+        end
+
+        if not inStore then
+            Wait(2000)
+        end
     end
-end ]]
+end)
 
 -----------------------------------------
 -- Open Creator Weapon 
@@ -66,7 +69,7 @@ RegisterNetEvent('rsg-weaponcomp:client:OpenCreatorWeapon', function()
         local weaponName = Citizen.InvokeNative(0x89CF5FF3D363311E, weaponHash, Citizen.ResultAsString())
         local wepSerial = weaponInHands[weaponHash]
         local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0) -- Returns weaponObject
-
+        
         currentHash = weaponHash
         currentSerial = wepSerial
         currentName = weaponName
@@ -191,11 +194,12 @@ local LoadModel = function(model)
 	RequestModel(model)
 
 	while not HasModelLoaded(model) do
-		Wait(0)
+		Wait(100)
 	end
 
 	return true
 end
+
 -----------------------------------
 -- TYPE COMPONENTS
 -----------------------------------
@@ -241,7 +245,6 @@ end
 -----------------------------------
 -- APPLY COMPONENTS
 -----------------------------------
-local COMPONENT_LOAD_WAIT_TIME = 100
 local svslot = nil
 
 local ApplyToFirstWeaponComponent = function(hash)
@@ -253,9 +256,6 @@ local ApplyToFirstWeaponComponent = function(hash)
     if modelHash and modelHash ~= 0 then
         if not HasModelLoaded(hash) then
             LoadModel(joaat(hash))
-            while not HasModelLoaded(hash) do
-                Wait(COMPONENT_LOAD_WAIT_TIME)
-            end
         end
         if HasModelLoaded(hash) then
             GiveWeaponComponentToEntity(cache.ped, joaat(hash), -1, true)
@@ -277,9 +277,6 @@ local ApplyToSecondWeaponComponent = function(hash)
     if modelHash and modelHash ~= 0 then
         if not HasModelLoaded(hash) then
             LoadModel(joaat(hash))
-            while not HasModelLoaded(hash) do
-                Wait(COMPONENT_LOAD_WAIT_TIME)
-            end
         end
 
         if HasModelLoaded(hash) then
@@ -302,9 +299,6 @@ local ApplyToThreeWeaponComponent = function(hash)
     if modelHash and modelHash ~= 0 then
         if not HasModelLoaded(hash) then
             LoadModel(joaat(hash))
-            while not HasModelLoaded(hash) do
-                Wait(COMPONENT_LOAD_WAIT_TIME)
-            end
         end
 
         if HasModelLoaded(hash) then
@@ -327,7 +321,7 @@ local RemoveAllWeaponComponents = function()
     local weaponComponentStruct = DataView.ArrayBuffer(8 * 8)
     local boundleItemId = ItemdatabaseGetBundleId(currentHash)
 
-    -- print('boundleItemId', boundleInfoStruct, weaponComponentStruct, boundleItemId)
+    if Config.Debug then print('boundleItemId', boundleInfoStruct, weaponComponentStruct, boundleItemId) end
 
     if boundleItemId ~= 0 then
         local weaponComponentsCount = ItemdatabaseGetBundleItemCount(boundleItemId, boundleInfoStruct:Buffer())
@@ -390,9 +384,6 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
         if modelHash and modelHash ~= 0 then
             if not HasModelLoaded(v) then
                 LoadModel(joaat(v))
-                while not HasModelLoaded(v) do
-                    Wait(COMPONENT_LOAD_WAIT_TIME)
-                end
             end
         end
 
@@ -423,9 +414,6 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
 
             if not IsModelValid(v) then
                 LoadModel(joaat(v))
-                while not HasModelLoaded(v) do
-                    Wait(100)
-                end
 
                 if modType == joaat("WEAPON_DECORATION") then
 
@@ -438,9 +426,6 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
             end
 
             LoadModel(joaat(v))
-            while not HasModelLoaded(v) do
-                Wait(100)
-            end
 
             if not ItemHaveTag(v) and not HasWeaponGotWeaponComponent(weaponObject, v) then
                 addWeaponInventoryItem(v, slotHash)
@@ -453,9 +438,6 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
         if modType == joaat("WEAPON_DECORATION") then
 
             LoadModel(joaat(v))
-            while not HasModelLoaded(v) do
-                Wait(100)
-            end
 
             if not ItemHaveTag(v) and not HasWeaponGotWeaponComponent(weaponObject, v) then
                 addWeaponInventoryItem(v, slotHash)
@@ -548,7 +530,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
     Wait(0)
 
     while next(componentsSql) == nil do
-      Wait(0)
+      Wait(100)
     end
 
     Wait(0)
@@ -614,7 +596,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
     Wait(0)
 
     while next(componentsPreSql) == nil do
-        Wait(50)
+        Wait(100)
     end
 
     Wait(0)
@@ -627,7 +609,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
         if table_contains(readComponent, category)  then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
-            Wait(100)
+            Wait(0)
             LoadModel(joaat(hashname))
             ApplyToFirstWeaponComponent(hashname)
         end
@@ -636,7 +618,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
         if table_contains(readMaterial, category) then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
-            Wait(100)
+            Wait(0)
             LoadModel(joaat(hashname))
             ApplyToSecondWeaponComponent(hashname)
         end
@@ -645,7 +627,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
         if table_contains(readEngraving, category) then
             RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), weaponHash)
-            Wait(100)
+            Wait(0)
             LoadModel(joaat(hashname))
             ApplyToThreeWeaponComponent(hashname)
         end
@@ -676,6 +658,12 @@ local selectedComponents = nil
 creatorCache = creatorCache or {} -- CREATOR CACHE FOR APPLY/REMOVE COMPONENTS
 selectedComponents = selectedComponents or {} -- Declaring the selected Components table outside the if block
 
+local YesselectedComponents = nil
+YesselectedComponents = YesselectedComponents or {} -- Declaring the price
+local NoselectedComponents = nil
+NoselectedComponents = NoselectedComponents or {} -- Declaring the price remove
+
+
 local c_zoom = 1.5
 local c_offset = 0.15
 
@@ -702,21 +690,39 @@ local mainWeaponCompMenus = {
     end
 }
 
+local PriceMenu = nil
+local RemoveMenu = nil
+
 mainCompMenu = function()
     MenuData.CloseAll()
-
+    inStore = true
     LocalPlayer.state:set("inv_busy", true, true) -- BLOCK INVENTORY
     FreezeEntityPosition(cache.ped, true) -- BLOCK PLAYER
+
+    RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
+        if result and #result > 0 then
+            for i = 1, #result do
+                YesselectedComponents = json.decode(result[i].components_before)
+                NoselectedComponents = json.decode(result[i].components)
+            end
+        end
+    end, currentSerial)
 
     Wait(100)
 
     TriggerEvent('rsg-weaponcomp:client:StartCam') -- NEED START CAM
 
-    local PriceMenu = nil
-    local RemoveMenu = nil
 
-    PriceMenu = tonumber(CalculatePrice(selectedComponents))
-    RemoveMenu = Config.RemovePrice
+    if selectedComponents ~= nil then
+        PriceMenu = tonumber(CalculatePrice(YesselectedComponents))
+        RemoveMenu = tonumber(CalculatePrice(NoselectedComponents)) * Config.RemovePrice
+    else
+        PriceMenu = tonumber(0)
+        RemoveMenu = tonumber(CalculatePrice(NoselectedComponents)) * Config.RemovePrice -- (0 - 1) = 100% price custom
+    end
+
+    NoselectedComponents = nil
+    YesselectedComponents = nil -- finish price mathematics
 
     local elements = {
         {label = 'Components', value = 'component',   desc = ""},
@@ -731,11 +737,7 @@ mainCompMenu = function()
         {title = "Weapons Menu", subtext = 'Options ', align = "top-left", elements = elements, itemHeight = "4vh"},
         function(data, _)
 
-        -----------------------------------
-        -- CONTROL KEYS
-        -----------------------------------
-        -- ToggleBlockControl(true) -- BLOCK KEYS
-
+        inStore = true -- BLOCK KEYS
         mainWeaponCompMenus[data.current.value](currentHash) -- MENU BUTTOMS
         TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
 
@@ -743,13 +745,11 @@ mainCompMenu = function()
 
         menu.close()
 
-        PriceMenu = nil
-        RemoveMenu = nil
-
         RemoveAllWeaponComponents()
 
         Wait(100)
 
+        inStore = false -- BLOCK KEYS
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
 
@@ -810,7 +810,6 @@ OpenComponentMenu = function()
                     if not selectedHash == 0 then
                         RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), currentHash)
                         Wait(0)
-
                         LoadModel(selectedHash)
                         Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
 
@@ -835,6 +834,8 @@ OpenComponentMenu = function()
                 if selectedComponents[selectedCategory] ~= selectedHash then
                     selectedComponents[selectedCategory] = selectedHash
                 end
+
+                if Config.Debug then print( 'selected', selectedHash) end
 
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL 
                 TriggerServerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
@@ -902,7 +903,6 @@ OpenMaterialMenu = function()
                         RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), currentHash)
                         Wait(0)
                         LoadModel(joaat(selectedHash))
-
                         Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
 
                         if selectedComponents[selectedCategory] ~= selectedHash then
@@ -927,8 +927,7 @@ OpenMaterialMenu = function()
                     selectedComponents[selectedCategory] = selectedHash
                 end
 
-                print( 'value', data.current.materials[data.current.value].value)
-                print( 'selectedComponents[selectedCategory]', selectedHash)
+                if Config.Debug then print( 'selected', selectedHash) end
 
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
                 TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
@@ -1037,8 +1036,7 @@ OpenEngravingMenu = function()
                     selectedComponents[selectedCategory] = selectedHash
                 end
 
-                print( 'value', data.current.engravings[data.current.value].value)
-                print( 'selectedComponents[selectedCategory]', selectedHash)
+                if Config.Debug then print( 'selected', selectedHash) end
 
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
                 TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
@@ -1060,14 +1058,13 @@ RegisterNetEvent('rsg-weaponcomp:client:update_selection')
 AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp, serial)
     --local wepobject = GetCurrentPedWeaponEntityIndex(cache.ped, 0) -- Returns weaponObject
 
-    if Config.Debug then
-        print("Data update_selection send:", json.encode(selectedComp))
-    end
+    if Config.Debug then print("Data update_selection send:", json.encode(selectedComp)) end
 
     TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedComp, serial) -- updateSQL
 
     for _, component in ipairs(selectedComp) do
         RemoveWeaponComponentFromPed(cache.ped, joaat(component), currentHash)
+        Wait(0)
     end
 
     Wait(0)
@@ -1155,14 +1152,12 @@ ButtomApplyAllComponents = function ()
     Wait(0)
     StartCam(c_zoom, c_offset)
     MenuData.CloseAll()
-    local currentPrice = nil
+    local currentPrice = PriceMenu
 
     if currentSerial ~= nil and selectedComponents then
-        currentPrice = tonumber(CalculatePrice(selectedComponents))
+        -- currentPrice = tonumber(CalculatePrice(selectedComponents))
 
-        --if Config.Debug then
-            print('currentPrice '.. currentPrice)
-        --end
+        if Config.Debug then print('currentPrice '.. currentPrice) end
 
         local options = {
             {   label = 'Do you want to proceed, sure?',
@@ -1199,6 +1194,7 @@ ButtomApplyAllComponents = function ()
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
     end
     currentPrice = nil
+    PriceMenu = nil
 end
 
 ButtomRemoveAllComponents = function ()
@@ -1207,8 +1203,7 @@ ButtomRemoveAllComponents = function ()
     StartCam(c_zoom, c_offset)
     MenuData.CloseAll()
 
-    local currentRemove = nil
-    currentRemove = Config.RemovePrice
+    local currentRemove = RemoveMenu
 
     local options = {
         {   label = 'Do you want to proceed, sure?',
@@ -1236,6 +1231,7 @@ ButtomRemoveAllComponents = function ()
 
     end
     currentRemove = nil
+    RemoveMenu = nil
 end
 
 -----------------------------------
@@ -1311,12 +1307,12 @@ AddEventHandler("rsg-weaponcomp:client:StartCam", function()
         Wait(500)
     end
 
-    DoScreenFadeOut(500)
-    Wait(500)
-    DoScreenFadeIn(800)
+    DoScreenFadeOut(1000)
+    Wait(0)
+    DoScreenFadeIn(1000)
 
     StartCam(c_zoom, c_offset)
-    local timeShop = 1000
+    local timeShop = 0
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local interaction = nil
@@ -1339,14 +1335,14 @@ AddEventHandler("rsg-weaponcomp:client:StartCam", function()
         end
     end
 
-    Wait(5000)
+    Wait(1000)
     CustomCam()
 end)
 
 RegisterNetEvent('rsg-weaponcomp:client:CustomCamera')
 AddEventHandler('rsg-weaponcomp:client:CustomCamera', function()
 
-    local timeShop = 5000
+    local timeShop = 0
 
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
@@ -1464,8 +1460,6 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
         end
     end
 
-    EndCam()
-
     TriggerServerEvent("rsg-weaponcomp:server:check_comps")
 
     FreezeEntityPosition(cache.ped, false) -- DISABLE BLOCK PLAYER
@@ -1473,8 +1467,9 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     ClearPedSecondaryTask(cache.ped)
 
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
+    inStore = false -- BLOCK KEYS
 
-    -- ToggleBlockControl(false) -- BLOCK KEYS
+    EndCam()
 
     -- selectedComponents = nil
 
@@ -1696,8 +1691,6 @@ AddEventHandler('onResourceStop', function(resourceName)
 
     FreezeEntityPosition(cache.ped , false) -- DISABLE BLOCK PLAYER
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
-
-    -- ToggleBlockControl(false) -- BLOCK KEYS
 
     UiStateMachineDestroy(-813354801) -- SHOW STATS
 
