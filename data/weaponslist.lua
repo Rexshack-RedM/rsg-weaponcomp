@@ -841,8 +841,8 @@ Components.SharedComponents = {
 		},
 		[Components.LanguageWeapons[26]] = {
 			[1] = { title = 'SCOPE02', price = 4, hashname = 'COMPONENT_RIFLE_SCOPE02', category_hashname = 'scope',    },
-			[2] ={   title = 'SCOPE03',  hashname ='COMPONENT_RIFLE_SCOPE03',     category_hashname = 'scope',     },
-			[3] ={  title = 'SCOPE04',  hashname ='COMPONENT_RIFLE_SCOPE04', category_hashname = 'scope',    },
+			[2] ={   title = 'SCOPE03', price = 4,  hashname ='COMPONENT_RIFLE_SCOPE03',     category_hashname = 'scope',     },
+			[3] ={  title = 'SCOPE04', price = 4,  hashname ='COMPONENT_RIFLE_SCOPE04', category_hashname = 'scope',    },
 		},
 		[Components.LanguageWeapons[21]] = {
 			[1] = { title = 'RIFLING_1', price = 4, hashname = 'COMPONENT_LONGARM_BARREL_RIFLING_1', category_hashname = 'barrel_rifling',    },
