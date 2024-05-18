@@ -55,7 +55,7 @@ local permissions = {
     ["CreatorWeapon"] = Config.CommandPermisions,
 }
 
-RSGCore.Commands.Add("customweapon", "Opens the Custom Weapon Menu", "{}", false, function(source)
+RSGCore.Commands.Add("customweapon", "Opens the Custom Weapon Menu", {}, false, function(source)
     local src = source
     if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command')  then
         TriggerClientEvent('rsg-weaponcomp:client:OpenCreatorWeapon', src)
@@ -64,7 +64,7 @@ RSGCore.Commands.Add("customweapon", "Opens the Custom Weapon Menu", "{}", false
     end
 end)
 
-RSGCore.Commands.Add("w_inspect", "Opens the inpect Weapon", "{}", false, function(source)
+RSGCore.Commands.Add("w_inspect", "Opens the inpect Weapon", {}, false, function(source)
     local src = source
     if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command')  then
         TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
@@ -73,7 +73,7 @@ RSGCore.Commands.Add("w_inspect", "Opens the inpect Weapon", "{}", false, functi
     end
 end)
 
-RSGCore.Commands.Add("loadweapon", "Loading skinthe Custom Weapon", "{}", false, function(source)
+RSGCore.Commands.Add("loadweapon", "Loading skinthe Custom Weapon", {}, false, function(source)
     local src = source
     TriggerClientEvent("rsg-weaponcomp:client:LoadComponents", src)
 end)
