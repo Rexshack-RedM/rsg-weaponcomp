@@ -57,7 +57,7 @@ local permissions = {
 
 RSGCore.Commands.Add("customweapon", "Opens the Custom Weapon Menu", "{}", false, function(source)
     local src = source
-    if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command')  then
+    if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src,  'command.customweapon')  then
         TriggerClientEvent('rsg-weaponcomp:client:OpenCreatorWeapon', src)
     else
         TriggerClientEvent('ox_lib:notify', src, {title = 'No have permissions', description = 'No are admin', type = 'inform' })
@@ -66,7 +66,7 @@ end)
 
 RSGCore.Commands.Add("w_inspect", "Opens the inpect Weapon", "{}", false, function(source)
     local src = source
-    if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command')  then
+    if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command.w_inspect')  then
         TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
     else
         TriggerClientEvent('ox_lib:notify', src, {title = 'No have permissions', description = 'No are admin', type = 'inform' })
