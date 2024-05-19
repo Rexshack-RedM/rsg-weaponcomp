@@ -689,49 +689,51 @@ mainCompMenu = function()
 
     -- local labelWeapon =  RSGCore.Shared.Items['"'..currentName..'"'].label
 
-    MenuData.Open('default', GetCurrentResourceName(), 'main_weapons_creator_menu',
-        {   title = "Weapons Menu",
+    MenuData.Open('default', GetCurrentResourceName(), 'main_weapons_creator_menu', {  
+            title = "Weapons Menu",
             subtext = 'Options ',
             align = "bottom-left",
             elements = elements,
             itemHeight = "4vh"
-        },
-        function(data, menu)
+    
+        }, function(data, menu)
 
-        inStore = true -- BLOCK KEYS
-        mainWeaponCompMenus[data.current.value](currentHash) -- MENU BUTTOMS
-        TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
+            inStore = true -- BLOCK KEYS
+            mainWeaponCompMenus[data.current.value](currentHash) -- MENU BUTTOMS
+            TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
 
-    end, function(data, menu)
+        end, function(data, menu)
 
-        menu.close()
+            menu.close()
 
-        RemoveAllWeaponComponents()
+            RemoveAllWeaponComponents()
 
-        Wait(100)
-        TriggerServerEvent("rsg-weaponcomp:server:check_comps")
+            Wait(100)
+            TriggerServerEvent("rsg-weaponcomp:server:check_comps")
 
-        inStore = false -- BLOCK KEYS
-        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
-        TriggerEvent('rsg-weaponcomp:client:ExitCam')
+            inStore = false -- BLOCK KEYS
+            TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
+            TriggerEvent('rsg-weaponcomp:client:ExitCam')
 
-    end)
+        end
+    )
 end
 
 -- COMP SUB MENU WITH OPTIONS
 OpenComponentMenu = function()
+    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
     local elements = {}
 
     -- local groupedComponents = GroupComponentsByWeaponAndCategory(Components.weapons_comp_list, weaponType, currentName)
-    for _, weaponData in pairs(Components.weapons_comp_list) do
     -- for _, weaponData in pairs(groupedComponents) do
+    for _, weaponData in pairs(Components.weapons_comp_list) do
         if weaponData[currentName] then
             for category, componentList in pairs(weaponData[currentName]) do
                 if next(componentList) ~= nil then
                     local minIndex = 0
                     local a = 1
 
-                    elements[#elements + 1] = {
+                    table.insert(elements, {
                         label = category,
                         value = minIndex,
                         type = "slider",
@@ -740,30 +742,52 @@ OpenComponentMenu = function()
                         category = category,
                         components = {},
                         id = a
-                    }
+                    })
 
                     a = a + 1
                     for _, component in ipairs(componentList) do
-                        (elements[#elements].components)[#(elements[#elements].components) + 1] = {
+                        table.insert(elements[#elements].components, {
                             label = component.title,
                             value = component.hashname or 0,
                             v = component.category_hashname,
-                        }
+                        })
                     end
+
                 end
             end
         end
     end
 
-    MenuData.Open('default', GetCurrentResourceName(), 'component_weapon_menu',
-        {
+    MenuData.Open('default', GetCurrentResourceName(), 'component_weapon_menu', {
             title = 'Custom Component',
             subtext = 'Options ' .. currentName,
             align = "bottom-left",
             elements = elements,
-            itemHeight = "2vh"
+            itemHeight = "2vh",
+            -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
         },
         function(data, menu)
+            -- local selectedIndex = data.selected + offset -- Considera el offset
+
+            -- if selectedIndex > menu.data.maxItems then
+            --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
+            -- elseif selectedIndex <= 0 then
+            --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
+            -- end
+
+            -- -- Lógica para manejar la selección y actualización del menú
+            -- local newElements = {}
+            -- for i = 1, menu.data.maxItems do
+            --     local index = i + offset
+            --     if elements[index] then
+            --         newElements[#newElements +1] = elements[index]
+            --     end
+            -- end
+
+            -- menu.setElements(newElements)
+            -- menu.refresh()
+
+        -- end, function(data, menu)
 
             if data.current then
                 local selectedCategory = data.current.category
@@ -785,7 +809,6 @@ OpenComponentMenu = function()
                         end
 
                         TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
-                        -- TriggerServerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM 
                         return
                     else
                         selectedHash = 0
@@ -807,12 +830,13 @@ OpenComponentMenu = function()
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL 
                 -- TriggerServerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
 
+                -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
+                -- local newData = { subtext = "Updated Comp Selection" }  -- Define los nuevos datos para el elemento
+                -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
+                -- menu.setElements(elements)
             end
-
             menu.refresh()
-        end,
-
-        function(data, menu)
+        end, function(data, menu)
             menu.close()
             mainCompMenu() -- BACK MAIN MENU
         end
@@ -920,6 +944,7 @@ OpenMaterialMenu = function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local elements = {}
+    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
 
     -- local groupedMaterials = GroupMaterialsByWeaponAndCategory(Components.SharedComponents, weaponType, currentCategory)
     -- for category, materialList in pairs(groupedMaterials) do
@@ -928,7 +953,7 @@ OpenMaterialMenu = function()
             local minIndex = 0
             local a = 1
 
-            elements[#elements + 1] = {
+            table.insert(elements,  {
                 label = category,
                 value = minIndex,
                 type = "slider",
@@ -937,85 +962,108 @@ OpenMaterialMenu = function()
                 category = category,
                 materials = {},
                 id = a
-            }
+            })
 
             a = a + 1
             for _, materialData in ipairs(materialList) do
-                (elements[#elements].materials)[#(elements[#elements].materials) + 1] = {
-
+                table.insert(elements[#elements].materials,  {
                     label = materialData.title,
                     value = materialData.hashname or 0,
                     v = materialData.category_hashname,
-                }
+                })
             end
         end
     end
 
-    MenuData.Open('default', GetCurrentResourceName(), 'material_weapon_menu',
-        {
-            title = 'Custom Materials',
-            subtext = 'Options ' .. currentName,
-            align = "bottom-left",
-            elements = elements,
-            itemHeight = "2vh"
-        }, function(data, menu)
+        MenuData.Open('default', GetCurrentResourceName(), 'material_weapon_menu', {
+                title = 'Custom Materials',
+                subtext = 'Options ' .. currentName,
+                align = "bottom-left",
+                elements = elements,
+                itemHeight = "2vh",
+                -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
+            }, function(data, menu)
 
-            if data.current then
-                local selectedCategory = data.current.category
-                local selectedValue = data.current.value
-                local selectedDeleted = data.current.value + 1
-                local selectedHash = nil
+                -- local selectedIndex = data.selected + offset -- Considera el offset
 
-                if selectedValue == 0 then
-                    selectedHash = data.current.materials[selectedDeleted].value
-                    if not selectedHash == 0 then
-                        RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), -1)
-                        Wait(0)
-                        LoadModel(joaat(selectedHash))
-                        Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
+                -- if selectedIndex > menu.data.maxItems then
+                --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
+                -- elseif selectedIndex <= 0 then
+                --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
+                -- end
+    
+                -- -- Lógica para manejar la selección y actualización del menú
+                -- local newElements = {}
+                -- for i = 1, menu.data.maxItems do
+                --     local index = i + offset
+                --     if elements[index] then
+                --         table.insert(newElements, elements[index])
+                --     end
+                -- end
+    
+                -- menu.setElements(newElements)
+                -- menu.refresh()
+    
+            -- end, function(data, menu)
+                if data.current then
+                    local selectedCategory = data.current.category
+                    local selectedValue = data.current.value
+                    local selectedDeleted = data.current.value + 1
+                    local selectedHash = nil
 
-                        if selectedComponents[selectedCategory] ~= selectedHash then
-                            selectedComponents[selectedCategory] = selectedHash
+                    if selectedValue == 0 then
+                        selectedHash = data.current.materials[selectedDeleted].value
+                        if not selectedHash == 0 then
+                            RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), -1)
+                            Wait(0)
+                            LoadModel(joaat(selectedHash))
+                            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
+
+                            if selectedComponents[selectedCategory] ~= selectedHash then
+                                selectedComponents[selectedCategory] = selectedHash
+                            end
+
+                            TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL 
+                            return
+                        else
+                            selectedHash = 0
                         end
-
-                        TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL 
-                        -- TriggerServerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
-                        return
                     else
-                        selectedHash = 0
+                        selectedHash = data.current.materials[selectedValue].value -- SELECT COMPONENTS
                     end
-                else
-                    selectedHash = data.current.materials[selectedValue].value -- SELECT COMPONENTS
+
+                    if creatorCache[selectedCategory] ~= selectedValue then
+                        creatorCache[selectedCategory] = selectedValue
+                    end
+
+                    if selectedComponents[selectedCategory]  ~= selectedHash then
+                        selectedComponents[selectedCategory] = selectedHash
+                    end
+
+                    if Config.Debug then print( 'selected', selectedHash) end
+
+                    TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
+                    -- TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
+
+                    -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
+                    -- local newData = { subtext = "Updated Mat Selection" }  -- Define los nuevos datos para el elemento
+                    -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
+                    -- menu.setElements(elements)
                 end
+                menu.refresh()
 
-                if creatorCache[selectedCategory] ~= selectedValue then
-                    creatorCache[selectedCategory] = selectedValue
-                end
-
-                if selectedComponents[selectedCategory]  ~= selectedHash then
-                    selectedComponents[selectedCategory] = selectedHash
-                end
-
-                if Config.Debug then print( 'selected', selectedHash) end
-
-                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
-                -- TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
-
+            end, function(data, menu)
+                menu.close()
+                mainCompMenu()
             end
-            menu.refresh()
-        end,
-
-        function(data, menu)
-            menu.close()
-            mainCompMenu()
-        end
-    )
-end
+        )
+    end
 
 OpenEngravingMenu = function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local elements = {}
+    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
 
     -- local groupedEngravings = GroupEngravingsByWeaponAndCategory(Components.SharedEngravingsComponents, weaponType, currentCategory)
     -- for category, engravingList in pairs(groupedEngravings) do
@@ -1024,7 +1072,7 @@ OpenEngravingMenu = function()
             local minIndex = 0
             local a = 1
 
-            elements[#elements + 1] = {
+            table.insert(elements, {
                 label = category,
                 value = minIndex,
                 type = "slider",
@@ -1033,28 +1081,49 @@ OpenEngravingMenu = function()
                 category = category,
                 engravings = {},
                 id = a
-            }
+            })
             a = a + 1
             for _, engravingData in ipairs(engravingList) do
-                (elements[#elements].engravings)[#(elements[#elements].engravings) + 1] = {
+                table.insert(elements[#elements].engravings,  {
                     label = engravingData.title,
                     value = engravingData.hashname or 0,
                     v = engravingData.category_hashname,
-                }
+                })
             end
         end
     end
 
-    MenuData.Open('default', GetCurrentResourceName(), 'engraving_weapon_menu',
-        {
+    MenuData.Open('default', GetCurrentResourceName(), 'engraving_weapon_menu', {
             title = 'Custom Engravings',
             subtext = 'Options ' .. currentName,
             align = "bottom-left",
             elements = elements,
-            itemHeight = "2vh"
+            itemHeight = "2vh",
+            -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
         },
         function(data, menu)
 
+            -- local selectedIndex = data.selected + offset -- Considera el offset
+
+            -- if selectedIndex > menu.data.maxItems then
+            --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
+            -- elseif selectedIndex <= 0 then
+            --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
+            -- end
+
+            -- -- Lógica para manejar la selección y actualización del menú
+            -- local newElements = {}
+            -- for i = 1, menu.data.maxItems do
+            --     local index = i + offset
+            --     if elements[index] then
+            --         table.insert(newElements, elements[index])
+            --     end
+            -- end
+
+            -- menu.setElements(newElements)
+            -- menu.refresh()
+
+        -- end, function(data, menu)
             if data.current then
                 local selectedCategory = data.current.category
                 local selectedValue = data.current.value
@@ -1077,7 +1146,6 @@ OpenEngravingMenu = function()
                         end
 
                         TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
-                        -- TriggerServerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM 
                         return
                     else
                         selectedHash = 0
@@ -1098,11 +1166,15 @@ OpenEngravingMenu = function()
 
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
                 -- TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
+
+                -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
+                -- local newData = { subtext = "Updated Eng Selection" }  -- Define los nuevos datos para el elemento
+                -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
+                -- menu.setElements(elements)
             end
             menu.refresh()
-        end,
 
-        function(data, menu)
+        end, function(data, menu)
             menu.close()
             mainCompMenu()
         end
@@ -1113,6 +1185,7 @@ OpenTintsMenu = function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local elements = {}
+    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
 
     -- local groupedEngravings = GroupEngravingsByWeaponAndCategory(Components.SharedEngravingsComponents, weaponType, currentCategory)
     -- for category, engravingList in pairs(groupedEngravings) do
@@ -1121,7 +1194,7 @@ OpenTintsMenu = function()
             local minIndex = 0
             local a = 1
 
-            elements[#elements + 1] = {
+            table.insert(elements, {
                 label = category,
                 value = minIndex,
                 type = "slider",
@@ -1130,27 +1203,48 @@ OpenTintsMenu = function()
                 category = category,
                 tints = {},
                 id = a
-            }
+            })
             a = a + 1
             for _, tintsData in ipairs(tintsList) do
-                (elements[#elements].tints)[#(elements[#elements].tints) + 1] = {
+                table.insert(elements[#elements].tints, {
                     label = tintsData.title,
                     value = tintsData.hashname or 0,
                     v = tintsData.category_hashname,
-                }
+                })
             end
         end
     end
 
-    MenuData.Open('default', GetCurrentResourceName(), 'tints_weapon_menu',
-        {
+    MenuData.Open('default', GetCurrentResourceName(), 'tints_weapon_menu', {
             title = 'Custom tints',
             subtext = 'Options ' .. currentName,
             align = "bottom-left",
             elements = elements,
-            itemHeight = "2vh"
-        },
-        function(data, menu)
+            itemHeight = "2vh",
+            -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
+        }, function(data, menu)
+
+            -- local selectedIndex = data.selected + offset -- Considera el offset
+
+            -- if selectedIndex > menu.data.maxItems then
+            --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
+            -- elseif selectedIndex <= 0 then
+            --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
+            -- end
+
+            -- -- Lógica para manejar la selección y actualización del menú
+            -- local newElements = {}
+            -- for i = 1, menu.data.maxItems do
+            --     local index = i + offset
+            --     if elements[index] then
+            --         table.insert(newElements, elements[index])
+            --     end
+            -- end
+
+            -- menu.setElements(newElements)
+            -- menu.refresh()
+
+        -- end, function(data, menu)
 
             if data.current then
                 local selectedCategory = data.current.category
@@ -1174,7 +1268,6 @@ OpenTintsMenu = function()
                         end
 
                         TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
-                        -- TriggerServerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM 
                         return
                     else
                         selectedHash = 0
@@ -1195,10 +1288,14 @@ OpenTintsMenu = function()
 
                 TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
                 -- TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
+
+                -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
+                -- local newData = { subtext = "Updated Tint Selection" }  -- Define los nuevos datos para el elemento
+                -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
+                -- menu.setElements(elements)
             end
             menu.refresh()
         end,
-
         function(data, menu)
             menu.close()
             mainCompMenu()

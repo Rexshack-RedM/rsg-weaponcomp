@@ -4,7 +4,7 @@ Config.Debug = false
 
 Config.CommandPermisions =  'admin' -- can use /customweapon
 Config.Notify =             'rnotify' -- 'ox_lib' or 'rnotify'
-Config.MenuData =           'rsg-menubase' -- menu_base' or 'rsg-menubase'
+Config.MenuData =           'rsg-menubase' -- 'menu_base' or 'rsg-menubase'
 
 Config.showStats =          true -- true / false can show stats
 Config.RemovePrice =        1.2 -- (0 - 1) = 100 % cost remove component 120%
