@@ -434,7 +434,9 @@ local CalculatePrice = function(selectedTable)
                     if categories[category] then
                         for _, component in ipairs(categories[category]) do
                             if component.hashname == hashname then
-                                priceComp = priceComp + component.price
+                                if component.price ~= nil then
+                                    priceComp = priceComp + component.price
+                                end
                             end
                         end
                     end
@@ -445,7 +447,9 @@ local CalculatePrice = function(selectedTable)
                 if categories[category] then
                     for _, component in ipairs(categories[category]) do
                         if component.hashname == hashname then
-                            priceMat = priceMat + component.price
+                            if component.price ~= nil then
+                                priceMat = priceMat + component.price
+                            end
                         end
                     end
                 end
@@ -455,7 +459,9 @@ local CalculatePrice = function(selectedTable)
                 if categories[category] then
                     for _, component in ipairs(categories[category]) do
                         if component.hashname == hashname then
-                            priceEng = priceEng + component.price
+                            if component.price ~= nil then
+                                priceEng = priceEng + component.price
+                            end
                         end
                     end
                 end
@@ -465,7 +471,9 @@ local CalculatePrice = function(selectedTable)
                 if categories[category] then
                     for _, component in ipairs(categories[category]) do
                         if component.hashname == hashname then
-                            priceTint = priceTint + component.price
+                            if component.price ~= nil then
+                                priceTint = priceTint + component.price
+                            end
                         end
                     end
                 end
