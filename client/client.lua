@@ -709,12 +709,12 @@ mainCompMenu = function()
         end, function(data, menu)
 
             menu.close()
-            TriggerServerEvent("rsg-weaponcomp:server:check_comps")
+            TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
+            inStore = false -- BLOCK KEYS
+            TriggerEvent('rsg-weaponcomp:client:ExitCam')
             Wait(100)
 
-            inStore = false -- BLOCK KEYS
-            TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
-            TriggerEvent('rsg-weaponcomp:client:ExitCam')
+            TriggerServerEvent("rsg-weaponcomp:server:check_comps")
 
         end
     )
@@ -1069,10 +1069,9 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp,
 
     for category, component in ipairs(selectedAdd) do
         if table_contains(readComponent, category) then
-
             for i = 1, #selectedAdd do
                 if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
-                ApplyToFirstWeaponComponent(selectedAdd[i])
+                ApplyToFirstWeaponComponent(GetHashKey(selectedAdd[i]))
                 if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
             Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
@@ -1081,17 +1080,16 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp,
         if table_contains(readMaterial, category) then
             for i = 1, #selectedAdd do
                 if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
-                ApplyToSecondWeaponComponent(selectedAdd[i])
+                ApplyToSecondWeaponComponent(GetHashKey(selectedAdd[i]))
                 if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
             Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
             TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial)
-
         end
         if table_contains(readEngraving, category) then
             for i = 1, #selectedAdd do
                 if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
-                ApplyToThreeWeaponComponent(selectedAdd[i])
+                ApplyToThreeWeaponComponent(GetHashKey(selectedAdd[i]))
                 if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
             Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
@@ -1100,7 +1098,7 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp,
         if table_contains(readTints, category) then
             for i = 1, #selectedAdd do
                 if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
-                ApplyToThreeWeaponComponent(selectedAdd[i])
+                ApplyToThreeWeaponComponent(GetHashKey(selectedAdd[i]))
                 if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
             Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
