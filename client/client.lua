@@ -142,13 +142,13 @@ local getGuidFromItemId = function(inventoryId, itemData, category, slotId)
 end
 
 local addWeaponInventoryItem = function(hash, slotHash)
-    local addReason = joaat("ADD_REASON_DEFAULT");
+    local addReason = GetHashKey("ADD_REASON_DEFAULT");
     local inventoryId = 1; -- INVENTORY_SP_PLAYER
 
     local isValid = ItemdatabaseIsKeyValid(hash, 0)
     if not isValid then return false end
 
-    local characterItem = getGuidFromItemId(inventoryId, nil, joaat("CHARACTER"), 0xA1212100);
+    local characterItem = getGuidFromItemId(inventoryId, nil, GetHashKey("CHARACTER"), 0xA1212100);
     if not characterItem then return false end
 
     local unkStruct = getGuidFromItemId(inventoryId, characterItem:Buffer(), 923904168, -740156546);
@@ -160,7 +160,7 @@ local addWeaponInventoryItem = function(hash, slotHash)
     -- WE CANT DO SAME FOR WRAP TINT IDK WHY BUT WORKS WITHOUT THIS 
     local gripItem;
     if slotHash == 0x57575690 then
-        gripItem = getGuidFromItemId(inventoryId, weaponItem:Buffer(), joaat(hash), -1591664384);
+        gripItem = getGuidFromItemId(inventoryId, weaponItem:Buffer(), GetHashKey(hash), -1591664384);
       if not gripItem then return false end
     end
 
@@ -175,11 +175,12 @@ local addWeaponInventoryItem = function(hash, slotHash)
 end
 
 local LoadModel = function(model)
+    local time = 0
 	if not IsModelInCdimage(model) then return false end
 
 	if not HasModelLoaded(model) then
         RequestModel(model)
-        while not HasModelLoaded(model) do Wait(100) end
+        while not HasModelLoaded(model) do Wait(time) end
     end
 
 	return true
@@ -243,73 +244,75 @@ local svslot = nil
 
 local ApplyToFirstWeaponComponent = function(hash)
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
-    local modelHash = Citizen.InvokeNative(0x59DE03442B6C9598, weaponHash) -- GetWeaponComponentTypeModel(
+    local modelHash = GetWeaponComponentTypeModel(weaponHash)
 
-    RequestWeaponAsset(joaat(weaponHash), 0, true)
-
+    RequestWeaponAsset(weaponHash, 0, true)
+    -- HasWeaponAssetLoaded(weaponHash)
     if modelHash and modelHash ~= 0 then
-        if not HasModelLoaded(hash) then LoadModel(joaat(hash)) end
+        if not HasModelLoaded(hash) then LoadModel(hash) end
         if HasModelLoaded(hash) then
             ItemdatabaseIsKeyValid(weaponHash, true)
-            GiveWeaponComponentToEntity(cache.ped, joaat(hash), -1, true)
+            GiveWeaponComponentToEntity(cache.ped, hash, -1, true)
             SetModelAsNoLongerNeeded(hash) -- THE MODEL IS NO LONGER NEEDED
 
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, hash, true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
         end
     else
-        GiveWeaponComponentToEntity(cache.ped, joaat(hash), -1, true)
+        GiveWeaponComponentToEntity(cache.ped, hash, -1, true)
     end
 end
 
 local ApplyToSecondWeaponComponent = function(hash)
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
-    local modelHash = Citizen.InvokeNative(0x59DE03442B6C9598, weaponHash) -- GetWeaponComponentTypeModel(
-    -- local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0) -- Returns weaponObject
+    local modelHash = GetWeaponComponentTypeModel(weaponHash)
+    -- local wep = GetObjectIndexFromEntityIndex(GetCurrentPedWeaponEntityIndex(cache.ped, 0)) -- Returns weaponObject
 
-    RequestWeaponAsset(joaat(weaponHash), 0, true)
+    RequestWeaponAsset(weaponHash, 0, true)
+    -- HasWeaponAssetLoaded(weaponHash)
 
     if modelHash and modelHash ~= 0 then
-        if not HasModelLoaded(hash) then LoadModel(joaat(hash)) end
+        if not HasModelLoaded(hash) then LoadModel(hash) end
         if HasModelLoaded(hash) then
             ItemdatabaseIsKeyValid(weaponHash, true)
-            GiveWeaponComponentToEntity(cache.ped,  GetHashKey(hash), -1, true)
-            SetModelAsNoLongerNeeded(hash) -- THE MODEL IS NO LONGER NEEDED
+            GiveWeaponComponentToEntity(cache.ped,  hash, -1, true)
+            SetModelAsNoLongerNeeded(hash)
 
             -- ApplyTextureWeapon(wep, hash) -- function for refresh texture 
 
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped,  GetHashKey(hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, hash, true, true, true)
         end
     else
-        GiveWeaponComponentToEntity(cache.ped,  GetHashKey(hash), -1, true)
+        GiveWeaponComponentToEntity(cache.ped, hash, -1, true)
     end
 end
 
 local ApplyToThreeWeaponComponent = function(hash)
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
-    local modelHash = Citizen.InvokeNative(0x59DE03442B6C9598, weaponHash) -- GetWeaponComponentTypeModel(
-    -- local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0) -- Returns weaponObject
+    local modelHash = GetWeaponComponentTypeModel(weaponHash)
+    local wep = GetObjectIndexFromEntityIndex(GetCurrentPedWeaponEntityIndex(cache.ped, 0))
 
-    RequestWeaponAsset(joaat(weaponHash), 0, true)
+    RequestWeaponAsset(weaponHash, 0, true)
+    -- HasWeaponAssetLoaded(weaponHash)
 
     if modelHash and modelHash ~= 0 then
-        if not HasModelLoaded(hash) then LoadModel(joaat(hash)) end
+        if not HasModelLoaded(hash) then LoadModel(hash) end
         if HasModelLoaded(hash) then
             ItemdatabaseIsKeyValid(weaponHash, true)
-            GiveWeaponComponentToEntity(cache.ped,  GetHashKey(hash), -1, true)
-            SetModelAsNoLongerNeeded(hash) -- THE MODEL IS NO LONGER NEEDED
+            GiveWeaponComponentToEntity(cache.ped,  hash, -1, true)
+            SetModelAsNoLongerNeeded(hash)
 
-            -- ApplyTextureWeapon(wep, hash) -- function for refresh texture 
+            -- ApplyTextureWeapon(wep, hash)
 
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped,  GetHashKey(hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, hash, true, true, true)
         end
     else
-        GiveWeaponComponentToEntity(cache.ped,  GetHashKey(hash), -1, true)
+        GiveWeaponComponentToEntity(cache.ped,  hash, -1, true)
     end
 end
 
 local RemoveAllWeaponComponents = function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
-    local modelHash = Citizen.InvokeNative(0x59DE03442B6C9598, weaponHash) -- GetWeaponComponentTypeModel(
+    local modelHash = GetWeaponComponentTypeModel(weaponHash)
     local weaponObject = GetCurrentPedWeaponEntityIndex(cache.ped, 0)
     local boundleInfoStruct = DataView.ArrayBuffer(8 * 8)
     boundleInfoStruct:SetInt32(0 * 8, 1)
@@ -339,18 +342,18 @@ local RemoveAllWeaponComponents = function()
                         if not HasWeaponGotWeaponComponent(weaponObject, componentHash) then
                             if weaponModType == GetHashKey("WEAPON_DECORATION") then
                                 if not HasWeaponGotWeaponComponent(weaponObject, componentHash) then Wait(0) return end
-                                RemoveWeaponComponentFromPed(weaponObject, GetHashKey(componentHash), -1) -- RemoveWeaponComponentFromPed no se aplica la funcion
                                 LoadModel(GetHashKey(componentHash))
+                                RemoveWeaponComponentFromPed(weaponObject, GetHashKey(componentHash), -1)
                             end
                             return
                         end
-                        RemoveWeaponComponentFromPed(weaponObject, GetHashKey(componentHash), -1) -- RemoveWeaponComponentFromPed no se aplica la funcion
                         LoadModel(GetHashKey(componentHash))
+                        RemoveWeaponComponentFromPed(weaponObject, GetHashKey(componentHash), -1)
                     end
                     if weaponModType == GetHashKey("WEAPON_DECORATION") then
                         if not HasWeaponGotWeaponComponent(weaponObject, componentHash) then Wait(0) return end
-                        RemoveWeaponComponentFromPed(weaponObject, GetHashKey(componentHash), -1) -- RemoveWeaponComponentFromPed no se aplica la funcion
-                        LoadModel(joaat(componentHash))
+                        LoadModel(GetHashKey(componentHash))
+                        RemoveWeaponComponentFromPed(weaponObject, GetHashKey(componentHash), -1)
                     end
                 end
                 var0 = var0 + 1
@@ -369,7 +372,7 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
     for k, v in ipairs(selectedTable) do
 
         if modelHash and modelHash ~= 0 then
-            if not HasModelLoaded(v) then LoadModel(joaat(v)) end
+            if not HasModelLoaded(v) then LoadModel(GetHashKey(v)) end
         end
 
         if not DoesEntityExist(weaponObject) then
@@ -392,7 +395,7 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
         if modType == GetHashKey("WEAPON_MOD") then
 
             if not IsModelValid(v) then
-                LoadModel(joaat(v))
+                LoadModel(GetHashKey(v))
                 if modType == GetHashKey("WEAPON_DECORATION") then
                     if not ItemHaveTag(v) and not HasWeaponGotWeaponComponent(weaponObject, v) then
                         addWeaponInventoryItem(v, slotHash)
@@ -401,7 +404,7 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
                 return
             end
 
-            LoadModel(joaat(v))
+            LoadModel(GetHashKey(v))
             if not ItemHaveTag(v) and not HasWeaponGotWeaponComponent(weaponObject, v) then
                 addWeaponInventoryItem(v, slotHash)
             end
@@ -410,7 +413,7 @@ local ApplyToAllWeaponComponent = function(serial, selectedTable, slotHash)
         Wait(100)
 
         if modType == GetHashKey("WEAPON_DECORATION") then
-            LoadModel(joaat(v))
+            LoadModel(GetHashKey(v))
             if not ItemHaveTag(v) and not HasWeaponGotWeaponComponent(weaponObject, v) then
                 addWeaponInventoryItem(v, slotHash)
             end
@@ -432,7 +435,9 @@ local CalculatePrice = function(selectedTable)
                     if categories[category] then
                         for _, component in ipairs(categories[category]) do
                             if component.hashname == hashname then
-                                priceComp = priceComp + component.price
+                                if component.price ~= nil then
+                                    priceComp = priceComp + component.price
+                                end
                             end
                         end
                     end
@@ -443,7 +448,9 @@ local CalculatePrice = function(selectedTable)
                 if categories[category] then
                     for _, component in ipairs(categories[category]) do
                         if component.hashname == hashname then
-                            priceMat = priceMat + component.price
+                            if component.price ~= nil then
+                                priceMat = priceMat + component.price
+                            end
                         end
                     end
                 end
@@ -453,7 +460,9 @@ local CalculatePrice = function(selectedTable)
                 if categories[category] then
                     for _, component in ipairs(categories[category]) do
                         if component.hashname == hashname then
-                            priceEng = priceEng + component.price
+                            if component.price ~= nil then
+                                priceEng = priceEng + component.price
+                            end
                         end
                     end
                 end
@@ -463,7 +472,9 @@ local CalculatePrice = function(selectedTable)
                 if categories[category] then
                     for _, component in ipairs(categories[category]) do
                         if component.hashname == hashname then
-                            priceTint = priceTint + component.price
+                            if component.price ~= nil then
+                                priceTint = priceTint + component.price
+                            end
                         end
                     end
                 end
@@ -474,7 +485,7 @@ local CalculatePrice = function(selectedTable)
     if Config.Debug then print('totalprice', priceComp, priceMat, priceEng, priceTint) end
 
     local totalprice = 0
-    Wait(1)
+    Wait(0)
     totalprice = priceComp + priceMat + priceEng + priceTint
     Wait(0)
     return totalprice
@@ -517,32 +528,32 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
         if Config.Debug then print('for category, hashname in pairs(componentsSql) do: ', category, hashname) end
 
         if table_contains(readComponent, category)  then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            ApplyToFirstWeaponComponent(hashname)
+            ApplyToFirstWeaponComponent(GetHashKey(hashname))
         end
 
         if table_contains(readMaterial, category) then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            ApplyToSecondWeaponComponent(hashname)
+            ApplyToSecondWeaponComponent(GetHashKey(hashname))
         end
 
         if table_contains(readEngraving, category) then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            ApplyToThreeWeaponComponent(hashname)
+            ApplyToThreeWeaponComponent(GetHashKey(hashname))
         end
 
         if table_contains(readTints, category) then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            ApplyToThreeWeaponComponent(hashname)
+            ApplyToThreeWeaponComponent(GetHashKey(hashname))
         end
     end
 
     TriggerServerEvent('rsg-weaponcomp:server:slot', wepSerial)
-    Wait(50)
+    Wait(100)
     local slotHash = svslot
     ApplyToAllWeaponComponent(wepSerial, componentsSql, slotHash)
 
@@ -577,31 +588,31 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
         if Config.Debug then print('for category, hashname in pairs(componentsPreSql) do: ', category, hashname) end
 
         if table_contains(readComponent, category)  then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            LoadModel(joaat(hashname))
-            ApplyToFirstWeaponComponent(hashname)
+            LoadModel(GetHashKey(hashname))
+            ApplyToFirstWeaponComponent(GetHashKey(hashname))
         end
 
         if table_contains(readMaterial, category) then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            LoadModel(joaat(hashname))
-            ApplyToSecondWeaponComponent(hashname)
+            LoadModel(GetHashKey(hashname))
+            ApplyToSecondWeaponComponent(GetHashKey(hashname))
         end
 
         if table_contains(readEngraving, category) then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            LoadModel(joaat(hashname))
-            ApplyToThreeWeaponComponent(hashname)
+            LoadModel(GetHashKey(hashname))
+            ApplyToThreeWeaponComponent(GetHashKey(hashname))
         end
 
         if table_contains(readTints, category) then
-            RemoveWeaponComponentFromPed(cache.ped, joaat(hashname), -1)
+            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(hashname), -1)
             Wait(0)
-            LoadModel(joaat(hashname))
-            ApplyToThreeWeaponComponent(hashname)
+            LoadModel(GetHashKey(hashname))
+            ApplyToThreeWeaponComponent(GetHashKey(hashname))
         end
 
     end
@@ -627,13 +638,13 @@ end
 
 local creatorCache = nil
 local selectedComponents = nil
-creatorCache = creatorCache or {} -- CREATOR CACHE FOR APPLY/REMOVE COMPONENTS
-selectedComponents = selectedComponents or {} -- Declaring the selected Components table outside the if block
+creatorCache = creatorCache or {}
+selectedComponents = selectedComponents or {}
 
 local YesselectedComponents = nil
-YesselectedComponents = YesselectedComponents or {} -- Declaring the price
+YesselectedComponents = YesselectedComponents or {}
 local NoselectedComponents = nil
-NoselectedComponents = NoselectedComponents or {} -- Declaring the price remove
+NoselectedComponents = NoselectedComponents or {}
 
 local mainWeaponCompMenus = {
     ["component"] = function() OpenComponentMenu() end,
@@ -664,7 +675,6 @@ mainCompMenu = function()
     end, currentSerial)
 
     Wait(100)
-
     TriggerEvent('rsg-weaponcomp:client:StartCam') -- NEED START CAM
 
     if selectedComponents ~= nil then
@@ -689,13 +699,7 @@ mainCompMenu = function()
 
     -- local labelWeapon =  RSGCore.Shared.Items['"'..currentName..'"'].label
 
-    MenuData.Open('default', GetCurrentResourceName(), 'main_weapons_creator_menu', {  
-            title = "Weapons Menu",
-            subtext = 'Options ',
-            align = "bottom-left",
-            elements = elements,
-            itemHeight = "4vh"
-    
+    MenuData.Open('default', GetCurrentResourceName(), 'main_weapons_creator_menu', {  title = "Weapons Menu", subtext = 'Options ', align = "bottom-left", elements = elements, itemHeight = "4vh"
         }, function(data, menu)
 
             inStore = true -- BLOCK KEYS
@@ -705,27 +709,24 @@ mainCompMenu = function()
         end, function(data, menu)
 
             menu.close()
-
-            RemoveAllWeaponComponents()
-
-            Wait(100)
-            TriggerServerEvent("rsg-weaponcomp:server:check_comps")
-
-            inStore = false -- BLOCK KEYS
             TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
+            inStore = false -- BLOCK KEYS
             TriggerEvent('rsg-weaponcomp:client:ExitCam')
+            Wait(100)
+
+            TriggerServerEvent("rsg-weaponcomp:server:check_comps")
 
         end
     )
 end
 
+---------------------
 -- COMP SUB MENU WITH OPTIONS
+---------------------
 OpenComponentMenu = function()
-    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
+    Wait(0)
     local elements = {}
-
-    -- local groupedComponents = GroupComponentsByWeaponAndCategory(Components.weapons_comp_list, weaponType, currentName)
-    -- for _, weaponData in pairs(groupedComponents) do
     for _, weaponData in pairs(Components.weapons_comp_list) do
         if weaponData[currentName] then
             for category, componentList in pairs(weaponData[currentName]) do
@@ -733,7 +734,7 @@ OpenComponentMenu = function()
                     local minIndex = 0
                     local a = 1
 
-                    table.insert(elements, {
+                    elements[#elements+1] = {
                         label = category,
                         value = minIndex,
                         type = "slider",
@@ -742,15 +743,15 @@ OpenComponentMenu = function()
                         category = category,
                         components = {},
                         id = a
-                    })
+                    }
 
                     a = a + 1
                     for _, component in ipairs(componentList) do
-                        table.insert(elements[#elements].components, {
+                        elements[#elements].components[#elements[#elements].components + 1] = {
                             label = component.title,
                             value = component.hashname or 0,
                             v = component.category_hashname,
-                        })
+                        }
                     end
 
                 end
@@ -758,36 +759,8 @@ OpenComponentMenu = function()
         end
     end
 
-    MenuData.Open('default', GetCurrentResourceName(), 'component_weapon_menu', {
-            title = 'Custom Component',
-            subtext = 'Options ' .. currentName,
-            align = "bottom-left",
-            elements = elements,
-            itemHeight = "2vh",
-            -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
-        },
-        function(data, menu)
-            -- local selectedIndex = data.selected + offset -- Considera el offset
-
-            -- if selectedIndex > menu.data.maxItems then
-            --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
-            -- elseif selectedIndex <= 0 then
-            --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
-            -- end
-
-            -- -- Lógica para manejar la selección y actualización del menú
-            -- local newElements = {}
-            -- for i = 1, menu.data.maxItems do
-            --     local index = i + offset
-            --     if elements[index] then
-            --         newElements[#newElements +1] = elements[index]
-            --     end
-            -- end
-
-            -- menu.setElements(newElements)
-            -- menu.refresh()
-
-        -- end, function(data, menu)
+    MenuData.Open('default', GetCurrentResourceName(), 'component_weapon_menu', { title = 'Custom Component', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
+        }, function(data, menu)
 
             if data.current then
                 local selectedCategory = data.current.category
@@ -798,11 +771,6 @@ OpenComponentMenu = function()
                 if selectedValue == 0 then
                     selectedHash = data.current.components[selectedDeleted].value
                     if not selectedHash == 0 then
-                        RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), -1)
-                        Wait(0)
-                        LoadModel(selectedHash)
-                        Wait(0)
-                        Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
 
                         if selectedComponents[selectedCategory] ~= selectedHash then
                             selectedComponents[selectedCategory] = selectedHash
@@ -814,7 +782,7 @@ OpenComponentMenu = function()
                         selectedHash = 0
                     end
                 else
-                    selectedHash = data.current.components[selectedValue].value  -- SELECT COMPONENTS
+                    selectedHash = data.current.components[selectedValue].value 
                 end
 
                 if creatorCache[selectedCategory] ~= selectedValue then
@@ -827,13 +795,7 @@ OpenComponentMenu = function()
 
                 if Config.Debug then print( 'selected', selectedHash) end
 
-                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL 
-                -- TriggerServerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
-
-                -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
-                -- local newData = { subtext = "Updated Comp Selection" }  -- Define los nuevos datos para el elemento
-                -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
-                -- menu.setElements(elements)
+                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) 
             end
             menu.refresh()
         end, function(data, menu)
@@ -843,117 +805,20 @@ OpenComponentMenu = function()
     )
 end
 
--- GROUPS FILTER SUB MENU WITH OPTIONS MAT/ENG/TINT
--- version A
---[[ local function GroupComponentsByWeaponAndCategory(components, weaponType, category)
-    local groupedComponents = {}
-
-    for weapon, weaponData in pairs(components) do
-        local weaponTypeFromName = string.match(weapon, "WEAPON_(%a+)_")
-        if weaponTypeFromName == weaponType then
-            for _, componentHashname in ipairs(weaponData) do
-                local type, componentCategory, variation = string.match(componentHashname, "COMPONENT_(%a+)_([^_]+)_([^_]+)")
-                
-                if componentCategory == category then
-                    if not groupedComponents[componentCategory] then
-                        groupedComponents[componentCategory] = {}
-                    end
-                    
-                    if not groupedComponents[componentCategory][variation] then
-                        groupedComponents[componentCategory][variation] = {}
-                    end
-                    
-                    table.insert(groupedComponents[componentCategory][variation], {
-                        label = componentHashname,
-                        value = componentHashname or 0,
-                    })
-                end
-            end
-        end
-    end
-
-    return groupedComponents
-end
-    
-
-local function GroupMaterialsByWeaponAndCategory(materials, weaponType, category)
-    local groupedMaterials = {}
-
-    for _, materialData in pairs(materials) do
-        local weaponTypeFromName = string.match(materialData.hashname, "WEAPON_(%a+)_")
-        if weaponTypeFromName == weaponType then
-            local type, materialCategory, variation = string.match(materialData.hashname, "COMPONENT_(%a+)_([^_]+)_([^_]+)")
-
-            if materialCategory == category then
-                if not groupedMaterials[variation] then
-                    groupedMaterials[variation] = {}
-                end
-                table.insert(groupedMaterials[variation], {
-                    label = materialData.title,
-                    value = materialData.hashname or 0,
-                })
-            end
-        end
-    end
-
-    return groupedMaterials
-end
-
-local function GroupEngravingsByWeaponAndCategory(engravings, weaponType, category)
-    local groupedEngravings = {}
-
-    for _, engravingData in pairs(engravings) do
-        local weaponTypeFromName = string.match(engravingData.hashname, "WEAPON_(%a+)_")
-        if weaponTypeFromName == weaponType then
-            local type, engravingCategory, variation = string.match(engravingData.hashname, "COMPONENT_(%a+)_([^_]+)_ENGRAVING_([^_]+)")
-
-            if engravingCategory == category then
-                if not groupedEngravings[variation] then
-                    groupedEngravings[variation] = {}
-                end
-                table.insert(groupedEngravings[variation], {
-                    label = engravingData.title,
-                    value = engravingData.hashname or 0,
-                })
-            end
-        end
-    end
-
-    return groupedEngravings
-end ]]
-
--- version B
---[[ local ParseComponentName = function(hash)
-    local weaponType, componentType, componentCategory, variation = string.match(hash, "WEAPON_(%a+)_([%a_]+)_([^_]+)_([^_]+)")
-    return weaponType, componentType, componentCategory, variation
-end
-
-local ParseMaterialOrEngravingName = function(hash)
-    local weaponType, componentType, category, variation, materialOrEngraving = string.match(hash, "COMPONENT_(%a+)_([%a_]+)_([^_]+)_([^_]+)_([^_]+)")
-    return weaponType, componentType, category, variation, materialOrEngraving
-end
-
---local weaponType, componentType, componentCategory, variation = ParseComponentName("WEAPON_REVOLVER_CATTLEMAN_BARREL_SHORT")
--- print(weaponType, componentType, componentCategory, variation) -- Salida: REVOLVER BARREL SHORT
-
--- local weaponType, componentType, category, variation, materialOrEngraving = ParseMaterialOrEngravingName("COMPONENT_SHORTARM_BARREL_MATERIAL_1")
--- print(weaponType, componentType, category, variation, materialOrEngraving) -- Salida: SHORTARM BARREL MATERIAL 1
- ]]
-
 OpenMaterialMenu = function()
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
+    Wait(0)
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
+    local componentModel = GetWeaponComponentTypeModel(weaponHash)
     local elements = {}
-    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
 
-    -- local groupedMaterials = GroupMaterialsByWeaponAndCategory(Components.SharedComponents, weaponType, currentCategory)
-    -- for category, materialList in pairs(groupedMaterials) do
     for category, materialList in pairs(Components.SharedComponents[weaponType] ) do
         if next(materialList) ~= nil then
             local minIndex = 0
             local a = 1
 
-            table.insert(elements,  {
+            elements[#elements+1] = {
                 label = category,
                 value = minIndex,
                 type = "slider",
@@ -962,117 +827,81 @@ OpenMaterialMenu = function()
                 category = category,
                 materials = {},
                 id = a
-            })
+            }
 
             a = a + 1
             for _, materialData in ipairs(materialList) do
-                table.insert(elements[#elements].materials,  {
-                    label = materialData.title,
-                    value = materialData.hashname or 0,
-                    v = materialData.category_hashname,
-                })
+                -- if componentModel ~= 0 and ItemdatabaseIsKeyValid(materialData.hashname, 0) then
+                    elements[#elements].materials[#elements[#elements].materials + 1] = {
+                        label = materialData.title,
+                        value = materialData.hashname or 0,
+                        v = materialData.category_hashname,
+                    }
+                -- end
             end
         end
     end
 
-        MenuData.Open('default', GetCurrentResourceName(), 'material_weapon_menu', {
-                title = 'Custom Materials',
-                subtext = 'Options ' .. currentName,
-                align = "bottom-left",
-                elements = elements,
-                itemHeight = "2vh",
-                -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
-            }, function(data, menu)
+    MenuData.Open('default', GetCurrentResourceName(), 'material_weapon_menu', { title = 'Custom Materials', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
+        }, function(data, menu)
+            if data.current then
+                local selectedCategory = data.current.category
+                local selectedValue = data.current.value
+                local selectedDeleted = data.current.value + 1
+                local selectedHash = nil
 
-                -- local selectedIndex = data.selected + offset -- Considera el offset
+                if selectedValue == 0 then
+                    selectedHash = data.current.materials[selectedDeleted].value
+                    if not selectedHash == 0 then
 
-                -- if selectedIndex > menu.data.maxItems then
-                --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
-                -- elseif selectedIndex <= 0 then
-                --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
-                -- end
-    
-                -- -- Lógica para manejar la selección y actualización del menú
-                -- local newElements = {}
-                -- for i = 1, menu.data.maxItems do
-                --     local index = i + offset
-                --     if elements[index] then
-                --         table.insert(newElements, elements[index])
-                --     end
-                -- end
-    
-                -- menu.setElements(newElements)
-                -- menu.refresh()
-    
-            -- end, function(data, menu)
-                if data.current then
-                    local selectedCategory = data.current.category
-                    local selectedValue = data.current.value
-                    local selectedDeleted = data.current.value + 1
-                    local selectedHash = nil
-
-                    if selectedValue == 0 then
-                        selectedHash = data.current.materials[selectedDeleted].value
-                        if not selectedHash == 0 then
-                            RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), -1)
-                            Wait(0)
-                            LoadModel(joaat(selectedHash))
-                            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
-
-                            if selectedComponents[selectedCategory] ~= selectedHash then
-                                selectedComponents[selectedCategory] = selectedHash
-                            end
-
-                            TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL 
-                            return
-                        else
-                            selectedHash = 0
+                        if selectedComponents[selectedCategory] ~= selectedHash then
+                            selectedComponents[selectedCategory] = selectedHash
                         end
+
+                        TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) 
+                        return
                     else
-                        selectedHash = data.current.materials[selectedValue].value -- SELECT COMPONENTS
+                        selectedHash = 0
                     end
-
-                    if creatorCache[selectedCategory] ~= selectedValue then
-                        creatorCache[selectedCategory] = selectedValue
-                    end
-
-                    if selectedComponents[selectedCategory]  ~= selectedHash then
-                        selectedComponents[selectedCategory] = selectedHash
-                    end
-
-                    if Config.Debug then print( 'selected', selectedHash) end
-
-                    TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
-                    -- TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
-
-                    -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
-                    -- local newData = { subtext = "Updated Mat Selection" }  -- Define los nuevos datos para el elemento
-                    -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
-                    -- menu.setElements(elements)
+                else
+                    selectedHash = data.current.materials[selectedValue].value
                 end
-                menu.refresh()
 
-            end, function(data, menu)
-                menu.close()
-                mainCompMenu()
+                if creatorCache[selectedCategory] ~= selectedValue then
+                    creatorCache[selectedCategory] = selectedValue
+                end
+
+                if selectedComponents[selectedCategory]  ~= selectedHash then
+                    selectedComponents[selectedCategory] = selectedHash
+                end
+
+                if Config.Debug then print( 'selected', selectedHash) end
+
+                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial)
             end
-        )
-    end
+            menu.refresh()
+
+        end, function(data, menu)
+            menu.close()
+            mainCompMenu()
+        end
+    )
+end
 
 OpenEngravingMenu = function()
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
+    Wait(0)
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
+    local componentModel = GetWeaponComponentTypeModel(weaponHash)
     local elements = {}
-    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
 
-    -- local groupedEngravings = GroupEngravingsByWeaponAndCategory(Components.SharedEngravingsComponents, weaponType, currentCategory)
-    -- for category, engravingList in pairs(groupedEngravings) do
     for category, engravingList in pairs(Components.SharedEngravingsComponents[weaponType]) do
         if next(engravingList) ~= nil then
             local minIndex = 0
             local a = 1
 
-            table.insert(elements, {
+            elements[#elements+1] = {
                 label = category,
                 value = minIndex,
                 type = "slider",
@@ -1081,49 +910,22 @@ OpenEngravingMenu = function()
                 category = category,
                 engravings = {},
                 id = a
-            })
+            }
             a = a + 1
             for _, engravingData in ipairs(engravingList) do
-                table.insert(elements[#elements].engravings,  {
-                    label = engravingData.title,
-                    value = engravingData.hashname or 0,
-                    v = engravingData.category_hashname,
-                })
+                -- if componentModel ~= 0 and  ItemdatabaseIsKeyValid(engravingData.hashname, 0) then
+                    elements[#elements].engravings[#elements[#elements].engravings + 1] = {
+                        label = engravingData.title,
+                        value = engravingData.hashname or 0,
+                        v = engravingData.category_hashname,
+                    }
+                -- end
             end
         end
     end
 
-    MenuData.Open('default', GetCurrentResourceName(), 'engraving_weapon_menu', {
-            title = 'Custom Engravings',
-            subtext = 'Options ' .. currentName,
-            align = "bottom-left",
-            elements = elements,
-            itemHeight = "2vh",
-            -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
-        },
-        function(data, menu)
-
-            -- local selectedIndex = data.selected + offset -- Considera el offset
-
-            -- if selectedIndex > menu.data.maxItems then
-            --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
-            -- elseif selectedIndex <= 0 then
-            --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
-            -- end
-
-            -- -- Lógica para manejar la selección y actualización del menú
-            -- local newElements = {}
-            -- for i = 1, menu.data.maxItems do
-            --     local index = i + offset
-            --     if elements[index] then
-            --         table.insert(newElements, elements[index])
-            --     end
-            -- end
-
-            -- menu.setElements(newElements)
-            -- menu.refresh()
-
-        -- end, function(data, menu)
+    MenuData.Open('default', GetCurrentResourceName(), 'engraving_weapon_menu', { title = 'Custom Engravings', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
+        }, function(data, menu)
             if data.current then
                 local selectedCategory = data.current.category
                 local selectedValue = data.current.value
@@ -1134,18 +936,11 @@ OpenEngravingMenu = function()
                     selectedHash = data.current.engravings[selectedDeleted].value
                     if not selectedHash == 0 then
 
-                        RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), -1)
-                        Wait(0)
-                        LoadModel(joaat(selectedHash))
-                        GiveWeaponComponentToEntity(cache.ped, joaat(selectedHash), -1, true)
-
-                        Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
-
                         if selectedComponents[selectedCategory] ~= selectedHash then
                             selectedComponents[selectedCategory] = selectedHash
                         end
 
-                        TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
+                        TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial)
                         return
                     else
                         selectedHash = 0
@@ -1162,15 +957,9 @@ OpenEngravingMenu = function()
                     selectedComponents[selectedCategory] = selectedHash
                 end
 
-                if Config.Debug then print( 'selected', selectedHash) end
+                if Config.Debug then print('selected', selectedHash) end
 
-                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
-                -- TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
-
-                -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
-                -- local newData = { subtext = "Updated Eng Selection" }  -- Define los nuevos datos para el elemento
-                -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
-                -- menu.setElements(elements)
+                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial)
             end
             menu.refresh()
 
@@ -1184,17 +973,16 @@ end
 OpenTintsMenu = function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
+    local componentModel = GetWeaponComponentTypeModel(weaponHash)
     local elements = {}
-    -- local offset = 0 -- Nuevo, define un offset para desplazarse por el menú
 
-    -- local groupedEngravings = GroupEngravingsByWeaponAndCategory(Components.SharedEngravingsComponents, weaponType, currentCategory)
-    -- for category, engravingList in pairs(groupedEngravings) do
     for category, tintsList in pairs(Components.SharedTintsComponents[weaponType]) do
         if next(tintsList) ~= nil then
+
             local minIndex = 0
             local a = 1
 
-            table.insert(elements, {
+            elements[#elements+1] = {
                 label = category,
                 value = minIndex,
                 type = "slider",
@@ -1203,48 +991,22 @@ OpenTintsMenu = function()
                 category = category,
                 tints = {},
                 id = a
-            })
+            }
             a = a + 1
             for _, tintsData in ipairs(tintsList) do
-                table.insert(elements[#elements].tints, {
-                    label = tintsData.title,
-                    value = tintsData.hashname or 0,
-                    v = tintsData.category_hashname,
-                })
+                -- if componentModel ~= 0 and ItemdatabaseIsKeyValid(tintsData.hashname, true) then
+                    elements[#elements].tints[#elements[#elements].tints + 1] = {
+                        label = tintsData.title,
+                        value = tintsData.hashname or 0,
+                        v = tintsData.category_hashname,
+                    }
+                -- end
             end
         end
     end
 
-    MenuData.Open('default', GetCurrentResourceName(), 'tints_weapon_menu', {
-            title = 'Custom tints',
-            subtext = 'Options ' .. currentName,
-            align = "bottom-left",
-            elements = elements,
-            itemHeight = "2vh",
-            -- maxItems = 6 -- Establece el máximo de elementos visibles a 6
+    MenuData.Open('default', GetCurrentResourceName(), 'tints_weapon_menu', { title = 'Custom tints', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
         }, function(data, menu)
-
-            -- local selectedIndex = data.selected + offset -- Considera el offset
-
-            -- if selectedIndex > menu.data.maxItems then
-            --     offset = selectedIndex - menu.data.maxItems -- Actualiza el offset para desplazar el menú
-            -- elseif selectedIndex <= 0 then
-            --     offset = 0 -- Si el índice seleccionado es menor o igual a 0, reinicia el offset
-            -- end
-
-            -- -- Lógica para manejar la selección y actualización del menú
-            -- local newElements = {}
-            -- for i = 1, menu.data.maxItems do
-            --     local index = i + offset
-            --     if elements[index] then
-            --         table.insert(newElements, elements[index])
-            --     end
-            -- end
-
-            -- menu.setElements(newElements)
-            -- menu.refresh()
-
-        -- end, function(data, menu)
 
             if data.current then
                 local selectedCategory = data.current.category
@@ -1256,24 +1018,17 @@ OpenTintsMenu = function()
                     selectedHash = data.current.tints[selectedDeleted].value
                     if not selectedHash == 0 then
 
-                        RemoveWeaponComponentFromPed(cache.ped, joaat(selectedHash), -1)
-                        Wait(0)
-                        LoadModel(joaat(selectedHash))
-                        GiveWeaponComponentToEntity(cache.ped, joaat(selectedHash), -1, true)
-
-                        Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(selectedHash), true, true, true) -- RELOADING THE LIVE MODEL
-
                         if selectedComponents[selectedCategory] ~= selectedHash then
                             selectedComponents[selectedCategory] = selectedHash
                         end
 
-                        TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
+                        TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial)
                         return
                     else
                         selectedHash = 0
                     end
                 else
-                    selectedHash = data.current.tints[selectedValue].value -- SELECT COMPONENTS
+                    selectedHash = data.current.tints[selectedValue].value
                 end
 
                 if creatorCache[selectedCategory] ~= selectedValue then
@@ -1286,13 +1041,7 @@ OpenTintsMenu = function()
 
                 if Config.Debug then print( 'selected', selectedHash) end
 
-                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial) -- updateSQL
-                -- TriggerEvent("rsg-weaponcomp:client:CustomCamera") -- NEED CUSTOM CAM
-
-                -- local query = { category = selectedCategory }  -- Define el criterio para encontrar el elemento
-                -- local newData = { subtext = "Updated Tint Selection" }  -- Define los nuevos datos para el elemento
-                -- menu.update(query, newData)  -- Llama a menu.update con la consulta y los nuevos datos
-                -- menu.setElements(elements)
+                TriggerEvent("rsg-weaponcomp:client:update_selection", selectedComponents, currentSerial)
             end
             menu.refresh()
         end,
@@ -1309,64 +1058,51 @@ end
 RegisterNetEvent('rsg-weaponcomp:client:update_selection')
 AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp, serial)
     --local wepobject = GetCurrentPedWeaponEntityIndex(cache.ped, 0) -- Returns weaponObject
-
     if Config.Debug then print("Data update_selection send:", json.encode(selectedComp)) end
 
-    TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedComp, serial) -- updateSQL
-
-    for _, component in ipairs(selectedComp) do
-        Wait(0)
-        RemoveWeaponComponentFromPed(cache.ped, joaat(component), -1)
-    end
+    TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedComp, serial)
 
     Wait(0)
 
     local selectedAdd = nil
     selectedAdd = selectedComp
+
     for category, component in ipairs(selectedAdd) do
         if table_contains(readComponent, category) then
-
             for i = 1, #selectedAdd do
-                if selectedAdd[i] ~= 0 then LoadModel(joaat(selectedAdd[i])) end
-                GiveWeaponComponentToEntity(cache.ped, joaat(selectedAdd[i]), -1, true)
-                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(joaat(selectedAdd[i])) end
+                if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
+                ApplyToFirstWeaponComponent(GetHashKey(selectedAdd[i]))
+                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
-
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(component), true, true, true) -- RELOADING THE LIVE MODEL
-            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial) -- updateSQL
-
-        elseif table_contains(readMaterial, category) then
-
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
+            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial)
+        end
+        if table_contains(readMaterial, category) then
             for i = 1, #selectedAdd do
-                if selectedAdd[i] ~= 0 then LoadModel(joaat(selectedAdd[i])) end
-                GiveWeaponComponentToEntity(cache.ped, joaat(selectedAdd[i]), -1, true)
-                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(joaat(selectedAdd[i])) end
+                if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
+                ApplyToSecondWeaponComponent(GetHashKey(selectedAdd[i]))
+                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
-
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(component), true, true, true) -- RELOADING THE LIVE MODEL
-            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial) -- updateSQL
-
-        elseif table_contains(readEngraving, category) then
-
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
+            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial)
+        end
+        if table_contains(readEngraving, category) then
             for i = 1, #selectedAdd do
-                if selectedAdd[i] ~= 0 then LoadModel(joaat(selectedAdd[i])) end
-                GiveWeaponComponentToEntity(cache.ped, joaat(selectedAdd[i]), -1, true)
-                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(joaat(selectedAdd[i])) end
+                if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
+                ApplyToThreeWeaponComponent(GetHashKey(selectedAdd[i]))
+                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
-
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(component), true, true, true) -- RELOADING THE LIVE MODEL
-            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial) -- updateSQL
-
-        elseif table_contains(readTints, category) then
-
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
+            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial)
+        end
+        if table_contains(readTints, category) then
             for i = 1, #selectedAdd do
-                if selectedAdd[i] ~= 0 then LoadModel(joaat(selectedAdd[i])) end
-                GiveWeaponComponentToEntity(cache.ped, joaat(selectedAdd[i]), -1, true)
-                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(joaat(selectedAdd[i])) end
+                if selectedAdd[i] ~= 0 then LoadModel(GetHashKey(selectedAdd[i])) Wait(0) RemoveWeaponComponentFromPed(cache.ped, GetHashKey(selectedAdd[i]), -1) end
+                ApplyToThreeWeaponComponent(GetHashKey(selectedAdd[i]))
+                if selectedAdd[i] ~= 0 then SetModelAsNoLongerNeeded(GetHashKey(selectedAdd[i])) end
             end
-
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, joaat(component), true, true, true) -- RELOADING THE LIVE MODEL
-            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial) -- updateSQL
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(component), true, true, true)
+            TriggerServerEvent("rsg-weaponcomp:server:update_selection", selectedAdd, serial)
         end
     end
 end)
@@ -1412,11 +1148,9 @@ ButtomApplyAllComponents = function ()
             Wait(100)
 
             local slotHash = svslot
-            TriggerServerEvent("rsg-weaponcomp:server:apply_weapon_components", selectedComponents, currentName, currentSerial) -- updateSQL
-            Wait(900)
+            TriggerServerEvent("rsg-weaponcomp:server:apply_weapon_components", selectedComponents, currentName, currentSerial)
+            Wait(100)
             ApplyToAllWeaponComponent(currentSerial, selectedComponents, slotHash)
-
-            TriggerEvent('rsg-weaponcomp:client:ExitCam')
         end
     else
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
@@ -1450,12 +1184,10 @@ ButtomRemoveAllComponents = function ()
         TriggerServerEvent('rsg-weaponcomp:server:price', currentRemove)
 
         RemoveAllWeaponComponents()
-        Wait(1000)
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents", "DEFAULT", currentName, currentSerial) -- update SQL
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
-
-        TriggerEvent('rsg-weaponcomp:client:ExitCam')
-
+        Wait(100)
+        TriggerServerEvent('rsg-weaponcomp:server:check_comps')
     end
     currentRemove = nil
     RemoveMenu = nil
@@ -1523,41 +1255,39 @@ AddEventHandler("rsg-weaponcomp:client:StartCam", function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local interaction = nil
-    local timeShop = 1
+    local timeShop = 0
 
     while not HasCollisionLoadedAroundEntity(cache.ped) do Wait(0) end
 
     if IsWeaponOneHanded(currentHash) and weaponType == 'SHORTARM' then
-        interaction = "SHORTARM_HOLD" or "SHORTARM_HOLD_ENTER"
+        interaction = "SHORTARM_HOLD_ENTER"
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'LONGARM' then
-        interaction = "LONGARM_HOLD" or "LONGARM_HOLD_ENTER"
+        interaction = "LONGARM_HOLD_ENTER"
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'SHOTGUN' then
-        interaction = "LONGARM_HOLD" or "LONGARM_HOLD_ENTER"
+        interaction = "LONGARM_HOLD_ENTER"
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'GROUP_BOW' then
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'MELEE_BLADE' then
-        interaction = "SHORTARM_HOLD" or "SHORTARM_HOLD_ENTER"
+        interaction = "SHORTARM_HOLD_ENTER"
     end
 
     Wait(0)
     if currentHash ~= -1569615261 and interaction ~= nil then
-        StartTaskItemInteraction(cache.ped, currentHash, joaat(interaction), 0, 0, 0)
+        StartTaskItemInteraction(cache.ped, currentHash, GetHashKey(interaction), 0, 0, 0)
         while not IsPedRunningTaskItemInteraction(cache.ped) do
             Wait(timeShop)
         end
     end
 end)
 
-RegisterNetEvent("rsg-weaponcomp:client:animationSaved") -- FINISH ANIMATION CRAFT
+RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
 AddEventHandler("rsg-weaponcomp:client:animationSaved", function()
-
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local boneIndex2 = GetEntityBoneIndexByName(cache.ped, "SKEL_L_Finger00")
-    local Cloth = CreateObject(joaat('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
+    local Cloth = CreateObject(GetHashKey('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
     local animDict = nil
     local animName = nil
 
-    Wait(0)
     if IsWeaponOneHanded(currentHash) and weaponType == 'SHORTARM' then
         animDict = "mech_inspection@weapons@shortarms@volcanic@base"
         animName = "clean_loop"
@@ -1577,33 +1307,33 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function()
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'MELEE_BLADE' then
     end
 
-    Wait(0)
+    Wait(100)
+    AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.04, 0.00, 20.0, -25.0, 165.0, true, false, true, false, 0, true)
     StartCam(c_zoom, c_offset)
 
-    AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.04, 0.00, 20.0, -25.0, 165.0, true, false, true, false, 0, true)
-
+    Wait(100)
     if lib.progressCircle({
-        duration = tonumber(Config.animationSave), -- Adjust the duration as needed
+        duration = tonumber(Config.animationSave),
         position = 'bottom',
         useWhileDead = false,
         canCancel = false,
         disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
         anim = { dict = animDict, clip = animName, flag = 15, },
-        -- prop = { model = joaat('s_balledragcloth01x'), bone = joaat("SKEL_L_Finger00"), pos = vec3(0.02, -0.04, 0.00), rot = vec3(0.0, .0, -1.5) },
+        -- prop = { model = GetHashKey('s_balledragcloth01x'), bone = GetHashKey("SKEL_L_Finger00"), pos = vec3(0.02, -0.04, 0.00), rot = vec3(0.0, .0, -1.5) },
         label = 'Weapon Attachments.. ',
     }) then
 
         SetEntityAsNoLongerNeeded(Cloth)
         DeleteEntity(Cloth)
-
-        Wait(500)
-
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
+        Wait(0)
+
+        TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     end
 
 end)
 
-RegisterNetEvent('rsg-weaponcomp:client:ExitCam') -- EXIT CAM
+RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
 AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
@@ -1622,27 +1352,25 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     Wait(0)
     if currentHash ~= -1569615261 and interaction ~= nil then
-        StartTaskItemInteraction(cache.ped, currentHash, joaat(interaction), 0, 0, 0)
+        StartTaskItemInteraction(cache.ped, currentHash, GetHashKey(interaction), 0, 0, 0)
         while not IsPedRunningTaskItemInteraction(cache.ped) do
             Wait(timeShop)
         end
     end
 
-    FreezeEntityPosition(cache.ped, false) -- DISABLE BLOCK PLAYER
-    ClearPedTasks(cache.ped)
-    ClearPedSecondaryTask(cache.ped)
-
-    LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
-    inStore = false -- BLOCK KEYS
-
-    Wait(0)
     EndCam()
+    Wait(0)
 
     DoScreenFadeOut(1000)
     Wait(0)
     DoScreenFadeIn(1000)
+    FreezeEntityPosition(cache.ped, false)
+    ClearPedTasks(cache.ped)
+    ClearPedSecondaryTask(cache.ped)
 
-    -- TriggerServerEvent("rsg-weaponcomp:server:check_comps")
+    LocalPlayer.state:set("inv_busy", false, true)
+    inStore = false
+
 end)
 
 -----------------------------------
@@ -1651,7 +1379,7 @@ end)
 getWeaponStats = function(weaponHash)
     local emptyStruct = DataView.ArrayBuffer(256)
     local charStruct = DataView.ArrayBuffer(256)
-    Citizen.InvokeNative(0x886DFD3E185C8A89, 1, emptyStruct:Buffer(), joaat("CHARACTER"), -1591664384, charStruct:Buffer()) -- InventoryGetGuidFromItemid(
+    Citizen.InvokeNative(0x886DFD3E185C8A89, 1, emptyStruct:Buffer(), GetHashKey("CHARACTER"), -1591664384, charStruct:Buffer()) -- InventoryGetGuidFromItemid(
 
     local unkStruct = DataView.ArrayBuffer(256)
     Citizen.InvokeNative(0x886DFD3E185C8A89, 1, charStruct:Buffer(), 923904168, -740156546, unkStruct:Buffer())
@@ -1662,48 +1390,48 @@ getWeaponStats = function(weaponHash)
 end
 
 showstats = function()
-    local _, weapon = GetCurrentPedWeapon(cache.ped, true, 0, true)
+    local _, weapon = GetCurrentPedWeapon(PlayerPedId(), true, 0, true)
     if weapon then
-        local uiFlowBlock = RequestFlowBlock(joaat("PM_FLOW_WEAPON_INSPECT"))
+        local uiFlowBlock = RequestFlowBlock(GetHashKey("PM_FLOW_WEAPON_INSPECT"))
         local uiContainer = DatabindingAddDataContainerFromPath("" , "ItemInspection")
-        Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, "stats", getWeaponStats(weapon), cache.ped)
-        Citizen.InvokeNative(0x617FCA1C5652BBAD, uiContainer, "tipText", 'Weapon Information') -- DatabindingAddDataString(
-        Citizen.InvokeNative(0x617FCA1C5652BBAD, uiContainer, "itemLabel", weapon) -- DatabindingAddDataHash(
-        Citizen.InvokeNative(0x58BAA5F635DA2FF4, uiContainer, "Visible", true) -- DatabindingAddDataBool(
+        Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, "stats", getWeaponStats(weapon), PlayerPedId())
+        DatabindingAddDataString(uiContainer, "tipText", 'Weapon Information')
+        DatabindingAddDataHash(uiContainer, "itemLabel", weapon)
+        DatabindingAddDataBool(uiContainer, "Visible", true)
 
-        UiflowblockIsLoaded(uiFlowBlock)
-        UiflowblockEnter(uiFlowBlock, 0)
-        UiStateMachineCreate(-813354801, uiFlowBlock)
+        Citizen.InvokeNative(0x10A93C057B6BD944, uiFlowBlock)
+        Citizen.InvokeNative(0x3B7519720C9DCB45, uiFlowBlock, 0)
+        Citizen.InvokeNative(0x4C6F2C4B7A03A266, -813354801, uiFlowBlock)
     end
 end
 
 RegisterNetEvent("rsg-weaponcomp:client:InspectionWeapon")
 AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
-    local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
+    local retval, weaponHash = GetCurrentPedWeapon(PlayerPedId(), true, 0, true)
     local weaponType = GetWeaponType(weaponHash)
     local interaction
     local act
     local object = GetObjectIndexFromEntityIndex(GetCurrentPedWeaponEntityIndex(cache.ped, 0))
     local cleaning = false
 
-    SetPedBlackboardBool(cache.ped, "GENERIC_WEAPON_CLEAN_PROMPT_AVAILABLE", true, -1)
+    SetPedBlackboardBool(cache.ped, "GENERIC_WEAPON_CLEAN_PROMPT_AVAILABLE", true, -1) -- Citizen.InvokeNative(0xCB9401F918CB0F75, 
 
     if IsWeaponOneHanded(currentHash) and weaponType == 'SHORTARM' then
         interaction = "SHORTARM_HOLD_ENTER"
-        act = joaat("SHORTARM_CLEAN_ENTER")
+        act = GetHashKey("SHORTARM_CLEAN_ENTER")
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'LONGARM' then
         interaction = "LONGARM_HOLD_ENTER"
-        act = joaat("LONGARM_CLEAN_ENTER")
+        act = GetHashKey("LONGARM_CLEAN_ENTER")
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'SHOTGUN' then
         interaction = "LONGARM_HOLD_ENTER"
-        act = joaat("LONGARM_CLEAN_ENTER")
+        act = GetHashKey("LONGARM_CLEAN_ENTER")
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'GROUP_BOW' then
     elseif IsWeaponOneHanded(currentHash) and weaponType == 'MELEE_BLADE' then
     end
 
     if weaponHash ~= -1569615261 then
 
-        TaskItemInteraction(cache.ped, weaponHash, joaat(interaction), 0,0,0)
+        StartTaskItemInteraction(cache.ped, weaponHash, GetHashKey(interaction), 0,0,0)
 
         if Config.showStats then showstats() end
         while not Citizen.InvokeNative(0xEC7E480FF8BD0BED, cache.ped) do Wait(300) end
@@ -1713,19 +1441,19 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
 
             if IsDisabledControlJustReleased(0, 3002300392) then
                 ClearPedTasks(cache.ped, 1, 1)
-                UiStateMachineDestroy(-813354801)
+                Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) -- UiStateMachineDestroy(
             end
 
             if IsDisabledControlJustReleased(0, 3820983707) and not cleaning then
                 cleaning = true
-                local Cloth= CreateObject(joaat('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
-                local PropId = joaat("CLOTH")
+                local Cloth= CreateObject(GetHashKey('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
+                local PropId = GetHashKey("CLOTH")
                 Citizen.InvokeNative(0x72F52AA2D2B172CC, cache.ped, 1242464081, Cloth, PropId, act, 1, 0, -1.0) -- TaskItemInteraction2
-                Wait(9500) 
+                Wait(9500)
                 ClearPedTasks(cache.ped, 1, 1)
 
                 if Config.showStats then
-                    Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) -- UiStateMachineDestroy(
+                    Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801)
                     Citizen.InvokeNative(0xA7A57E89E965D839, object, 0.0, 0) -- SetWeaponDegradation(
                     Citizen.InvokeNative(0x812CE61DEBCAB948, object, 0.0, 0) -- SetWeaponDirt(
                 end
@@ -1735,7 +1463,7 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
 
         end
 
-        if Config.showStats then UiStateMachineDestroy(-813354801) end
+        if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
     end
 end)
 
@@ -1746,7 +1474,7 @@ end)
 RegisterCommand('w_damage', function(source, args, rawCommand)
     -- local player = PlayerPedId()
     -- weaponHash = Citizen.InvokeNative(0x8425C5F057012DAB, player)
-    local damageModifier = GetWeaponComponentDamageModifier(joaat('COMPONENT_REVOLVER_CATTLEMAN_BARREL_LONG'))
+    local damageModifier = GetWeaponComponentDamageModifier(GetHashKey('COMPONENT_REVOLVER_CATTLEMAN_BARREL_LONG'))
     if Config.Debug then
         print(currentHash, damageModifier)
     end
@@ -1791,7 +1519,7 @@ RegisterCommand("w_scope", function(source)
     end
     for _, components in ipairs(componentsPreSql) do
         if components ==  readScope then
-            ApplyToFirstWeaponComponent(joaat(readScope))
+            ApplyToFirstWeaponComponent(GetHashKey(readScope))
         end
     end
 
@@ -1803,8 +1531,8 @@ RegisterCommand("w_scope", function(source)
                         if weapon_scope == false then
                             weapon_scope = true
                             TriggerServerEvent("rsg-weaponcomp:server:check_comps")
-                            RemoveWeaponComponentFromPed(cache.ped, joaat(readScope), -1) -- RemoveWeaponComponentFromPed(cache.ped, joaat(v), weaponHash) -- RemoveWeaponComponentFromPed(ped, hash, weaponHash) -- This is the server-side RPC native equivalent of the client native REMOVE_WEAPON_COMPONENT_FROM_PED. / 0x412AA00D
-                            LoadModel(joaat(readScope))
+                            RemoveWeaponComponentFromPed(cache.ped, GetHashKey(readScope), -1) -- RemoveWeaponComponentFromPed(cache.ped, GetHashKey(v), weaponHash) -- RemoveWeaponComponentFromPed(ped, hash, weaponHash) -- This is the server-side RPC native equivalent of the client native REMOVE_WEAPON_COMPONENT_FROM_PED. / 0x412AA00D
+                            LoadModel(GetHashKey(readScope))
                         else
                             weapon_scope = false
                             TriggerServerEvent("rsg-weaponcomp:server:check_comps")

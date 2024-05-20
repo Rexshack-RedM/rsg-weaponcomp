@@ -1278,7 +1278,7 @@ Components.SharedEngravingsComponents = {
 
 Components.SharedTintsComponents = {
     ['SHORTARM'] =	{ -- 
-	[Components.LanguageWeapons[35]] = {
+		[Components.LanguageWeapons[35]] = {
 			[1] = { title = 'T_A_1', price = 4, hashname = 'COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_1', category_hashname = 'gripstock',    },
 			[2] = { title = 'T_A_2', price = 4, hashname = 'COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_2', category_hashname = 'gripstock',    },
 			[3] = { title = 'T_A_3', price = 4, hashname = 'COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_3', category_hashname = 'gripstock',    },
