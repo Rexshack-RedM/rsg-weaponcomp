@@ -780,14 +780,14 @@ Components.SharedComponents = {
 		},
 		[Components.LanguageWeapons[6]] = {
 			[1] = { title = 'M_1', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_1', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
+			[2] = { title = 'M_2', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_2', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[3] = { title = 'M_3', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_3', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[4] = { title = 'M_4', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_4', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
+			[5] = { title = 'M_5', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_5', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[6] = { title = 'M_6', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_6', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
+			[7] = { title = 'M_7', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_7', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[8] = { title = 'M_8', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_8', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[9] = { title = 'M_9', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_9', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
-			[2] = { title = 'M_2', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_2', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
-			[5] = { title = 'M_5', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_5', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
-			[7] = { title = 'M_7', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_7', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[10] = { title = 'M_10', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_10', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 		},
 		[Components.LanguageWeapons[9]] = {
@@ -1551,5 +1551,3 @@ Components.SharedTintsComponents = {
         },
 	},
 }
-
--- return weapons_comp_list

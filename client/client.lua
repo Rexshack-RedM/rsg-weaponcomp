@@ -254,35 +254,35 @@ function GameCam(hash, move_coords, objecthash)
     for _, word in ipairs(words) do
         if weaponType == "LONGARM" then
             if string.match(word, "GRIP") then
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 60.0-15.0)
+                StartCam(move_coords.x-0.15, move_coords.y+0.01, move_coords.z-0.10, 60.0-15.0)
             elseif string.match(word, "BARREL") then
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 60.0)
+                StartCam(move_coords.x+0.40, move_coords.y+0.055, move_coords.z-0.20, 60.0)
             elseif string.match(word, "SIGHT") then
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 60.0)
+                StartCam(move_coords.x+0.40, move_coords.y-0.055, move_coords.z-0.20, 60.0)
             -- elseif string.match(word, "WRAP") then
                 -- StartCamCustom(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
 
             elseif string.match(word, "CYLINDER") then
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 60.0-15.0)
+                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0-15.0)
             elseif string.match(word, "FRAME") then
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 60.0)
+                StartCam(move_coords.x+0.06, move_coords.y-0.045, move_coords.z-0.20, 60.0)
             elseif string.match(word, "TRIGGER") then
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 60.0 - 15.0)
+                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0 - 15.0)
             elseif string.match(word, "HAMMER") then
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 60.0 - 15.0)
+                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z-0.20, 60.0 - 15.0)
             --elseif string.match(word, "SCOPE") then
                 -- StartCamCustom(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
 
             else
-                StartCam(move_coords.x, move_coords.y, move_coords.z, 90.0)
+                StartCam(move_coords.x+0.20, move_coords.y, move_coords.z, 90.0)
             end
         elseif weaponType == "SHOTGUN" then
             if string.match(word, "GRIP") then
-                StartCam(move_coords.x-0.15, move_coords.y+0.010, move_coords.z - 0.10, 60.0 - 15.0)
+                StartCam(move_coords.x-0.15, move_coords.y+0.01, move_coords.z-0.10, 60.0-15.0)
             elseif string.match(word, "BARREL") then
-                StartCam(move_coords.x+0.400, move_coords.y-0.055, move_coords.z - 0.20, 60.0)
+                StartCam(move_coords.x+0.40, move_coords.y+0.055, move_coords.z-0.20, 60.0)
             elseif string.match(word, "SIGHT") then
-                StartCam(move_coords.x+0.400, move_coords.y-0.055, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x+0.40, move_coords.y-0.055, move_coords.z-0.20, 60.0)
             -- elseif string.match(word, "CLIP") then
                 -- StartCam(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
             -- elseif string.match(word, "STOCK") then
@@ -291,13 +291,13 @@ function GameCam(hash, move_coords, objecthash)
                 -- StartCam(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
 
             elseif string.match(word, "CYLINDER") then
-                StartCam(move_coords.x-0.010, move_coords.y+0.005, move_coords.z - 0.20, 60.0 - 15.0)
+                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0-15.0)
             elseif string.match(word, "FRAME") then
-                StartCam(move_coords.x+0.060, move_coords.y-0.045, move_coords.z - 0.20, 60.0)
+                StartCam(move_coords.x+0.06, move_coords.y-0.045, move_coords.z-0.20, 60.0)
             elseif string.match(word, "TRIGGER") then
-                StartCam(move_coords.x-0.010, move_coords.y+0.005, move_coords.z - 0.20, 60.0 - 15.0)
+                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0 - 15.0)
             elseif string.match(word, "HAMMER") then
-                StartCam(move_coords.x-0.010, move_coords.y-0.050, move_coords.z - 0.20, 60.0 - 15.0)
+                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z-0.20, 60.0 - 15.0)
             else
                 StartCam(move_coords.x+0.2, move_coords.y, move_coords.z, 90.0)
             end
@@ -333,8 +333,7 @@ end
 function createobject(x, y, z, objecthash)
     wepobject = Citizen.InvokeNative(0x9888652B8BA77F73, objecthash, 0, x, y, z, false, 1.0)
     SetEntityCoords(wepobject, x, y, z)
-    SetEntityRotation(wepobject, 90.0, 0.0, 360.0, 1, true) -- POSICION EN MESA MOSTRADOR
-
+    SetEntityRotation(wepobject, 90.0, 0.0, 360.0, 1, true)
 end
 
 local move_coords = nil
@@ -385,6 +384,7 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
     currentName = weaponName
     currentWep = wep
 
+    if weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
     if not inCustom and weapon_type ~= nil and currentSerial ~= nil then
         FreezeEntityPosition(cache.ped, true)
         createobject(custcoords.x, custcoords.y, custcoords.z, weaponHash)
@@ -394,12 +394,10 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
         move_coords_z = custcoords.z
         is_zed = custcoords.z
 
-        -- add code
         TriggerServerEvent("rsg-weaponcomp:server:check_comps") -- CHECK COMPONENTS EQUIPED
         Wait(100)
         mainCompMenu(weaponHash) -- ENTER MENU
-        -- finish add code
-
+        LocalPlayer.state:set("inv_busy", true, true) -- BLOCK INVENTORY
         inCustom = true
     else
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
@@ -559,7 +557,6 @@ mainCompMenu = function(objecthash)
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
         Wait(1000)
 
-
     end)
 end
 
@@ -569,7 +566,7 @@ end
 OpenComponentMenu = function(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
-    -- local elements = searchSharedComponents(currentName, nil)
+
     local elements = {}
     local weapon_type = GetWeaponType(objecthash)
     local weaponData = Components.weapons_comp_list[weapon_type] or {}
@@ -585,7 +582,7 @@ OpenComponentMenu = function(objecthash)
             max = #componentList,
             category = category,
             components = {},
-            id = #elements + 1  -- ID basado en el tamaño actual de elements
+            id = #elements + 1
         }
 
         for index, component in ipairs(componentList) do
@@ -618,7 +615,9 @@ OpenComponentMenu = function(objecthash)
             if selectedHash ~= creatorCache[selectedCategory] then
                 creatorCache[selectedCategory] = selectedHash
                 TriggerEvent("rsg-weaponcomp:client:update_selection", creatorCache)
-                TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                if Config.StartCamObj == true then
+                    TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                end
             end
         end
         menu.refresh()
@@ -632,7 +631,6 @@ OpenMaterialMenu = function(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
 
-    -- local elementsCheck = searchSharedComponents(currentName, Components.SharedComponents)
     local weapon_type = GetWeaponType(objecthash)
     local elements = {}
     local weaponData = Components.SharedComponents[weapon_type] or {}
@@ -647,7 +645,7 @@ OpenMaterialMenu = function(objecthash)
             max = #materialList,
             category = category,
             materials = {},
-            id = #elements + 1  -- ID basado en el tamaño actual de elements
+            id = #elements + 1
         }
 
         for index, material in ipairs(materialList) do
@@ -680,7 +678,9 @@ OpenMaterialMenu = function(objecthash)
             if selectedHash ~= creatorCache[selectedCategory] then
                 creatorCache[selectedCategory] = selectedHash
                 TriggerEvent("rsg-weaponcomp:client:update_selection", creatorCache)
-                TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                if Config.StartCamObj == true then
+                    TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                end
             end
         end
         menu.refresh()
@@ -694,8 +694,6 @@ end
 OpenEngravingMenu = function(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
-
-    -- local elementsCheck = searchSharedComponents(currentName, Components.SharedEngravingsComponents)
 
     local weapon_type = GetWeaponType(objecthash)
     local elements = {}
@@ -711,7 +709,7 @@ OpenEngravingMenu = function(objecthash)
             max = #engravingList,
             category = category,
             engravings = {},
-            id = #elements + 1  -- ID basado en el tamaño actual de elements
+            id = #elements + 1
         }
 
         for index, engraving in ipairs(engravingList) do
@@ -743,7 +741,9 @@ OpenEngravingMenu = function(objecthash)
             if selectedHash ~= creatorCache[selectedCategory] then
                 creatorCache[selectedCategory] = selectedHash
                 TriggerEvent("rsg-weaponcomp:client:update_selection", creatorCache)
-                TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                if Config.StartCamObj == true then
+                    TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                end
             end
         end
         menu.refresh()
@@ -757,8 +757,6 @@ end
 OpenTintsMenu = function(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
-
-    -- local elementsCheck = searchSharedComponents(currentName, Components.SharedTintsComponents)
 
     local weapon_type = GetWeaponType(objecthash)
     local elements = {}
@@ -774,7 +772,7 @@ OpenTintsMenu = function(objecthash)
                 max = #tintsList,
                 category = category,
                 tints = {},
-                id = #elements + 1  -- ID basado en el tamaño actual de elements
+                id = #elements + 1
             }
 
             for index, tint in ipairs(tintsList) do
@@ -807,7 +805,9 @@ OpenTintsMenu = function(objecthash)
             if selectedHash ~= creatorCache[selectedCategory] then
                 creatorCache[selectedCategory] = selectedHash
                 TriggerEvent("rsg-weaponcomp:client:update_selection", creatorCache)
-                TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                if Config.StartCamObj == true then
+                    TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
+                end
             end
         end
         menu.refresh()
@@ -835,9 +835,9 @@ ButtomApplyAllComponents = function (objecthash)
         end
     end, currentSerial)
 
-    Wait(100)
+    Wait(200)
     local currentPrice = CalculatePrice(componentsApplyPreSql)
-    Wait(100)
+    Wait(200)
 
     if currentPrice == 0.0 or componentsApplyPreSql == nil then TriggerEvent('rsg-weaponcomp:client:ExitCam') return end
     if Config.Debug then print('currentPrice '.. currentPrice) end
@@ -860,12 +860,7 @@ ButtomApplyAllComponents = function (objecthash)
     if input[1] == 'yes' then
 
         TriggerServerEvent('rsg-weaponcomp:server:price', currentPrice, objecthash)
-
-        Wait(100)
         TriggerServerEvent("rsg-weaponcomp:server:apply_weapon_components", creatorCache, currentName, currentSerial)
-
-        Wait(3000)
-        TriggerServerEvent('rsg-weaponcomp:server:check_comps')
     end
 
 end
@@ -882,9 +877,9 @@ ButtomRemoveAllComponents = function (objecthash)
         end
     end, currentSerial)
 
-    Wait(500)
+    Wait(200)
     local currentRemove = CalculatePrice(componentsRemoveSql)
-    Wait(500)
+    Wait(200)
 
     if currentRemove == 0.0 or componentsRemoveSql == nil then TriggerEvent('rsg-weaponcomp:client:ExitCam') return end
 
@@ -906,7 +901,7 @@ ButtomRemoveAllComponents = function (objecthash)
     if input[1] == 'yes' then
 
         TriggerServerEvent('rsg-weaponcomp:server:price', currentRemove, objecthash)
-        Wait(3000)
+        Wait(1000)
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents", "DEFAULT", currentName, currentSerial) -- update SQL
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
     end
@@ -1075,7 +1070,7 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     Wait(0)
     DoScreenFadeIn(1000)
-
+    LocalPlayer.state:set("inv_busy", false, true)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     inCustom = false
 
@@ -1106,7 +1101,7 @@ AddEventHandler('onResourceStop', function(r)
         DeleteObject(wepobject)
     end
 
-    -- LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
+    LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
     FreezeEntityPosition(cache.ped , false) -- DISABLE BLOCK PLAYER
     MenuData.CloseAll()
     EndCam()
