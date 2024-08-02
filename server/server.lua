@@ -73,7 +73,7 @@ end)
 -- Payment
 -------------------------------------------
 RegisterServerEvent('rsg-weaponcomp:server:price')
-AddEventHandler('rsg-weaponcomp:server:price', function(price)
+AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     local currentCash = Player.Functions.GetMoney('cash')
@@ -91,34 +91,7 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price)
             TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
         end
     end
-
-    Wait(1000)
-    TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src)
-end)
-
---------------------------------------------
--- CHECK SLOT
---------------------------------------------
-RegisterServerEvent('rsg-weaponcomp:server:slot')
-AddEventHandler('rsg-weaponcomp:server:slot', function(serial)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-
-    local weapons = {}
-    for _, item in pairs(Player.PlayerData.items) do
-        if item.type == 'weapon' then
-            table.insert(weapons, item)
-        end
-    end
-
-    local svslot = nil
-    for _, weapon in pairs(weapons) do
-        if weapon.info.serie == serial then
-            svslot = weapon.slot
-            break
-        end
-    end
-    TriggerClientEvent('rsg-weaponcomp:client:returnSlot', src, svslot)
+    TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash)
 end)
 
 --------------------------------------------
@@ -212,16 +185,6 @@ RegisterServerEvent('rsg-weaponcomp:server:removeComponents_selection', function
 end)
 
 --------------------------------------------
--- VISION COMPONENTS / IN TEST
---------------------------------------------
-RegisterNetEvent('rsg-weaponcomp:server:inspectWeapon')
-AddEventHandler('rsg-weaponcomp:server:inspectWeapon', function(weaponHash)
-    local src = source
-    local stats = getWeaponStats(weaponHash)
-    TriggerClientEvent('rsg-weaponcomp:client:viewweapon', src, weaponHash, stats)
-end)
-
---------------------------------------------
 -- CHECK COMPONENTS SQL
 --------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:server:check_comps') -- EQUIPED
@@ -234,6 +197,16 @@ RegisterNetEvent('rsg-weaponcomp:server:check_comps_selection') -- EQUIPED
 AddEventHandler('rsg-weaponcomp:server:check_comps_selection', function()
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:LoadComponents_selection', src)
+end)
+
+--------------------------------------------
+-- VISION COMPONENTS / IN TEST
+--------------------------------------------
+RegisterNetEvent('rsg-weaponcomp:server:inspectWeapon')
+AddEventHandler('rsg-weaponcomp:server:inspectWeapon', function(weaponHash)
+    local src = source
+    local stats = getWeaponStats(weaponHash)
+    TriggerClientEvent('rsg-weaponcomp:client:viewweapon', src, weaponHash, stats)
 end)
 
 --------------------------------------------------------------------------------------------------
