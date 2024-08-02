@@ -78,10 +78,12 @@ Config.GunsmithLocations = {
   },
 }
 
-Config.GunsmithCustomLocations = {
+Config.StartCamObj = true -- false or true small changes in camera
+
+Config.CustomLocations = {
   {
-    name = 'Gunsmith Customs',
-    prompt = 'valguncustom',
+    name = 'Customs',
+    prompt = 'val_custom',
     gunsmithid = 'valgunsmith',
     coords = vector3(-280.98, 778.88, 119.50),
     custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
@@ -197,5 +199,5 @@ Config.weaponObject = {
 -- EXTRA Webhooks / RANKING
 -----------------------
 Config.Webhooks = {
-    ['weaponCustom'] = '',
+    ['weaponCustom'] = 'https://discord.com/api/webhooks/1265455996126494801/5ZJgoOekdzaY50UTE_rkAcKxUSraqqvHFJpI9Av5tuYDtnA6wZ55hNrA623Nnnpdokww',
 }
