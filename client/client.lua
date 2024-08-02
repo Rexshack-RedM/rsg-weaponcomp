@@ -169,7 +169,7 @@ end
 ---------------------------------
 CreateThread(function()
     for _,v in pairs(Config.CustomLocations) do
-        exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'],  v.name, {
+        exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds[Config.Keybinds],  v.name, {
             type = 'client',
             event = 'rsg-weaponcomp:client:startcustom',
             args = { v.custcoords },
