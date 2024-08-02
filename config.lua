@@ -2,6 +2,9 @@ Config = {}
 
 Config.Debug = false
 
+        -- add code
+        -- finish add code
+        
 Config.CommandPermisions =  'admin' -- can use /customweapon
 Config.Notify =             'rnotify' -- 'ox_lib' or 'rnotify'
 Config.MenuData =           'rsg-menubase' -- 'menu_base' or 'rsg-menubase'
@@ -9,6 +12,82 @@ Config.MenuData =           'rsg-menubase' -- 'menu_base' or 'rsg-menubase'
 Config.showStats =          true -- true / false can show stats
 Config.RemovePrice =        1.2 -- (0 - 1) = 100 % cost remove component 120%
 Config.animationSave =      10000 -- apply components
+
+Config.GunsmithLocations = {
+  { 
+      name = 'Valentine Gunsmith',
+      gunsmithid = 'valgunsmith',
+      coords = vector3(-280.98, 778.88, 119.50),
+      prompt = 'valguncustom',
+      custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
+      npcmodel = `u_m_m_rhdgunsmith_01`,
+      npccoords = vector4(-280.98, 778.88, 119.50, 4.01),
+      jobaccess = 'valgunsmith',
+      blipname = 'Valentine Gunsmith',
+      blipsprite = 'blip_shop_gunsmith',
+      blipscale = 0.2,
+      showblip = true
+  },
+  { 
+      name = 'Rhodes Gunsmith',
+      gunsmithid = 'rhogunsmith',
+      coords = vector3(1322.64, -1323.14, 77.89),
+      npcmodel = `u_m_m_rhdgunsmith_01`,
+      npccoords = vector4(1322.64, -1323.14, 77.89, 351.73),
+      jobaccess = 'rhogunsmith',
+      blipname = 'Rhodes Gunsmith',
+      blipsprite = 'blip_shop_gunsmith',
+      blipscale = 0.2,
+      showblip = true
+  },
+  { 
+      name = 'StDenis Gunsmith',
+      gunsmithid = 'stdgunsmith',
+      coords = vector3(2717.28, -1286.84, 49.64),
+      npcmodel = `u_m_m_rhdgunsmith_01`,
+      npccoords = vector4(2717.28, -1286.84, 49.64, 37.67),
+      jobaccess = 'stdgunsmith',
+      blipname = 'StDenis Gunsmith',
+      blipsprite = 'blip_shop_gunsmith',
+      blipscale = 0.2,
+      showblip = true
+  },
+  { 
+      name = 'Tumbleweed Gunsmith',
+      gunsmithid = 'tumgunsmith',
+      coords = vector3(-5506.44, -2963.92, -0.64),
+      npcmodel = `u_m_m_rhdgunsmith_01`,
+      npccoords = vector4(-5506.44, -2963.92, -0.64, 105.35),
+      jobaccess = 'tumgunsmith',
+      blipname = 'Tumbleweed Gunsmith',
+      blipsprite = 'blip_shop_gunsmith',
+      blipscale = 0.2,
+      showblip = true
+  },
+  { 
+      name = 'Annesburg Gunsmith',
+      gunsmithid = 'anngunsmith',
+      coords = vector3(2948.46, 1319.50, 44.82),
+      npcmodel = `u_m_m_rhdgunsmith_01`,
+      npccoords = vector4(2948.46, 1319.50, 44.82, 67.53),
+      jobaccess = 'anngunsmith',
+      blipname = 'Annesburg Gunsmith',
+      blipsprite = 'blip_shop_gunsmith',
+      blipscale = 0.2,
+      showblip = true
+  },
+}
+
+Config.GunsmithCustomLocations = {
+  {
+    name = 'Gunsmith Customs',
+    prompt = 'valguncustom',
+    gunsmithid = 'valgunsmith',
+    coords = vector3(-280.98, 778.88, 119.50),
+    custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
+    jobaccess = 'valgunsmith',
+  },
+}
 
 -------------------------
 -- DAMAGE
@@ -118,5 +197,5 @@ Config.weaponObject = {
 -- EXTRA Webhooks / RANKING
 -----------------------
 Config.Webhooks = {
-    ['weaponCustom'] = '',
+    ['weaponCustom'] = 'https://discord.com/api/webhooks/1265455996126494801/5ZJgoOekdzaY50UTE_rkAcKxUSraqqvHFJpI9Av5tuYDtnA6wZ55hNrA623Nnnpdokww',
 }
