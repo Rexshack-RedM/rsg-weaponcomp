@@ -999,7 +999,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
     inCustom = false
 
     Wait(0)
-    if wepobject and not inCustom then
+    if wepobject and inCustom == false then
         DeleteObject(wepobject)
     end
     SetCurrentPedWeapon(cache.ped, objecthash, true)
@@ -1052,7 +1052,7 @@ RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
 AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     EndCam()
-    if wepobject and inCustom then
+    if wepobject and inCustom == true then
         DeleteObject(wepobject)
     end
     FreezeEntityPosition(cache.ped, false)
