@@ -165,17 +165,28 @@ local GetWeaponType = function(objecthash)
 end
 
 ---------------------------------
--- custom prompts
+-- customs prompts
 ---------------------------------
 CreateThread(function()
-    Wait(0)
-    if inCustom == true then return end
-    for _,v in pairs(Config.CustomLocations) do
-        exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'], v.name, {
-            type = 'client',
-            event = 'rsg-weaponcomp:client:startcustom',
-            args = { v.custcoords },
-        })
+    local PlayerData = RSGCore.Functions.GetPlayerData()
+    local jobtype = PlayerData.job.type
+    while true do
+        Wait(0)
+        local pos = GetEntityCoords(cache.ped)
+        if inCustom == false and jobtype == 'gunsmith' then
+            for _, v in pairs(Config.CustomLocations) do
+                local dist = #(pos - v.coords)
+                if dist < 1 then
+                    local message = "~COLOR_GOLD~Press [J] to enter Weapon Custom Menu"
+                    local text = Citizen.InvokeNative(0xFA925AC00EB830B9, 10, "LITERAL_STRING", message, Citizen.ResultAsLong())
+                    Citizen.InvokeNative(0xFA233F8FE190514C, text)
+                    Citizen.InvokeNative(0xE9990552DEC71600)
+                    if IsControlJustReleased(0, RSGCore.Shared.Keybinds['J']) then
+                        TriggerEvent('rsg-weaponcomp:client:startcustom', v.custcoords)
+                    end
+                end
+            end
+        end
     end
 end)
 
@@ -362,6 +373,7 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
     currentName = weaponName
     currentWep = wep
 
+    if inCustom == true then return end
     if weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
     if weapon_type ~= nil and currentSerial ~= nil then
 
@@ -500,7 +512,8 @@ local mainWeaponCompMenus = {
     ["engraving"] = function(objecthash) OpenEngravingMenu(objecthash) end,
     ["tints"] = function(objecthash) OpenTintsMenu(objecthash) end,
     ["applycommponent"] = function(objecthash) ButtomApplyAllComponents(objecthash) end,
-    ["removecommponent"] = function(objecthash) ButtomRemoveAllComponents(objecthash) end
+    ["removecommponent"] = function(objecthash) ButtomRemoveAllComponents(objecthash) end,
+    ["exitcommponent"] = function() TriggerEvent('rsg-weaponcomp:client:ExitCam') end
 }
 
 -- MAIN MENU
@@ -518,6 +531,7 @@ mainCompMenu = function(objecthash)
         {label = 'Tints',       value = 'tints',            desc = ""},
         {label = 'Apply $',     value = 'applycommponent',  desc = ""},
         {label = 'Remove $',    value = 'removecommponent', desc = ""},
+        {label = 'EXIT',        value = 'exitcommponent',   desc = ""},
     }
 
     MenuData.Open('default', GetCurrentResourceName(), 'main_weapons_creator_menu', {
