@@ -168,20 +168,12 @@ end
 -- custom prompts
 ---------------------------------
 CreateThread(function()
-    while true do
-        Wait(1000)  -- Comprobar cada segundo
-
-        if not inCustom then
-            for _,v in pairs(Config.CustomLocations) do
-                exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'], v.name, {
-                    type = 'client',
-                    event = 'rsg-weaponcomp:client:startcustom',
-                    args = { v.custcoords },
-                })
-            end
-
-            break  -- Salir del bucle después de crear los prompts
-        end
+    for _,v in pairs(Config.CustomLocations) do
+        exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'], v.name, {
+            type = 'client',
+            event = 'rsg-weaponcomp:client:startcustom',
+            args = { v.custcoords },
+        })
     end
 end)
 
@@ -357,7 +349,6 @@ AddEventHandler("rsg-weaponcomp:client:StartCamObj", function(hash, coords, obje
 end)
 
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
-
     local weaponHash = GetPedCurrentHeldWeapon(cache.ped)
     local weaponInHands = exports['rsg-weapons']:weaponInHands()
     local weaponName = Citizen.InvokeNative(0x89CF5FF3D363311E, weaponHash, Citizen.ResultAsString())
@@ -369,6 +360,7 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
     currentName = weaponName
     currentWep = wep
 
+    if inCustom == true then return end
     if weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
     if weapon_type ~= nil and currentSerial ~= nil then
 
@@ -1054,6 +1046,8 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     camera = nil
     DestroyAllCams(true)
 
+    MenuData.CloseAll()
+
     if wepobject then
         DeleteObject(wepobject)
     end
@@ -1064,7 +1058,6 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     Wait(0)
     DoScreenFadeIn(1000)
-
     SetCurrentPedWeapon(cache.ped, `WEAPON_UNARMED`, true)
     LocalPlayer.state:set("inv_busy", false, true)
 
