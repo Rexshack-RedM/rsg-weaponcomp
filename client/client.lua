@@ -173,7 +173,7 @@ CreateThread(function()
     while true do
         Wait(0)
         local pos = GetEntityCoords(cache.ped)
-        if inCustom == false and jobtype == 'gunsmith' then -- 'gunsmith' or 'weaponsmith'
+        if inCustom == false and jobtype == 'gunsmith' then
             for _, v in pairs(Config.CustomLocations) do
                 local dist = #(pos - v.coords)
                 if dist < 1 then
@@ -660,7 +660,7 @@ OpenMaterialMenu = function(objecthash)
         if data.current then
             local selectedCategory = data.current.category
             local selectedIndex = data.current.value
-            local selectedDeleted = data.current.value[1]
+            local selectedDeleted = data.current.value + 1
             local selectedHash = nil
 
             if selectedIndex > 0 and selectedIndex <= #data.current.materials then
@@ -787,7 +787,7 @@ OpenTintsMenu = function(objecthash)
         if data.current then
             local selectedCategory = data.current.category
             local selectedIndex = data.current.value
-            local selectedDeleted = data.current.value[1]
+            local selectedDeleted = data.current.value + 1
             local selectedHash = nil
 
             if selectedIndex > 0 and selectedIndex <= #data.current.tints then
