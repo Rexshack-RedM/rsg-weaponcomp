@@ -32,3 +32,4 @@ dependencies {
 lua54 'yes'
 
 export 'startWeaponInspection'
+export 'InWeaponCustom'

@@ -168,12 +168,14 @@ end
 -- custom prompts
 ---------------------------------
 CreateThread(function()
-    for _,v in pairs(Config.CustomLocations) do
-        exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds[Config.Keybinds],  v.name, {
-            type = 'client',
-            event = 'rsg-weaponcomp:client:startcustom',
-            args = { v.custcoords },
-        })
+    if inCustom == false then
+        for _,v in pairs(Config.CustomLocations) do
+            exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'],  v.name, {
+                type = 'client',
+                event = 'rsg-weaponcomp:client:startcustom',
+                args = { v.custcoords },
+            })
+        end
     end
 end)
 
@@ -217,26 +219,29 @@ end
 -- Cams and object
 ---------------------------------
 function StartCam(x,y,z,zoom)
+    if zoom < 30 or zoom > 100 then if Config.Debug then print("Error: Zoom (30 - 100)") end return end
     if not camera then
         DestroyAllCams(true)
         local camera_pos = GetObjectOffsetFromCoords(x, y, z ,0.0 ,1.0, 1.0, 1.0)
         camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z+0.5, -90.00, 00.00, -180.0, zoom, true, 0)
-        -- local camera_pos = GetObjectOffsetFromCoords(x, y, z, 0.0 ,1.0, 1.0, 1.0)
-        -- camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z, -15.0, 0.0, -85.0, zoom, false, 0)
 
         SetCamActive(camera ,true)
-        RenderScriptCams(true, true, 2000, true, true)
-    else
-        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z-0.5, -90.00, 00.00, -180.0, zoom, true, 0)
+        RenderScriptCams(true, true, 1000, true, true)
+    elseif camera then
+        DestroyCam(camera, true)
+
+        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z, -90.00, 00.00, -180.0, zoom, true, 0)
         SetCamActive(camera ,true)
-        RenderScriptCams(true, true, 2000, true, true)
+        RenderScriptCams(true, true, 1000, true, true)
     end
 end
 
 function EndCam()
     RenderScriptCams(false, true, 2000, true, false)
     DestroyCam(camera, false)
+    DestroyCam(weaponCamera, false)
     camera = nil
+    weaponCamera = nil
     DestroyAllCams(true)
 end
 
@@ -251,36 +256,39 @@ end
 function GameCam(hash, move_coords, objecthash)
     local weaponType = GetWeaponType(objecthash)
     local words = getWordsFromHash(hash)
+    -- local weapon_dimensions = Components.weapons_coords[weaponType]
+    -- local dimensions = weapon_dimensions[objecthash]
+
     for _, word in ipairs(words) do
         if weaponType == "LONGARM" then
             if string.match(word, "GRIP") then
-                StartCam(move_coords.x-0.15, move_coords.y+0.01, move_coords.z-0.10, 60.0-15.0)
+                StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "BARREL") then
-                StartCam(move_coords.x+0.40, move_coords.y+0.055, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x+0.25, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "SIGHT") then
-                StartCam(move_coords.x+0.40, move_coords.y-0.055, move_coords.z-0.20, 60.0)
-            -- elseif string.match(word, "WRAP") then
-                -- StartCamCustom(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x+0.20, move_coords.y-0.05, move_coords.z+0.30, 60.0-15.0)
+            elseif string.match(word, "WRAP") then
+                StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
 
             elseif string.match(word, "CYLINDER") then
-                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0-15.0)
+                StartCam(move_coords.x+0.0, move_coords.y+0.00, move_coords.z+0.30, 60.0)
             elseif string.match(word, "FRAME") then
-                StartCam(move_coords.x+0.06, move_coords.y-0.045, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x-0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "TRIGGER") then
-                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0 - 15.0)
+                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.30, 60.0-15.0)
             elseif string.match(word, "HAMMER") then
-                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z-0.20, 60.0 - 15.0)
-            --elseif string.match(word, "SCOPE") then
-                -- StartCamCustom(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x+0.0, move_coords.y-0.05, move_coords.z+0.30, 60.0-15)
+            -- elseif string.match(word, "SCOPE") then
+                -- StartCam(move_coords.x+0.20, move_coords.y-0.05, move_coords.z+0.30, 60.0-15.0)
 
             else
-                StartCam(move_coords.x+0.20, move_coords.y, move_coords.z, 90.0)
+                StartCam(move_coords.x+0.20, move_coords.y, move_coords.z+0.40, 90.0-15)
             end
         elseif weaponType == "SHOTGUN" then
             if string.match(word, "GRIP") then
-                StartCam(move_coords.x-0.15, move_coords.y+0.01, move_coords.z-0.10, 60.0-15.0)
+                StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "BARREL") then
-                StartCam(move_coords.x+0.40, move_coords.y+0.055, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x+0.25, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "SIGHT") then
                 StartCam(move_coords.x+0.40, move_coords.y-0.055, move_coords.z-0.20, 60.0)
             -- elseif string.match(word, "CLIP") then
@@ -291,42 +299,44 @@ function GameCam(hash, move_coords, objecthash)
                 -- StartCam(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
 
             elseif string.match(word, "CYLINDER") then
-                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0-15.0)
+                StartCam(move_coords.x+0.0, move_coords.y+0.00, move_coords.z+0.30, 60.0)
             elseif string.match(word, "FRAME") then
-                StartCam(move_coords.x+0.06, move_coords.y-0.045, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x-0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "TRIGGER") then
-                StartCam(move_coords.x-0.01, move_coords.y+0.005, move_coords.z-0.20, 60.0 - 15.0)
+                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.30, 60.0-15.0)
             elseif string.match(word, "HAMMER") then
-                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z-0.20, 60.0 - 15.0)
+                StartCam(move_coords.x+0.0, move_coords.y-0.05, move_coords.z+0.30, 60.0-15)
             else
                 StartCam(move_coords.x+0.2, move_coords.y, move_coords.z, 90.0)
             end
         elseif weaponType == "SHORTARM" then
             if string.match(word, "GRIP") then
-                StartCam(move_coords.x+0.00, move_coords.y+0.010, move_coords.z-0.10, 60.0-15.0)
+                StartCam(move_coords.x-0.08, move_coords.y+0.02, move_coords.z+0.25, 60.0-15.0)
             elseif string.match(word, "BARREL") then
-                StartCam(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 60.0)
             elseif string.match(word, "SIGHT") then
-                StartCam(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.20, 60.0-25.0)
             -- elseif string.match(word, "CLIP") then
                 -- StartCamCustom(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
-
             elseif string.match(word, "CYLINDER") then
-                StartCam(move_coords.x+0.050, move_coords.y-0.055, move_coords.z-0.20, 60.0-15.0)
+                StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0-15.0)
             elseif string.match(word, "FRAME") then
-                StartCam(move_coords.x+0.060, move_coords.y-0.045, move_coords.z-0.20, 60.0)
+                StartCam(move_coords.x-0.04, move_coords.y+0.02, move_coords.z+0.40, 60.0-15.0)
             elseif string.match(word, "HAMMER") then
-                StartCam(move_coords.x-0.010, move_coords.y-0.050, move_coords.z-0.20, 60.0-15.0)
+                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.25, 60.0-35.0)
             elseif string.match(word, "TRIGGER") then
-                StartCam(move_coords.x-0.010, move_coords.y+0.005, move_coords.z-0.20, 60.0-15.0)
+                StartCam(move_coords.x-0.01, move_coords.y+0.03, move_coords.z+0.25, 60.0-25.0)
             else
                 StartCam(move_coords.x+0.2, move_coords.y, move_coords.z, 90.0)
             end
         elseif weaponType == "GROUP_BOW" then
             StartCam(move_coords.x-0.02, move_coords.y-0.1, move_coords.z, 90.0)
         elseif weaponType == "MELEE_BLADE" then
-            StartCam(move_coords.x-0.02, move_coords.y-0.1, move_coords.z, 90.0)
+            StartCam(move_coords.x+0.00, move_coords.y+0.0, move_coords.z, 90.0-15)
         end
+        --if Config.Debug then
+            print('hey Cam Move',weaponType, hash, word, move_coords.x, move_coords.y, move_coords.z)
+        --end
     end
 end
 
@@ -336,7 +346,6 @@ function createobject(x, y, z, objecthash)
     SetEntityRotation(wepobject, 90.0, 0.0, 360.0, 1, true)
 end
 
-local move_coords = nil
 RegisterNetEvent('rsg-weaponcomp:client:StartCamObj')
 AddEventHandler("rsg-weaponcomp:client:StartCamObj", function(hash, coords, objecthash)
     while not HasCollisionLoadedAroundEntity(cache.ped) do
@@ -344,31 +353,10 @@ AddEventHandler("rsg-weaponcomp:client:StartCamObj", function(hash, coords, obje
     end
 
     DoScreenFadeOut(250)
-    Wait(250)
+    Wait(0)
     DoScreenFadeIn(250)
-
-    if not coords then
-    else
-        local weaponType = GetWeaponType(objecthash)
-
-        if weaponType == 'SHORTARM' then
-            StartCam(coords.x, coords.y, coords.z+0.7, 45.0) -- POSICION EN MESA MOSTRADOR
-        elseif weaponType == 'LONGARM' then
-            StartCam(coords.x, coords.y, coords.z+1, 90.0) -- POSICION EN MESA MOSTRADOR
-        elseif weaponType == 'SHOTGUN' then
-            StartCam(coords.x, coords.y, coords.z+1, 90.0) -- POSICION EN MESA MOSTRADOR
-        elseif weaponType == 'GROUP_BOW' then
-            StartCam(coords.x, coords.y, coords.z+1, 90.0) -- POSICION EN MESA MOSTRADOR
-        elseif weaponType == 'MELEE_BLADE' then
-            StartCam(coords.x, coords.y, coords.z+0.7, 60.0) -- POSICION EN MESA MOSTRADOR
-        end
-
-        move_coords = coords
-
-        GameCam(hash, move_coords, weaponType)
-        --print('hey Cam', coords.x, coords.y, coords.z)
-        --print('hey Cam', move_coords_x, move_coords_y, move_coords_z)
-    end
+    GameCam(hash, coords, objecthash)
+    if Config.Debug then print('hey Cam', coords.x, coords.y, coords.z) end
 end)
 
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
@@ -389,10 +377,6 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
         FreezeEntityPosition(cache.ped, true)
         createobject(custcoords.x, custcoords.y, custcoords.z, weaponHash)
         StartCam(custcoords.x+0.2, custcoords.y+0.1, custcoords.z+4.0, custcoords.h)
-        move_coords_x = custcoords.x
-        move_coords_y = custcoords.y
-        move_coords_z = custcoords.z
-        is_zed = custcoords.z
 
         TriggerServerEvent("rsg-weaponcomp:server:check_comps") -- CHECK COMPONENTS EQUIPED
         Wait(100)
@@ -424,40 +408,44 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
         end
     end, wepSerial)
 
-    Wait(0)
     while next(componentsSql) == nil do Wait(100) end
     Wait(0)
 
-    if componentsSql ~= nil and wep ~= nil then
-        if Config.Debug then print( 'rsg-weaponcomp:client:LoadComponents"')  print('weaponHash: ', weaponHash, 'component: ', json.encode(componentsSql)) end
-        for category, hashname in pairs(componentsSql) do
+    if inCustom == false then
 
-            if Config.Debug then print('for category, hashname in pairs(componentsSql) do: ', category, hashname) end
+        if componentsSql ~= nil and wep ~= nil then
+            if Config.Debug then print( 'rsg-weaponcomp:client:LoadComponents"')  print('weaponHash: ', weaponHash, 'component: ', json.encode(componentsSql)) end
+            for category, hashname in pairs(componentsSql) do
 
-            if table_contains(readComponent, category)  then
-                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                if Config.Debug then print('for category, hashname in pairs(componentsSql) do: ', category, hashname) end
+
+                if table_contains(readComponent, category)  then
+                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                end
+                if table_contains(readMaterial, category) then
+                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                end
+                if table_contains(readEngraving, category) then
+                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                end
+                if table_contains(readTints, category) then
+                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                end
             end
-            if table_contains(readMaterial, category) then
-                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-            end
-            if table_contains(readEngraving, category) then
-                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-            end
-            if table_contains(readTints, category) then
-                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-            end
+
+            ComponentsTables(componentsSql)
         end
-
-        ComponentsTables(componentsSql)
+        Wait(100)
+        componentsSql = nil
     end
-    Wait(100)
+end)
 
-    componentsSql = nil
+exports('InWeaponCustom', function()
+    return inCustom
 end)
 
 RegisterNetEvent("rsg-weaponcomp:client:LoadComponents_selection") -- SELECTION
 AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
-
     local componentsPreSql = {}
 
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
@@ -473,31 +461,32 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
     if Config.Debug then print('do: ', json.encode(componentsPreSql)) end
 
-    if componentsPreSql ~= nil and currentWep ~= nil then
-        for category, hashname in pairs(componentsPreSql) do
+    if inCustom == true then
+        if componentsPreSql ~= nil and currentWep ~= nil then
+            for category, hashname in pairs(componentsPreSql) do
 
-            if Config.Debug then print('for category, hashname in pairs(componentsPreSql) do: ', category, hashname) end
+                if Config.Debug then print('for category, hashname in pairs(componentsPreSql) do: ', category, hashname) end
 
-            if table_contains(readComponent, category)  then
-                RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
-            end
-            if table_contains(readMaterial, category) then
-                RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
-            end
-            if table_contains(readEngraving, category) then
-                RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
-            end
-            if table_contains(readTints, category) then
-                RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
+                if table_contains(readComponent, category)  then
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
+                end
+                if table_contains(readMaterial, category) then
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
+                end
+                if table_contains(readEngraving, category) then
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
+                end
+                if table_contains(readTints, category) then
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
+                end
+
             end
 
+            ComponentsTables(componentsPreSql)
         end
-
-        ComponentsTables(componentsPreSql)
+        Wait(100)
+        componentsPreSql = nil
     end
-    Wait(100)
-    componentsPreSql = nil
-
 end)
 
 -----------------------------------
@@ -818,7 +807,6 @@ OpenTintsMenu = function(objecthash)
     end)
 end
 
-
 -----------------------------------
 -- APPLY BUTTOM -- REMOVE BUTTOM
 -----------------------------------
@@ -991,8 +979,6 @@ local StartCamClean = function(zoom, offset)
     }
 
     if not weaponCamera then
-
-        DestroyAllCams(true)
         local camera_pos = GetObjectOffsetFromCoords(pos.x, pos.y, pos.z, 0.0, 1.0, 1.0, 1.0)
 
         weaponCamera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", pos.x, pos.y, pos.z + 0.5, 300.00, 0.00, 0.00, 50.00, false, 0)
@@ -1008,6 +994,14 @@ end
 RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
 AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
 
+    StartCamClean(c_zoom, c_offset)
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
+    inCustom = false
+
+    Wait(0)
+    if wepobject and not inCustom then
+        DeleteObject(wepobject)
+    end
     SetCurrentPedWeapon(cache.ped, objecthash, true)
 
     local weapon_type = GetWeaponType(objecthash)
@@ -1036,8 +1030,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
     end
 
     Wait(100)
-    AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.04, 0.00, 20.0, -25.0, 165.0, true, false, true, false, 0, true)
-    StartCamClean(c_zoom, c_offset)
+    AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
 
     lib.progressBar({
         duration = tonumber(Config.animationSave),
@@ -1050,8 +1043,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
 
     SetEntityAsNoLongerNeeded(Cloth)
     DeleteEntity(Cloth)
-
-    SetCurrentPedWeapon(cache.ped, objecthash, false)
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     TriggerEvent('rsg-weaponcomp:client:ExitCam')
 
 end)
@@ -1060,7 +1052,7 @@ RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
 AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     EndCam()
-    if wepobject then
+    if wepobject and inCustom then
         DeleteObject(wepobject)
     end
     FreezeEntityPosition(cache.ped, false)
@@ -1070,8 +1062,8 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     Wait(0)
     DoScreenFadeIn(1000)
+    SetCurrentPedWeapon(cache.ped, `WEAPON_UNARMED`, true)
     LocalPlayer.state:set("inv_busy", false, true)
-    TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     inCustom = false
 
 end)
