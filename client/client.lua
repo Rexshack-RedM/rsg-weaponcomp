@@ -168,6 +168,8 @@ end
 -- custom prompts
 ---------------------------------
 CreateThread(function()
+    Wait(0)
+    if inCustom == true then return end
     for _,v in pairs(Config.CustomLocations) do
         exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'], v.name, {
             type = 'client',
@@ -360,7 +362,6 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
     currentName = weaponName
     currentWep = wep
 
-    if inCustom == true then return end
     if weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
     if weapon_type ~= nil and currentSerial ~= nil then
 
