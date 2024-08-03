@@ -167,11 +167,9 @@ end
 ---------------------------------
 -- customs prompts
 ---------------------------------
-CreateThread(function()
-    local PlayerData = RSGCore.Functions.GetPlayerData()
-    local jobtype = PlayerData.job.type
+RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', function()
+    local jobtype = RSGCore.Functions.GetPlayerData().job.type
     while true do
-        Wait(0)
         local pos = GetEntityCoords(cache.ped)
         if inCustom == false and jobtype == 'gunsmith' then
             for _, v in pairs(Config.CustomLocations) do
@@ -187,6 +185,7 @@ CreateThread(function()
                 end
             end
         end
+        Wait(1)
     end
 end)
 
@@ -194,15 +193,15 @@ end)
 -- apply
 ---------------------------------
 function apply_weapon_component(weapon_component_hash)
-	local weapon_component_model_hash = Citizen.InvokeNative(0x59DE03442B6C9598, GetHashKey(weapon_component_hash))
-	if weapon_component_model_hash and weapon_component_model_hash ~= 0 then
-		RequestModel(weapon_component_model_hash)
-		local i = 0
-		while not HasModelLoaded(weapon_component_model_hash) and i <= 300 do
-			i = i + 1
-			Wait(0)
-		end
-		if HasModelLoaded(weapon_component_model_hash) then
+    local weapon_component_model_hash = Citizen.InvokeNative(0x59DE03442B6C9598, GetHashKey(weapon_component_hash))
+    if weapon_component_model_hash and weapon_component_model_hash ~= 0 then
+        RequestModel(weapon_component_model_hash)
+        local i = 0
+        while not HasModelLoaded(weapon_component_model_hash) and i <= 300 do
+            i = i + 1
+            Wait(0)
+        end
+        if HasModelLoaded(weapon_component_model_hash) then
             if inCustom == true then
                 Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
                 SetModelAsNoLongerNeeded(weapon_component_model_hash)
@@ -215,7 +214,7 @@ function apply_weapon_component(weapon_component_hash)
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
             end
         end
-	else
+    else
         if inCustom == true then
             Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
             Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
