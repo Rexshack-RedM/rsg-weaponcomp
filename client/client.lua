@@ -168,14 +168,14 @@ end
 -- custom prompts
 ---------------------------------
 CreateThread(function()
-    if inCustom == false then
-        for _,v in pairs(Config.CustomLocations) do
-            exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'],  v.name, {
-                type = 'client',
-                event = 'rsg-weaponcomp:client:startcustom',
-                args = { v.custcoords },
-            })
-        end
+    Wait(0)
+    if inCustom == true then return end
+    for _,v in pairs(Config.CustomLocations) do
+        exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'], v.name, {
+            type = 'client',
+            event = 'rsg-weaponcomp:client:startcustom',
+            args = { v.custcoords },
+        })
     end
 end)
 
@@ -234,15 +234,6 @@ function StartCam(x,y,z,zoom)
         SetCamActive(camera ,true)
         RenderScriptCams(true, true, 1000, true, true)
     end
-end
-
-function EndCam()
-    RenderScriptCams(false, true, 2000, true, false)
-    DestroyCam(camera, false)
-    DestroyCam(weaponCamera, false)
-    camera = nil
-    weaponCamera = nil
-    DestroyAllCams(true)
 end
 
 local function getWordsFromHash(hash)
@@ -360,7 +351,6 @@ AddEventHandler("rsg-weaponcomp:client:StartCamObj", function(hash, coords, obje
 end)
 
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
-
     local weaponHash = GetPedCurrentHeldWeapon(cache.ped)
     local weaponInHands = exports['rsg-weapons']:weaponInHands()
     local weaponName = Citizen.InvokeNative(0x89CF5FF3D363311E, weaponHash, Citizen.ResultAsString())
@@ -373,16 +363,15 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
     currentWep = wep
 
     if weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
-    if not inCustom and weapon_type ~= nil and currentSerial ~= nil then
-        FreezeEntityPosition(cache.ped, true)
+    if weapon_type ~= nil and currentSerial ~= nil then
+
         createobject(custcoords.x, custcoords.y, custcoords.z, weaponHash)
         StartCam(custcoords.x+0.2, custcoords.y+0.1, custcoords.z+4.0, custcoords.h)
 
         TriggerServerEvent("rsg-weaponcomp:server:check_comps") -- CHECK COMPONENTS EQUIPED
         Wait(100)
         mainCompMenu(weaponHash) -- ENTER MENU
-        LocalPlayer.state:set("inv_busy", true, true) -- BLOCK INVENTORY
-        inCustom = true
+
     else
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
     end
@@ -517,6 +506,9 @@ local mainWeaponCompMenus = {
 -- MAIN MENU
 mainCompMenu = function(objecthash)
     MenuData.CloseAll()
+    FreezeEntityPosition(cache.ped, true)
+    LocalPlayer.state:set("inv_busy", true, true) -- BLOCK INVENTORY
+    inCustom = true
 
     Wait(100)
     local elements = {
@@ -962,7 +954,7 @@ local StartCamClean = function(zoom, offset)
     DoScreenFadeIn(1000)
 
     local coords = GetEntityCoords(cache.ped)
-    local zoomOffset = zoom
+    local zoomOffset = tonumber(zoom)
     local angle
 
     if playerHeading == nil then
@@ -973,8 +965,8 @@ local StartCamClean = function(zoom, offset)
     end
 
     local pos = {
-        x = coords.x - (zoomOffset * math.sin(angle)),
-        y = coords.y + (zoomOffset * math.cos(angle)),
+        x = coords.x - tonumber(zoomOffset * math.sin(angle)),
+        y = coords.y + tonumber(zoomOffset * math.cos(angle)),
         z = coords.z + offset
     }
 
@@ -994,12 +986,10 @@ end
 RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
 AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
 
-    StartCamClean(c_zoom, c_offset)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
-    inCustom = false
 
     Wait(0)
-    if wepobject and inCustom == false then
+    if wepobject then
         DeleteObject(wepobject)
     end
     SetCurrentPedWeapon(cache.ped, objecthash, true)
@@ -1031,6 +1021,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
 
     Wait(100)
     AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
+    StartCamClean(c_zoom, c_offset)
 
     lib.progressBar({
         duration = tonumber(Config.animationSave),
@@ -1051,20 +1042,29 @@ end)
 RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
 AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
-    EndCam()
-    if wepobject and inCustom == true then
+    RenderScriptCams(false, true, 2000, true, false)
+    DestroyCam(camera, false)
+    camera = nil
+    DestroyAllCams(true)
+
+    MenuData.CloseAll()
+
+    if wepobject then
         DeleteObject(wepobject)
     end
-    FreezeEntityPosition(cache.ped, false)
-    ClearPedTasks(cache.ped)
-    ClearPedSecondaryTask(cache.ped)
+
+    inCustom = false
+
     DoScreenFadeOut(1000)
 
     Wait(0)
     DoScreenFadeIn(1000)
     SetCurrentPedWeapon(cache.ped, `WEAPON_UNARMED`, true)
     LocalPlayer.state:set("inv_busy", false, true)
-    inCustom = false
+
+    FreezeEntityPosition(cache.ped, false)
+    ClearPedTasks(cache.ped)
+    ClearPedSecondaryTask(cache.ped)
 
 end)
 
@@ -1093,10 +1093,9 @@ AddEventHandler('onResourceStop', function(r)
         DeleteObject(wepobject)
     end
 
+    inCustom = false
+    MenuData.CloseAll()
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
     FreezeEntityPosition(cache.ped , false) -- DISABLE BLOCK PLAYER
-    MenuData.CloseAll()
-    EndCam()
-    inCustom = false
 
 end)
