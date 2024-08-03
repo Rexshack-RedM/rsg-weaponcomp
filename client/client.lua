@@ -335,9 +335,9 @@ function GameCam(hash, move_coords, objecthash)
         elseif weaponType == "MELEE_BLADE" then
             StartCam(move_coords.x+0.00, move_coords.y+0.0, move_coords.z, 90.0-15)
         end
-        --if Config.Debug then
+        if Config.Debug then
             print('hey Cam Move',weaponType, hash, word, move_coords.x, move_coords.y, move_coords.z)
-        --end
+        end
     end
 end
 
