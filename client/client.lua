@@ -219,7 +219,7 @@ end
 -- Cams and object
 ---------------------------------
 function StartCam(x,y,z,zoom)
-    if zoom < 30 or zoom > 100 then if Config.Debug then print("Error: Zoom (30 - 100)") end return end
+    -- if zoom < 30 or zoom > 100 then if Config.Debug then print("Error: Zoom (30 - 100)") end return end
     if not camera then
         DestroyAllCams(true)
         local camera_pos = GetObjectOffsetFromCoords(x, y, z ,0.0 ,1.0, 1.0, 1.0)
