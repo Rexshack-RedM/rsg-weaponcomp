@@ -1,24 +1,88 @@
 Config = {}
 
 Config.Debug = false
-        
-Config.CommandPermisions =  'admin' -- can use /customweapon
-Config.Notify            = 'rnotify' -- 'ox_lib' or 'rnotify'
-Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase'
-Config.showStats         = true -- true / false can show stats
+
+Config.Notify            = 'ox_lib' -- 'ox_lib' or 'rnotify' notify selection
+Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase' menu selection
+
+Config.Keybinds          = 'J'
+Config.Payment           = 'money' --  'item' or  'money'
+Config.PaymentType       = 'cash' -- Payment = money you can select 'cash' or 'bloodmoney' / Payment = item you can select 'cash' or 'bloodmoney'
+
 Config.RemovePrice       = 1.2 -- (0 - 1) = 100 % cost remove component 120%
-Config.animationSave     = 10000 -- apply components
-Config.StartCamObj       = true -- false or true small changes in camera
+Config.animationSave     = 10000 -- Waiting time for application or removal components
+Config.StartCamObj       = true -- false / true Camera movements with category changes during selection
+
+Config.CommandPermisions = 'admin' -- can use /customweapon 
+Config.showStats         = true -- true / false can show stats inspect
 
 Config.CustomLocations = {
-    {
-        name = 'Customs',
-        prompt = 'valguncustom',
-        gunsmithid = 'valgunsmith',
-        coords = vector3(-280.98, 778.88, 119.50),
-        custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
-        jobaccess = 'valgunsmith',
-    },
+  {
+    name = 'Customs',
+    prompt = 'val_custom',
+    gunsmithid = 'valgunsmith',
+    coords = vector3(-280.98, 778.88, 119.50),
+    custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
+    jobaccess = 'valgunsmith',
+  },
+  {
+    name = 'Customs',
+    prompt = 'rho_custom',
+    gunsmithid = 'rhogunsmith',
+    coords = vector3(1323.16, -1321.54, 77.91),
+    custcoords = vector4(1323.07, -1322.34, 77.95, 0.0),
+    jobaccess = 'rhogunsmith',
+  },
+  {
+    name = 'Customs',
+    prompt = 'tum_custom',
+    gunsmithid = 'tumgunsmith',
+    coords = vector3(-5508.35, -2964.26, -0.54),
+    custcoords = vector4(-5507.34, -2963.81, -0.59, 60.0),
+    jobaccess = 'tumgunsmith',
+  },
+  {
+    name = 'Customs',
+    prompt = 'std_custom',
+    gunsmithid = 'stdgunsmith',
+    coords = vector3(2715.39, -1285.63, 49.80),
+    custcoords = vector4(2715.97, -1286.54, 49.72, 0.0),
+    jobaccess = 'stdgunsmith',
+  },
+  {
+    name = 'Customs',
+    prompt = 'Ann_custom',
+    gunsmithid = 'anngunsmith',
+    coords = vector3(-280.98, 778.88, 119.50),
+    custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
+    jobaccess = 'anngunsmith',
+  },
+  --[[ 
+  -- EXTRA LOCATIONS
+  {
+    name = 'Customs',
+    prompt = 'str_custom',
+    gunsmithid = 'strgunsmith',
+    coords = vector3(-1752.0, -386.7, 156.52),
+    custcoords = vector4(-1752.85, -386.86, 156.48, 60.0),
+    jobaccess = 'strgunsmith',
+  },
+  {
+    name = 'Customs',
+    prompt = 'blk_custom',
+    gunsmithid = 'blkgunsmith',
+    coords = vector3(-859.30, -1277.90, 43.66),
+    custcoords = vector4(-859.31, -1278.66, 43.50, 6.0),
+    jobaccess = 'blkgunsmith',
+  },
+  {
+    name = 'Customs',
+    prompt = 'gua_custom',
+    gunsmithid = 'guagunsmith',
+    coords = vector3(1322.02, -6980.69, 61.97),
+    custcoords = vector4(1322.02, -6980.69, 61.97, 6.0),
+    jobaccess = 'guagunsmith',
+  }, ]]
 }
 
 -------------------------
@@ -29,7 +93,8 @@ Config.WeaponDamageModifiers = {
     [0x1086D041]    = 1.5,           -- Jawbone Knife
     [0x28950C71]    = 10.0,          -- Machete
     [0xDB21AC8C]    = 10.0,          -- Regular Knife
---    HASHKEY       DMG VALUE      MODEL NAME      --
+
+--    HASHKEY       DMG VALUE      MODEL NAME 
   --PISTOLS
     [0x020D13FF]    = 2.2,        -- Volcanic Pistol
     [0x5B78B8DD]    = 2.0,        -- M1899 Pistol
@@ -62,67 +127,6 @@ Config.WeaponDamageModifiers = {
   --BOWS
     [0x88a8505c]    = 1.5,        -- BOW
     [0x6E0F12B]     = 5.0,        -- IMPROVED BOW
-}
-
--------------------------
--- MODELS
------------------------
-Config.weaponObject = {
-    ['WEAPON_REVOLVER_SCHOFIELD'] ='w_revolver_schofield01',
-    ['WEAPON_REVOLVER_LEMAT'] ='w_revolver_lemat01',
-    ['WEAPON_REVOLVER_DOUBLEACTION'] ='w_revolver_doubleaction01',
-    ['WEAPON_REVOLVER_CATTLEMAN'] ='w_revolver_cattleman01',
-    ['WEAPON_REVOLVER_NAVY'] = 'w_revolver_navy01',
-
-    ['WEAPON_PISTOL_SEMIAUTO'] ='w_pistol_semiauto01',
-    ['WEAPON_PISTOL_MAUSER'] ='w_pistol_mauser01',
-    ['WEAPON_PISTOL_VOLCANIC'] ='w_pistol_volcanic01',
-    ['WEAPON_PISTOL_M1899'] ='w_pistol_m189902',
-
-    ['WEAPON_REPEATER_WINCHESTER'] ='w_repeater_winchester01',
-    ['WEAPON_REPEATER_HENRY'] ='w_repeater_henry01',
-    ['WEAPON_REPEATER_EVANS'] ='w_repeater_evans01',
-    ['WEAPON_REPEATER_CARBINE'] ='w_repeater_carbine01',
-
-    ['WEAPON_RIFLE_SPRINGFIELD'] ='w_rifle_springfield01',
-    ['WEAPON_RIFLE_BOLTACTION'] ='w_rifle_boltaction01',
-    ['WEAPON_RIFLE_VARMINT'] ='w_repeater_pumpaction01',
-    ['WEAPON_RIFLE_ELEPHANT'] = 'w_dis_rif_elephant01',
-
-    ['WEAPON_SNIPERRIFLE_ROLLINGBLOCK'] ='w_rifle_rollingblock01',
-    ['WEAPON_SNIPERRIFLE_CARCANO'] ='w_rifle_carcano01',
-
-    ['WEAPON_SHOTGUN_SEMIAUTO'] ='w_shotgun_semiauto01',
-    ['WEAPON_SHOTGUN_SAWEDOFF'] ='w_shotgun_sawed01',
-    ['WEAPON_SHOTGUN_REPEATING'] ='w_shotgun_repeating01',
-    ['WEAPON_SHOTGUN_PUMP'] ='w_shotgun_pumpaction01',
-    ['WEAPON_SHOTGUN_DOUBLEBARREL'] ='w_shotgun_doublebarrel01',
-
-    ['WEAPON_KIT_CAMERA'] ='p_camerabox01x',
-    ['WEAPON_KIT_CAMERA_ADVANCED'] ='p_camerabox01x',
-    ['WEAPON_LASSO'] =  'w_melee_lasso01',
-    ['WEAPON_LASSO_REINFORCED'] =  'w_melee_lasso01',
-    ['WEAPON_FISHINGROD'] ='w_melee_fishingpole02',
-
-    ['WEAPON_MELEE_KNIFE'] ='w_melee_knife02',
-    ['WEAPON_MELEE_KNIFE_CIVIL_WAR'] ='w_melee_knife16',
-    ['WEAPON_MELEE_KNIFE_JAWBONE'] ='w_melee_knife03',
-    ['WEAPON_MELEE_KNIFE_MINER'] ='w_melee_knife14',
-    ['WEAPON_MELEE_KNIFE_VAMPIRE'] ='w_melee_knife18',
-    ['WEAPON_MELEE_CLEAVER'] ='w_melee_hatchet02',
-    ['WEAPON_MELEE_HATCHET'] ='w_melee_hatchet01',
-    ['WEAPON_MELEE_HATCHET_DOUBLE_BIT'] ='w_melee_hatchet06',
-    ['WEAPON_MELEE_HATCHET_HEWING'] ='w_melee_hatchet05',
-    ['WEAPON_MELEE_HATCHET_HUNTER'] ='w_melee_hatchet07',
-    ['WEAPON_MELEE_HATCHET_VIKING'] ='w_melee_hatchet04',
-    ['WEAPON_MELEE_MACHETE_COLLECTOR'] = 'p_machete01x',
-
-    ['WEAPON_THROWN_TOMAHAWK'] ='w_melee_tomahawk01',
-    ['WEAPON_THROWN_THROWING_KNIVES'] ='w_melee_knife05',
-    ['WEAPON_MELEE_MACHETE'] ='w_melee_machete01',
-
-    ['WEAPON_BOW'] ='w_sp_bowarrow',
-    ['WEAPON_BOW_IMPROVED'] ='w_sp_bowarrow',
 }
 
 -------------------------

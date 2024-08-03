@@ -736,6 +736,70 @@ Components.weapons_comp_list = {
 	}
 }
 
+Components.weapons_coords = {
+	['SHORTARM'] = {
+		-- ['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = {x = 0.2987, y = 0.049179, z = 0.141814},
+		['WEAPON_REVOLVER_CATTLEMAN'] = {x = 0.30, y = 0.05, z = 0.14},
+		['WEAPON_REVOLVER_DOUBLEACTION'] = {x = 0.28, y = 0.05, z = 0.15},
+		['WEAPON_REVOLVER_DOUBLEACTION_EXOTIC'] = {x = 0.28, y = 0.05, z = 0.15},
+		['WEAPON_REVOLVER_LEMAT'] = {},
+		['WEAPON_REVOLVER_SCHOFIELD'] = {x = 0.32, y = 0.042, z = 0.13},
+		['WEAPON_REVOLVER_NAVY'] = {x = 0.23, y = 0.04, z = 0.14},
+		--[[ ['WEAPON_REVOLVER_NAVY_CROSSOVER'] = {}, ]]
+		['WEAPON_PISTOL_MAUSER'] = {x = 0.32, y = 0.03, z = 0.17},
+		['WEAPON_PISTOL_VOLCANIC'] = {x = 0.50, y = 0.03, z = 0.17},
+		['WEAPON_PISTOL_M1899'] = {x = 0.23, y = 0.025, z = 0.15},
+		['WEAPON_PISTOL_SEMIAUTO'] = {x = 0.23, y = 0.05, z = 0.14},
+	},
+	['LONGARM'] = {
+		['WEAPON_REPEATER_CARBINE'] = {x = 0.95, y = 0.03, z = 0.21},
+		['WEAPON_REPEATER_WINCHESTER'] = {x = 0.95, y = 0.03, z = 0.21},
+		['WEAPON_REPEATER_HENRY'] = {x = 0.95, y = 0.03, z = 0.20},
+		['WEAPON_REPEATER_EVANS'] = {x = 0.95, y = 0.03, z = 0.20},
+		['WEAPON_SNIPERRIFLE_ROLLINGBLOCK'] = {x = 1.14, y = 0.04, z = 0.20},
+		['WEAPON_SNIPERRIFLE_CARCANO'] = {x = 1.02, y = 0.08, z = 0.19},
+		['WEAPON_RIFLE_VARMINT'] = {x = 1.02, y = 0.03, z = 0.20},
+		['WEAPON_RIFLE_SPRINGFIELD'] = {x = 0.92, y = 0.04, z = 0.17},
+		['WEAPON_RIFLE_BOLTACTION'] = {x = 1.05, y = 0.08, z = 0.17},
+		['WEAPON_RIFLE_ELEPHANT'] = {x = 1.14, y = 0.04, z = 0.20},
+	},
+	['SHOTGUN'] = {
+		['WEAPON_SHOTGUN_REPEATING'] = {x = 0.84, y = 0.04, z = 0.20},
+		['WEAPON_SHOTGUN_PUMP'] = {x = 0.81, y = 0.04, z = 0.20},
+		['WEAPON_SHOTGUN_DOUBLEBARREL'] = {x = 0.84, y = 0.04, z = 0.20},
+		['WEAPON_SHOTGUN_SAWEDOFF'] = {x = 0.50, y = 0.04, z = 0.20},
+		['WEAPON_SHOTGUN_SEMIAUTO'] = {x = 0.70, y = 0.04, z = 0.17},
+	},
+	['MELEE_BLADE'] = {
+		['WEAPON_LASSO'] = {},
+		['WEAPON_LASSO_REINFORCED'] = {},
+		['WEAPON_FISHINGROD'] = {},
+		['WEAPON_MELEE_KNIFE'] = {},
+		['WEAPON_MELEE_KNIFE_CIVIL_WAR'] = {},
+		['WEAPON_MELEE_KNIFE_JAWBONE'] = {},
+		['WEAPON_MELEE_KNIFE_MINER'] = {},
+		['WEAPON_MELEE_KNIFE_VAMPIRE'] = {},
+		['WEAPON_MELEE_CLEAVER'] = {},
+		['WEAPON_MELEE_HATCHET'] = {},
+		['WEAPON_MELEE_HATCHET_DOUBLE_BIT'] = {},
+		['WEAPON_MELEE_HATCHET_HEWING'] = {},
+		['WEAPON_MELEE_HATCHET_HUNTER'] = {},
+		['WEAPON_MELEE_HATCHET_VIKING'] = {},
+		['WEAPON_THROWN_TOMAHAWK'] = {},
+		['WEAPON_THROWN_THROWING_KNIVES'] = {},
+		["WEAPON_THROWN_DYNAMITE"] = {},
+		['WEAPON_MELEE_MACHETE'] = {},
+		['WEAPON_MELEE_MACHETE_COLLECTOR'] = {},
+		['WEAPON_BOW'] = {},
+		['WEAPON_BOW_IMPROVED'] = {},
+
+		['WEAPON_KIT_CAMERA'] = {},
+		['WEAPON_KIT_CAMERA_ADVANCED'] = {},
+		['WEAPON_KIT_BINOCULARS'] = {},
+		['WEAPON_KIT_BINOCULARS_ADVANCED'] = {},
+	}
+}
+
 Components.SharedComponents = {
     ['SHORTARM'] =	{ -- [13] BARREL_MATERIAL, [19] GRIP_MATERIAL, [3] HAMMER_MATERIAL, [4] FRAME_MATERIAL, [6] TRIGGER_MATERIAL, [9] SIGHT_MATERIAL, [16] CYLINDER_MATERIAL, [21] BARREL_RIFLING
 		[Components.LanguageWeapons[13]] = {
@@ -780,14 +844,14 @@ Components.SharedComponents = {
 		},
 		[Components.LanguageWeapons[6]] = {
 			[1] = { title = 'M_1', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_1', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
+			[2] = { title = 'M_2', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_2', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[3] = { title = 'M_3', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_3', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[4] = { title = 'M_4', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_4', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
+			[5] = { title = 'M_5', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_5', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[6] = { title = 'M_6', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_6', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
+			[7] = { title = 'M_7', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_7', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[8] = { title = 'M_8', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_8', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[9] = { title = 'M_9', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_9', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
-			[2] = { title = 'M_2', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_2', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
-			[5] = { title = 'M_5', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_5', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
-			[7] = { title = 'M_7', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_7', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 			[10] = { title = 'M_10', price = 4, hashname = 'COMPONENT_SHORTARM_TRIGGER_MATERIAL_10', category_hashname = 'trigger', weapon_type = 'SHORTARM',    },
 		},
 		[Components.LanguageWeapons[9]] = {
@@ -1551,5 +1615,3 @@ Components.SharedTintsComponents = {
         },
 	},
 }
-
--- return weapons_comp_list

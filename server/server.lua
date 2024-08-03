@@ -56,21 +56,41 @@ RegisterServerEvent('rsg-weaponcomp:server:price')
 AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
-    local currentCash = Player.Functions.GetMoney('cash')
 
-    if currentCash < tonumber(price) then
-        TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $' .. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
-        TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
-        return
-    else
-        Player.Functions.RemoveMoney('cash', tonumber(price))
+    if Config.Payment == 'item' then
+        local cashItem = Player.Functions.GetItemByName(Config.PaymentType)
+    	local cashAmount = cashItem.amount
 
-        if Config.Notify == 'rnotify' then
-            TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
-        elseif Config.Notify == 'ox_lib' then
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
+        if not cashItem and tonumber(cashAmount) < tonumber(price) then
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $'.. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
+            return
+        else
+            Player.Functions.RemoveItem(Config.PaymentType, tonumber(price), 'custom-weapon')
+            TriggerClientEvent('inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.PaymentType], "remove")
+
+            if Config.Notify == 'rnotify' then
+                TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
+            elseif Config.Notify == 'ox_lib' then
+                TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
+            end
+        end
+    elseif Config.Payment == 'money' then
+        local currentCash = Player.Functions.GetMoney(Config.PaymentType)
+        if currentCash < tonumber(price) then
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $' .. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
+            TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
+            return
+        else
+            Player.Functions.RemoveMoney(Config.PaymentType, tonumber(price))
+
+            if Config.Notify == 'rnotify' then
+                TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
+            elseif Config.Notify == 'ox_lib' then
+                TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
+            end
         end
     end
+
     TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash)
 end)
 
