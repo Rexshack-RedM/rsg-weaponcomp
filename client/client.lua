@@ -167,11 +167,12 @@ end
 ---------------------------------
 -- customs prompts
 ---------------------------------
-RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', function()
+CreateThread(function()
     local jobtype = RSGCore.Functions.GetPlayerData().job.type
     while true do
+        Wait(0)
         local pos = GetEntityCoords(cache.ped)
-        if inCustom == false and jobtype == 'gunsmith' then
+        if inCustom == false and jobtype == Config.JobType then
             for _, v in pairs(Config.CustomLocations) do
                 local dist = #(pos - v.coords)
                 if dist < 1 then
@@ -179,13 +180,12 @@ RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', function()
                     local text = Citizen.InvokeNative(0xFA925AC00EB830B9, 10, "LITERAL_STRING", message, Citizen.ResultAsLong())
                     Citizen.InvokeNative(0xFA233F8FE190514C, text)
                     Citizen.InvokeNative(0xE9990552DEC71600)
-                    if IsControlJustReleased(0, RSGCore.Shared.Keybinds['J']) then
+                    if IsControlJustReleased(0, RSGCore.Shared.Keybinds[Config.Keybinds]) then
                         TriggerEvent('rsg-weaponcomp:client:startcustom', v.custcoords)
                     end
                 end
             end
         end
-        Wait(1)
     end
 end)
 
@@ -193,15 +193,15 @@ end)
 -- apply
 ---------------------------------
 function apply_weapon_component(weapon_component_hash)
-    local weapon_component_model_hash = Citizen.InvokeNative(0x59DE03442B6C9598, GetHashKey(weapon_component_hash))
-    if weapon_component_model_hash and weapon_component_model_hash ~= 0 then
-        RequestModel(weapon_component_model_hash)
-        local i = 0
-        while not HasModelLoaded(weapon_component_model_hash) and i <= 300 do
-            i = i + 1
-            Wait(0)
-        end
-        if HasModelLoaded(weapon_component_model_hash) then
+	local weapon_component_model_hash = Citizen.InvokeNative(0x59DE03442B6C9598, GetHashKey(weapon_component_hash))
+	if weapon_component_model_hash and weapon_component_model_hash ~= 0 then
+		RequestModel(weapon_component_model_hash)
+		local i = 0
+		while not HasModelLoaded(weapon_component_model_hash) and i <= 300 do
+			i = i + 1
+			Wait(0)
+		end
+		if HasModelLoaded(weapon_component_model_hash) then
             if inCustom == true then
                 Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
                 SetModelAsNoLongerNeeded(weapon_component_model_hash)
@@ -214,7 +214,7 @@ function apply_weapon_component(weapon_component_hash)
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
             end
         end
-    else
+	else
         if inCustom == true then
             Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
             Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
@@ -262,28 +262,31 @@ function GameCam(hash, move_coords, objecthash)
 
     for _, word in ipairs(words) do
         if weaponType == "LONGARM" then
-            if string.match(word, "GRIP") then
-                StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
-            elseif string.match(word, "BARREL") then
-                StartCam(move_coords.x+0.25, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
-            elseif string.match(word, "SIGHT") then
-                StartCam(move_coords.x+0.20, move_coords.y-0.05, move_coords.z+0.30, 60.0-15.0)
+            if string.match(word, "SIGHT") then
+                StartCam(move_coords.x+0.15, move_coords.y-0.10, move_coords.z+0.20, 60.0-15.0)
+            elseif string.match(word, "SCOPE") then
+                StartCam(move_coords.x+0.20, move_coords.y-0.05, move_coords.z+0.30, 60.0)
+
             elseif string.match(word, "WRAP") then
-                StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
+                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-5.0)
+            elseif string.match(word, "GRIP") then
+                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-5.0)
+
+            elseif string.match(word, "BARREL") then
+                StartCam(move_coords.x+0.40, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
+            elseif string.match(word, "TRIGGER") then
+                 StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.30, 60.0)
+
 
             elseif string.match(word, "CYLINDER") then
-                StartCam(move_coords.x+0.0, move_coords.y+0.00, move_coords.z+0.30, 60.0)
-            elseif string.match(word, "FRAME") then
-                StartCam(move_coords.x-0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
-            elseif string.match(word, "TRIGGER") then
-                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.30, 60.0-15.0)
-            elseif string.match(word, "HAMMER") then
-                StartCam(move_coords.x+0.0, move_coords.y-0.05, move_coords.z+0.30, 60.0-15)
-            -- elseif string.match(word, "SCOPE") then
-                -- StartCam(move_coords.x+0.20, move_coords.y-0.05, move_coords.z+0.30, 60.0-15.0)
+                StartCam(move_coords.x+0.0, move_coords.y+0.00, move_coords.z+0.30, 75.0)
+            -- elseif string.match(word, "FRAME") then
+            --     StartCam(move_coords.x-0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
+            -- elseif string.match(word, "HAMMER") then
+            --     StartCam(move_coords.x+0.0, move_coords.y-0.05, move_coords.z+0.30, 60.0-15)
 
             else
-                StartCam(move_coords.x+0.20, move_coords.y, move_coords.z+0.40, 90.0-15)
+                StartCam(move_coords.x+0.20, move_coords.y, move_coords.z+0.5, 75.0)
             end
         elseif weaponType == "SHOTGUN" then
             if string.match(word, "GRIP") then
@@ -308,32 +311,32 @@ function GameCam(hash, move_coords, objecthash)
             elseif string.match(word, "HAMMER") then
                 StartCam(move_coords.x+0.0, move_coords.y-0.05, move_coords.z+0.30, 60.0-15)
             else
-                StartCam(move_coords.x+0.2, move_coords.y, move_coords.z, 90.0)
+                StartCam(move_coords.x+0.2, move_coords.y, move_coords.z, 120.0)
             end
         elseif weaponType == "SHORTARM" then
             if string.match(word, "GRIP") then
-                StartCam(move_coords.x-0.08, move_coords.y+0.02, move_coords.z+0.25, 60.0-15.0)
-            elseif string.match(word, "BARREL") then
-                StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 60.0)
+                StartCam(move_coords.x-0.08, move_coords.y+0.02, move_coords.z+0.25, 60.0)
+            -- elseif string.match(word, "BARREL") then
+            --     StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 60.0)
             elseif string.match(word, "SIGHT") then
-                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.20, 60.0-25.0)
+                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.20, 60.0-15.0)
             -- elseif string.match(word, "CLIP") then
-                -- StartCamCustom(move_coords.x+0.120, move_coords.y-0.055, move_coords.z-0.20, 60.0)
-            elseif string.match(word, "CYLINDER") then
-                StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0-15.0)
-            elseif string.match(word, "FRAME") then
-                StartCam(move_coords.x-0.04, move_coords.y+0.02, move_coords.z+0.40, 60.0-15.0)
-            elseif string.match(word, "HAMMER") then
-                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.25, 60.0-35.0)
-            elseif string.match(word, "TRIGGER") then
-                StartCam(move_coords.x-0.01, move_coords.y+0.03, move_coords.z+0.25, 60.0-25.0)
+            --     StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0-15.0)
+            -- elseif string.match(word, "CYLINDER") then
+                -- StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0-15.0)
+            -- elseif string.match(word, "FRAME") then
+               --  StartCam(move_coords.x-0.04, move_coords.y+0.02, move_coords.z+0.40, 60.0-15.0)
+            -- elseif string.match(word, "HAMMER") then
+            --     StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.25, 60.0-35.0)
+            -- elseif string.match(word, "TRIGGER") then
+            --     StartCam(move_coords.x-0.01, move_coords.y+0.03, move_coords.z+0.25, 60.0-25.0)
             else
-                StartCam(move_coords.x+0.2, move_coords.y, move_coords.z, 90.0)
+                StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 90.0)
             end
         elseif weaponType == "GROUP_BOW" then
-            StartCam(move_coords.x-0.02, move_coords.y-0.1, move_coords.z, 90.0)
+            StartCam(move_coords.x-0.02, move_coords.y-0.1, move_coords.z+0.5, 90.0)
         elseif weaponType == "MELEE_BLADE" then
-            StartCam(move_coords.x+0.00, move_coords.y+0.0, move_coords.z, 90.0-15)
+            StartCam(move_coords.x+0.00, move_coords.y+0.0, move_coords.z+0.2, 90.0-15)
         end
         if Config.Debug then
             print('hey Cam Move',weaponType, hash, word, move_coords.x, move_coords.y, move_coords.z)
@@ -342,9 +345,18 @@ function GameCam(hash, move_coords, objecthash)
 end
 
 function createobject(x, y, z, objecthash)
+    if wepobject and DoesEntityExist(wepobject) then
+        DeleteObject(wepobject)
+    end
+
     wepobject = Citizen.InvokeNative(0x9888652B8BA77F73, objecthash, 0, x, y, z, false, 1.0)
-    SetEntityCoords(wepobject, x, y, z)
-    SetEntityRotation(wepobject, 90.0, 0.0, 360.0, 1, true)
+
+    if wepobject and DoesEntityExist(wepobject) then
+        SetEntityCoords(wepobject, x, y, z)
+        SetEntityRotation(wepobject, 90.0, 0.0, 360.0, 1, true)
+    else
+        print("Error al crear el objeto")
+    end
 end
 
 RegisterNetEvent('rsg-weaponcomp:client:StartCamObj')
@@ -374,10 +386,10 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
 
     if inCustom == true then return end
     if weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
-    if weapon_type ~= nil and currentSerial ~= nil then
+    if weapon_type ~= nil and currentSerial ~= nil and weaponName ~= Config.WeaponRestriction then
 
         createobject(custcoords.x, custcoords.y, custcoords.z, weaponHash)
-        StartCam(custcoords.x+0.2, custcoords.y+0.1, custcoords.z+4.0, custcoords.h)
+        StartCam(custcoords.x+0.2, custcoords.y+0.15 , custcoords.z+4.0, custcoords.h)
 
         TriggerServerEvent("rsg-weaponcomp:server:check_comps") -- CHECK COMPONENTS EQUIPED
         Wait(100)
@@ -389,6 +401,22 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(custcoords)
 
 end)
 
+local function InventoryGetGuidFromItemId(inventoryId, itemDataBuffer, category, slotId, outItemBuffer) return Citizen.InvokeNative(0x886DFD3E185C8A89, inventoryId, itemDataBuffer, category, slotId, outItemBuffer) end
+
+local function getGuidFromItemId(inventoryId, itemData, category, slotId)
+    local outItem = DataView.ArrayBuffer(4 * 8)
+    -- INVENTORY_GET_GUID_FROM_ITEMID
+    local success = InventoryGetGuidFromItemId(inventoryId, itemData or 0, category, slotId, outItem:Buffer())
+    return success and outItem or nil
+end
+local function getWeaponStruct(weaponHash)
+
+    local charStruct = getGuidFromItemId(1, nil, GetHashKey("CHARACTER"), -1591664384)
+    local unkStruct = getGuidFromItemId(1, charStruct:Buffer(), 923904168, -740156546)
+    local weaponStruct = getGuidFromItemId(1, unkStruct:Buffer(), weaponHash, -1591664384)
+
+    return weaponStruct
+end
 -----------------------------------
 -- LOAD COMP/MAT/ENG 
 -----------------------------------
@@ -398,7 +426,6 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
     local weaponInHands = exports['rsg-weapons']:weaponInHands()
     local wepSerial = weaponInHands[weaponHash]
     local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0)
-
     local componentsSql = {}
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
         if result and #result > 0 then
@@ -446,7 +473,10 @@ end)
 
 RegisterNetEvent("rsg-weaponcomp:client:LoadComponents_selection") -- SELECTION
 AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
+    local weaponHash = GetPedCurrentHeldWeapon(cache.ped)
     local componentsPreSql = {}
+
+    local structure = getWeaponStruct(weaponHash):Buffer()
 
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
         if result and #result > 0 then
@@ -461,7 +491,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
     if Config.Debug then print('do: ', json.encode(componentsPreSql)) end
 
-    if inCustom == true then
+    if inCustom == true and structure  then
         if componentsPreSql ~= nil and currentWep ~= nil then
             for category, hashname in pairs(componentsPreSql) do
 
@@ -515,7 +545,7 @@ local mainWeaponCompMenus = {
     ["exitcommponent"] = function() TriggerEvent('rsg-weaponcomp:client:ExitCam') end
 }
 
--- MAIN MENU
+-- MAIN MENU JOB
 mainCompMenu = function(objecthash)
     MenuData.CloseAll()
     FreezeEntityPosition(cache.ped, true)
@@ -570,16 +600,23 @@ OpenComponentMenu = function(objecthash)
     for category, componentList in pairs(weaponComponents) do
         local newElement = {
             label = category,
-            value = 1,
+            value = 0,
             type = "slider",
-            min = 1,
+            min = 0,
             max = #componentList,
             category = category,
-            components = {},
+            components = {
+            },
             id = #elements + 1
         }
-
+        -- Insert "Original" option as the first component
+        table.insert(newElement.components, {
+            label = "Original",
+            value = nil,
+            v = nil,
+        })
         for index, component in ipairs(componentList) do
+
             table.insert(newElement.components, {
                 label = component.title,
                 value = component.hashname,
@@ -596,17 +633,18 @@ OpenComponentMenu = function(objecthash)
         if data.current then
             local selectedCategory = data.current.category
             local selectedIndex = data.current.value
-            local selectedDeleted = data.current.value - 1
             local selectedHash = nil
 
-            if selectedIndex > 0 and selectedIndex <= #data.current.components then
+            if selectedIndex == 0 then
+                selectedHash = nil
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
+            elseif selectedIndex >= 1 and selectedIndex <= #data.current.components then
                 selectedHash = data.current.components[selectedIndex].value
-            else
-                selectedHash = data.current.components[selectedDeleted].value
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true) -- ApplyShopItemToPed
             end
 
             if Config.Debug then print('selected', selectedHash) end
-            if selectedHash ~= creatorCache[selectedCategory] then
+            if selectedHash and selectedHash ~= creatorCache[selectedCategory] then
                 creatorCache[selectedCategory] = selectedHash
                 TriggerEvent("rsg-weaponcomp:client:update_selection", creatorCache)
                 if Config.StartCamObj == true then
@@ -813,8 +851,9 @@ OpenTintsMenu = function(objecthash)
 end
 
 -----------------------------------
--- APPLY BUTTOM -- REMOVE BUTTOM
+-- APPLY BUTTOM -- REMOVE BUTTOM -- JOB
 -----------------------------------
+
 ButtomApplyAllComponents = function (objecthash)
 
     MenuData.CloseAll()
@@ -900,7 +939,6 @@ ButtomRemoveAllComponents = function (objecthash)
     end
     componentsRemoveSql = nil
 end
-
 -----------------------------------
 -- UPDATE SELECTION
 -----------------------------------
@@ -1000,12 +1038,14 @@ RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
 AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
 
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
-
-    Wait(0)
-    if wepobject then
-        DeleteObject(wepobject)
-    end
     SetCurrentPedWeapon(cache.ped, objecthash, true)
+
+    if wepobject and DoesEntityExist(wepobject) then
+        DeleteObject(wepobject)
+        wepobject = nil -- Limpiar la variable después de eliminar el objeto
+    else
+        print("No hay objeto para eliminar o ya ha sido eliminado")
+    end
 
     local weapon_type = GetWeaponType(objecthash)
     local boneIndex2 = GetEntityBoneIndexByName(cache.ped, "SKEL_L_Finger00")
@@ -1060,11 +1100,14 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     camera = nil
     DestroyAllCams(true)
 
-    MenuData.CloseAll()
-
-    if wepobject then
+    if wepobject and DoesEntityExist(wepobject) then
         DeleteObject(wepobject)
+        wepobject = nil -- Limpiar la variable después de eliminar el objeto
+    else
+        print("No hay objeto para eliminar o ya ha sido eliminado")
     end
+
+    MenuData.CloseAll()
 
     inCustom = false
 
@@ -1102,11 +1145,12 @@ end)
 AddEventHandler('onResourceStop', function(r)
     if GetCurrentResourceName() ~= r then return end
 
-    if wepobject then
+    if wepobject ~= nil then
         DeleteObject(wepobject)
     end
 
     inCustom = false
+    DestroyAllCams(true)
     MenuData.CloseAll()
     LocalPlayer.state:set("inv_busy", false, true) -- DISABLE BLOCK INVENTORY
     FreezeEntityPosition(cache.ped , false) -- DISABLE BLOCK PLAYER

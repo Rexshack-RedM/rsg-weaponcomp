@@ -76,7 +76,7 @@ Components.LanguageWeapons = {
 
 Components.weapons_comp_list = {
 	['SHORTARM'] = { -- [1] BARREL, [7] GRIP, [5] SIGHT, [10] ROLE_ENGRAVING is off, [41] FRAME_ENGRAVING is off, [11] CLIP
-		-- ['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = {},
+		['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = {},
 		['WEAPON_REVOLVER_CATTLEMAN'] = {
 			-- SpecificComponents
 			[Components.LanguageWeapons[1]] = {
@@ -183,7 +183,7 @@ Components.weapons_comp_list = {
 				[3] = {   title = 'Crossover Sight',  hashname = 'COMPONENT_REVOLVER_NAVY_SIGHT_CROSSOVER',  category_hashname = 'sight', weapon_type = 'SHORTARM', type_weapon = 'WEAPON_REVOLVER_NAVY',      },
 			},
 		},
-		--[[ ['WEAPON_REVOLVER_NAVY_CROSSOVER'] = {}, ]]
+		['WEAPON_REVOLVER_NAVY_CROSSOVER'] = {},
 		['WEAPON_PISTOL_MAUSER'] = {
 			[Components.LanguageWeapons[1]] = {
 				[1] = { title = 'Short Barrel', price = 4, hashname = 'COMPONENT_PISTOL_MAUSER_BARREL_SHORT', category_hashname = 'barrel',    },

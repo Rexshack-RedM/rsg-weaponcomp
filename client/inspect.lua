@@ -83,16 +83,19 @@ local function getWeaponDisplayName(weaponHash, weaponObject)
 end
 
 local function updateWeaponStats(player, uiContainer, weaponHash, weaponObject)
-    Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, "stats", getWeaponStruct(weaponHash):Buffer(), player)
-    DatabindingAddDataHash(uiContainer, "itemLabel", getWeaponDisplayName(weaponHash, weaponObject))
-    DatabindingAddDataString(uiContainer, "tipText", getWeaponConditionText(weaponObject))
+        Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, "stats", getWeaponStruct(weaponHash):Buffer(), player)
+        DatabindingAddDataHash(uiContainer, "itemLabel", getWeaponDisplayName(weaponHash, weaponObject))
+        DatabindingAddDataString(uiContainer, "tipText", getWeaponConditionText(weaponObject))
 end
 
 local function initialize(player, weaponHash, weaponObject)
     local uiFlowBlock = RequestFlowBlock(GetHashKey("PM_FLOW_WEAPON_INSPECT"))
 
     local uiContainer = DatabindingAddDataContainerFromPath("", "ItemInspection")
-    DatabindingAddDataBool(uiContainer, "Visible", true)
+
+    if Config.showStats == true then
+        DatabindingAddDataBool(uiContainer, "Visible", true)
+    end
     updateWeaponStats(player, uiContainer, weaponHash, weaponObject)
 
     --Citizen.InvokeNative(0x10A93C057B6BD944, uiFlowBlock)
@@ -163,8 +166,7 @@ local function createStateMachine(uiFlowBlock)
 end
 
 local function startWeaponInspection(hasGunOil, takeGunOilCallback)
-    local player = PlayerPedId()
-    local _, weaponHash = GetCurrentPedWeapon(player, true, 0, true)
+    local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
     local interaction
 
     if IsWeaponOneHanded(weaponHash) then
@@ -173,19 +175,19 @@ local function startWeaponInspection(hasGunOil, takeGunOilCallback)
         interaction = GetHashKey("LONGARM_HOLD_ENTER")
     end
 
-    TaskItemInteraction(player, weaponHash, interaction, 1, 0, 0)
+    TaskItemInteraction(cache.ped, weaponHash, interaction, 1, 0, 0)
 
-    local weaponObject = GetObjectIndexFromEntityIndex(GetCurrentPedWeaponEntityIndex(player, 0))
+    local weaponObject = GetObjectIndexFromEntityIndex(GetCurrentPedWeaponEntityIndex(cache.ped, 0))
     local initialWeaponDegradation = clamp(GetWeaponDegradation(weaponObject) - GetWeaponPermanentDegradation(weaponObject))
     local initialWeaponDamage = clamp(GetWeaponDamage(weaponObject) - GetWeaponPermanentDegradation(weaponObject))
     local initialWeaponDirt = GetWeaponDirt(weaponObject)
     local initialWeaponSoot = GetWeaponSoot(weaponObject)
-    local uiFlowBlock, uiContainer = initialize(player, weaponHash, weaponObject)
+    local uiFlowBlock, uiContainer = initialize(cache.ped, weaponHash, weaponObject)
 
     if uiContainer then
         local state = createStateMachine(uiFlowBlock)
 
-        while shouldContinue(player) do
+        while shouldContinue(cache.ped) do
         DisableControlAction(0, GetHashKey("INPUT_NEXT_CAMERA"), true)
         --disables aim
         DisableControlAction(0, GetHashKey("INPUT_CONTEXT_LT"), true)
@@ -193,14 +195,14 @@ local function startWeaponInspection(hasGunOil, takeGunOilCallback)
         if state == 0 then
             state = createStateMachine(uiFlowBlock)
         elseif state == 1 then
-            toggleCleanPrompt(player, weaponObject, hasGunOil)
-            if GetItemInteractionFromPed(player) == GetHashKey("LONGARM_CLEAN_ENTER") or GetItemInteractionFromPed(player) == GetHashKey("SHORTARM_CLEAN_ENTER") then
+            toggleCleanPrompt(cache.ped, weaponObject, hasGunOil)
+            if GetItemInteractionFromPed(cache.ped) == GetHashKey("LONGARM_CLEAN_ENTER") or GetItemInteractionFromPed(cache.ped) == GetHashKey("SHORTARM_CLEAN_ENTER") then
             if takeGunOilCallback then takeGunOilCallback() end
             state = 2
             end
 
         elseif state == 2 then
-            if GetItemInteractionFromPed(player) == GetHashKey("LONGARM_CLEAN_EXIT") or GetItemInteractionFromPed(player) == GetHashKey("SHORTARM_CLEAN_EXIT") then
+            if GetItemInteractionFromPed(cache.ped) == GetHashKey("LONGARM_CLEAN_EXIT") or GetItemInteractionFromPed(cache.ped) == GetHashKey("SHORTARM_CLEAN_EXIT") then
             state = 3
             else
             local cleanProgress = Citizen.InvokeNative(0xBC864A70AD55E0C1, PlayerPedId(), GetHashKey("INPUT_CONTEXT_X"), Citizen.ResultAsFloat())
@@ -216,13 +218,13 @@ local function startWeaponInspection(hasGunOil, takeGunOilCallback)
                 SetWeaponDirt(weaponObject, weaponDirt)
                 SetWeaponSoot(weaponObject, weaponSoot)
 
-                updateWeaponStats(player, uiContainer, weaponHash, weaponObject)
+                updateWeaponStats(cache.ped, uiContainer, weaponHash, weaponObject)
             end
             end
 
         elseif state == 3 then
             cleanWeaponObject(weaponObject)
-            updateWeaponStats(player, uiContainer, weaponHash, weaponObject)
+            updateWeaponStats(cache.ped, uiContainer, weaponHash, weaponObject)
             state = 1
         end
 
@@ -234,14 +236,18 @@ local function startWeaponInspection(hasGunOil, takeGunOilCallback)
     end
 end
 
+AddEventHandler('onResourceStop', function(r)
+    if GetCurrentResourceName() ~= r then return end
+    Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801)
+    DatabindingRemoveDataEntry(uiContainer)
+    --ReleaseFlowBlock(uiFlowBlock) --Citizen.InvokeNative(0xF320A77DD5F781DF, uiFlowBlock)
+    Citizen.InvokeNative(0x8BC7C1F929D07BF3, GetHashKey("HUD_CTX_INSPECT_ITEM")) -- DisableHUDComponent
+
+end)
+
 exports("startWeaponInspection", function(hasGunOil, takeGunOilCallback)
     startWeaponInspection(hasGunOil, takeGunOilCallback)
 end)
-
-
------------------------------------
--- UTILITYS -- INSPECTION - OLD
------------------------------------
 
 local GetWeaponType = function(objecthash)
     local weapon_type = nil
@@ -269,6 +275,48 @@ local GetWeaponType = function(objecthash)
     return weapon_type
 end
 
+RegisterNetEvent("rsg-weaponcomp:client:InspectionWeaponNew")
+AddEventHandler("rsg-weaponcomp:client:InspectionWeaponNew", function()
+    local _, weaponHash = GetCurrentPedWeapon(PlayerPedId(), true, 0, true)
+    local weaponType = GetWeaponType(weaponHash)
+    local interaction = nil
+    local act = nil
+    local hasRepairItem = RSGCore.Functions.HasItem(Config.RepairItem)
+
+    local takeRepairItemCallback = function ()
+        Wait(0)
+        if IsWeaponOneHanded(weaponHash) and weaponType == 'SHORTARM' then
+            interaction = "SHORTARM_HOLD_ENTER"
+            act = GetHashKey("SHORTARM_CLEAN_ENTER")
+        elseif IsWeaponOneHanded(weaponHash) and weaponType == 'LONGARM' then
+            interaction = "LONGARM_HOLD_ENTER"
+            act = GetHashKey("LONGARM_CLEAN_ENTER")
+        elseif IsWeaponOneHanded(weaponHash) and weaponType == 'SHOTGUN' then
+            interaction = "LONGARM_HOLD_ENTER"
+            act = GetHashKey("LONGARM_CLEAN_ENTER")
+        elseif IsWeaponOneHanded(weaponHash) and weaponType == 'GROUP_BOW' then
+        elseif IsWeaponOneHanded(weaponHash) and weaponType == 'MELEE_BLADE' then
+        end
+        local Cloth= CreateObject(GetHashKey('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
+        local PropId = GetHashKey("CLOTH")
+        Citizen.InvokeNative(0x72F52AA2D2B172CC, cache.ped, 1242464081, Cloth, PropId, act, 1, 0, -1.0) -- TaskItemInteraction2
+        Wait(9500)
+        TriggerServerEvent('rsg-weaponcomp:server:inspectkitConsume')
+        ClearPedTasks(cache.ped, 1, 1)
+    end
+
+    if not hasRepairItem then
+        lib.notify({ title = 'Item Needed', description = "You're not holding a weapons kit repair !", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+        return
+    else
+        startWeaponInspection(hasRepairItem, takeRepairItemCallback)
+    end
+end)
+
+-----------------------------------
+-- UTILITYS -- INSPECTION - OLD
+-----------------------------------
+--[[ 
 getWeaponStats = function(weaponHash)
     local emptyStruct = DataView.ArrayBuffer(256)
     local charStruct = DataView.ArrayBuffer(256)
@@ -307,6 +355,7 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
     local object = GetObjectIndexFromEntityIndex(GetCurrentPedWeaponEntityIndex(cache.ped, 0))
     local cleaning = false
 
+    local hasGunOil = RSGCore.Functions.HasItem(Config.RepairItem)
     SetPedBlackboardBool(cache.ped, "GENERIC_WEAPON_CLEAN_PROMPT_AVAILABLE", true, -1) -- Citizen.InvokeNative(0xCB9401F918CB0F75, 
 
     if IsWeaponOneHanded(weaponHash) and weaponType == 'SHORTARM' then
@@ -322,7 +371,7 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
     elseif IsWeaponOneHanded(weaponHash) and weaponType == 'MELEE_BLADE' then
     end
 
-    if weaponHash ~= -1569615261 then
+    if weaponHash ~= -1569615261 and hasGunOil then
 
         StartTaskItemInteraction(cache.ped, weaponHash, GetHashKey(interaction), 0,0,0)
 
@@ -343,6 +392,7 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
                 local PropId = GetHashKey("CLOTH")
                 Citizen.InvokeNative(0x72F52AA2D2B172CC, cache.ped, 1242464081, Cloth, PropId, act, 1, 0, -1.0) -- TaskItemInteraction2
                 Wait(9500)
+                TriggerServerEvent('rsg-weaponcomp:server:inspectkitConsume')
                 ClearPedTasks(cache.ped, 1, 1)
 
                 if Config.showStats then
@@ -356,6 +406,7 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
 
         end
 
+
         if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
     end
-end)
+end) ]]
