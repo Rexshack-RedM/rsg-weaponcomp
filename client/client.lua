@@ -1128,6 +1128,7 @@ end)
 -- START AND STOP RESOURCE CLEAN UP
 -----------------------------------
 AddEventHandler('RSGCore:Client:OnPlayerLoaded', function()
+    LocalPlayer.state:set('isLoggedIn', true, false)
     PlayerData = RSGCore.Functions.GetPlayerData()
     Wait(5000)
     TriggerServerEvent('rsg-weaponcomp:server:check_comps')
@@ -1139,6 +1140,7 @@ AddEventHandler('onResourceStart', function(r)
 end)
 
 RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
+    LocalPlayer.state:set('isLoggedIn', false, false)
     PlayerData = {}
 end)
 
