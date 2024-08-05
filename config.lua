@@ -12,7 +12,7 @@ Config.RemovePrice       = 1.2 -- (0 - 1) = 100 % cost remove component 120%
 Config.animationSave     = 10000 -- Waiting time for application or removal components
 
 -- Job
-Config.JobType           = 'weaponsmith' -- 'gunsmith' or 'weaponsmith'
+Config.JobType           = 'gunsmith' -- 'gunsmith' or 'weaponsmith'
 Config.RepairItem        = 'weapon_repair_kit'
 
 Config.StartCamObj       = true -- false / true Camera movements with category changes during selection
