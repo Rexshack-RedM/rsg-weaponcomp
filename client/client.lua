@@ -600,9 +600,9 @@ OpenComponentMenu = function(objecthash)
     for category, componentList in pairs(weaponComponents) do
         local newElement = {
             label = category,
-            value = 0,
+            value = 1,
             type = "slider",
-            min = 0,
+            min = 1,
             max = #componentList,
             category = category,
             components = {
@@ -610,11 +610,11 @@ OpenComponentMenu = function(objecthash)
             id = #elements + 1
         }
         -- Insert "Original" option as the first component
-        table.insert(newElement.components, {
+        --[[ table.insert(newElement.components, {
             label = "Original",
             value = nil,
             v = nil,
-        })
+        }) ]]--
         for index, component in ipairs(componentList) do
 
             table.insert(newElement.components, {
