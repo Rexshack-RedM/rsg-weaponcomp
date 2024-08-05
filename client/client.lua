@@ -184,6 +184,7 @@ CreateThread(function()
                     if IsControlJustReleased(0, RSGCore.Shared.Keybinds[Config.Keybinds]) then
                         TriggerEvent('rsg-weaponcomp:client:startcustom', v.custcoords)
                     end
+		    Wait(3000) -- prevent
                 end
             end
         end
@@ -353,19 +354,20 @@ local LoadModel = function(model)
 	end
 	RequestModel(model)
 	while not HasModelLoaded(model) do
-		Wait(0)
+		Wait(100)
 	end
 	return true
 end
 
 function createobject(x, y, z, objecthash)
+
     if wepobject and DoesEntityExist(wepobject) then
         DeleteObject(wepobject)
     end
 
     for k, v in pairs(Components.weaponObject) do
-        if joaat(k) == objecthash then
-        LoadModel(v)
+        if GetHashKey(k) == objecthash then
+            LoadModel(v)
         end
     end
 
@@ -374,28 +376,25 @@ function createobject(x, y, z, objecthash)
     if wepobject and DoesEntityExist(wepobject) then
         SetEntityCoords(wepobject, x, y, z)
         SetEntityRotation(wepobject, 90.0, 0.0, 360.0, 1, true)
+    else
+        print("Error al crear el objeto")
+    end
 
-        for k, v in pairs(Components.weapons_comp_list) do
-            if joaat(v) == objecthash then
-                for k2,v2 in pairs(v) do
-                    if k2 == Components.LanguageWeapons[1] then
-                        apply_weapon_component(v2[1])
+    local weapon_type = GetWeaponType(objecthash)
+    local weaponData = Components.weapons_comp_list[weapon_type] or {}
+    for k, v in pairs(weaponData) do
+        if GetHashKey(k) == objecthash then
+            for k2, v2 in pairs(v) do
+                for i= 1, 100 do
+                    if k2 == "BARREL" then
+                        apply_weapon_component(v2[1].hashname)
                     end
-                    if k2 == Components.LanguageWeapons[7] then
-                        apply_weapon_component(v2[1])
+                    if k2 == "GRIP" then
+                        apply_weapon_component(v2[1].hashname)
                     end
                 end
             end
         end
-
-        --[[ if wep_comps ~= nil then
-            for k,v in pairs(wep_comps) do
-                apply_weapon_component(v)
-            end
-        end
-         ]]
-    else
-        print("Error al crear el objeto")
     end
 end
 
