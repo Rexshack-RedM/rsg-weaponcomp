@@ -6,6 +6,8 @@ local currentSerial = nil
 local currentName = nil
 local currentWep = nil
 
+local wep_comps = {}
+
 -- LIST POSSIBLES CATEGORYES
 local readComponent = {Components.LanguageWeapons[1], Components.LanguageWeapons[7], Components.LanguageWeapons[5], Components.LanguageWeapons[10], Components.LanguageWeapons[41], Components.LanguageWeapons[11], Components.LanguageWeapons[36],  Components.LanguageWeapons[2], Components.LanguageWeapons[37], Components.LanguageWeapons[27], Components.LanguageWeapons[31], Components.LanguageWeapons[39], Components.LanguageWeapons[38]}
 local readMaterial = {Components.LanguageWeapons[13], Components.LanguageWeapons[19], Components.LanguageWeapons[3], Components.LanguageWeapons[4], Components.LanguageWeapons[6], Components.LanguageWeapons[9], Components.LanguageWeapons[16], Components.LanguageWeapons[21], Components.LanguageWeapons[24], Components.LanguageWeapons[26], Components.LanguageWeapons[22],  Components.LanguageWeapons[23], Components.LanguageWeapons[32]}
@@ -345,9 +347,26 @@ function GameCam(hash, move_coords, objecthash)
     end
 end
 
+local LoadModel = function(model)
+	if not IsModelInCdimage(model) then
+		return false
+	end
+	RequestModel(model)
+	while not HasModelLoaded(model) do
+		Wait(0)
+	end
+	return true
+end
+
 function createobject(x, y, z, objecthash)
     if wepobject and DoesEntityExist(wepobject) then
         DeleteObject(wepobject)
+    end
+
+    for k, v in pairs(Components.weaponObject) do
+        if joaat(k) == objecthash then
+        LoadModel(v)
+        end
     end
 
     wepobject = Citizen.InvokeNative(0x9888652B8BA77F73, objecthash, 0, x, y, z, false, 1.0)
@@ -355,6 +374,26 @@ function createobject(x, y, z, objecthash)
     if wepobject and DoesEntityExist(wepobject) then
         SetEntityCoords(wepobject, x, y, z)
         SetEntityRotation(wepobject, 90.0, 0.0, 360.0, 1, true)
+
+        for k, v in pairs(Components.weapons_comp_list) do
+            if joaat(v) == objecthash then
+                for k2,v2 in pairs(v) do
+                    if k2 == Components.LanguageWeapons[1] then
+                        apply_weapon_component(v2[1])
+                    end
+                    if k2 == Components.LanguageWeapons[7] then
+                        apply_weapon_component(v2[1])
+                    end
+                end
+            end
+        end
+
+        --[[ if wep_comps ~= nil then
+            for k,v in pairs(wep_comps) do
+                apply_weapon_component(v)
+            end
+        end
+         ]]
     else
         print("Error al crear el objeto")
     end
