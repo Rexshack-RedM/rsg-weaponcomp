@@ -40,7 +40,7 @@ RSGCore.Commands.Add(Config.Command.inspect, "Opens the new inpect Weapon", {}, 
     local src = source
     if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command.w_inspect')  then
         TriggerClientEvent('rsg-weaponcomp:client:InspectionWeaponNew', src)
-    elseif IsPlayerAceAllowed(src, 'command.w_inspect')  then
+    elseif RSGCore.Functions.HasPermission(src, permissions['InspectWeapon']) then
         TriggerClientEvent('rsg-weaponcomp:client:InspectionWeaponNew', src)
     else
         TriggerClientEvent('ox_lib:notify', src, {title = 'No have permissions', description = 'No are admin', type = 'inform' })
