@@ -444,19 +444,19 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
             if Config.Debug then print( 'rsg-weaponcomp:client:LoadComponents"')  print('weaponHash: ', weaponHash, 'component: ', json.encode(componentsSql)) end
             for category, hashname in pairs(componentsSql) do
 
-                if Config.Debug then print('for category, hashname in pairs(componentsSql) do: ', category, hashname) end
+                if Config.Debug then print('for category, hashname in pairs(componentsPreSql) do: ', category, hashname) end
 
                 if table_contains(readComponent, category)  then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
                 end
                 if table_contains(readMaterial, category) then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
                 end
                 if table_contains(readEngraving, category) then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
                 end
                 if table_contains(readTints, category) then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
                 end
             end
 
