@@ -8,13 +8,25 @@ Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase' menu 
 Config.Keybinds          = 'J'
 Config.Payment           = 'money' --  'item' or  'money'
 Config.PaymentType       = 'cash' -- Payment = money you can select 'cash' or 'bloodmoney' / Payment = item you can select 'cash' or 'bloodmoney'
-
 Config.RemovePrice       = 1.2 -- (0 - 1) = 100 % cost remove component 120%
 Config.animationSave     = 10000 -- Waiting time for application or removal components
-Config.StartCamObj       = true -- false / true Camera movements with category changes during selection
 
-Config.CommandPermisions = 'admin' -- can use /customweapon 
-Config.showStats         = true -- true / false can show stats inspect
+-- Job
+Config.JobType           = 'gunsmith' -- 'gunsmith' or 'weaponsmith'
+Config.RepairItem        = 'weapon_repair_kit'
+
+Config.StartCamObj       = true -- false / true Camera movements with category changes during selection
+Config.showStats         = false -- true / false can show stats inspect
+
+Config.CommandPermisions = {
+  ['Creator'] = 'admin',
+  ["Inspect"] = ''
+}
+
+Config.Command = {
+  ['inspect']       = "w_inspect",
+  ['loadweapon']    = "loadweapon",
+}
 
 Config.CustomLocations = {
   {
@@ -129,6 +141,37 @@ Config.WeaponDamageModifiers = {
     [0x6E0F12B]     = 5.0,        -- IMPROVED BOW
 }
 
+--------------------
+-- LIMIT WEAPONS RESTRICTION
+--------------------
+Config.WeaponRestriction = {
+  'WEAPON_FISHINGROD',
+  'WEAPON_MELEE_KNIFE',
+  'WEAPON_MELEE_KNIFE_CIVIL_WAR',
+  'WEAPON_MELEE_KNIFE_JAWBONE',
+  'WEAPON_MELEE_KNIFE_MINER',
+  'WEAPON_MELEE_KNIFE_VAMPIRE',
+  'WEAPON_MELEE_CLEAVER',
+  'WEAPON_MELEE_HATCHET',
+  'WEAPON_MELEE_HATCHET_DOUBLE_BIT',
+  'WEAPON_MELEE_HATCHET_HEWING',
+  'WEAPON_MELEE_HATCHET_HUNTER',
+  'WEAPON_MELEE_HATCHET_VIKING',
+
+  'WEAPON_THROWN_TOMAHAWK',
+  'WEAPON_THROWN_THROWING_KNIVES',
+  "WEAPON_THROWN_DYNAMITE",
+
+  'WEAPON_BOW_IMPROVED',
+  'WEAPON_KIT_BINOCULARS',
+  'WEAPON_LASSO',
+  'WEAPON_LASSO_REINFORCED',
+
+  'WEAPON_REVOLVER_CATTLEMAN_MEXICAN',
+  'WEAPON_REVOLVER_NAVY_CROSSOVER',
+  'WEAPON_SNIPERRIFLE_CARCANO',
+
+}
 -------------------------
 -- EXTRA Webhooks / RANKING
 -----------------------
