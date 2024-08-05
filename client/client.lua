@@ -335,9 +335,9 @@ function GameCam(hash, move_coords, objecthash)
                 StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 90.0)
             end
         elseif weaponType == "GROUP_BOW" then
-            StartCam(move_coords.x-0.02, move_coords.y-0.1, move_coords.z+0.5, 90.0)
+            StartCam(move_coords.x-0.02, move_coords.y-0.1, move_coords.z+0.4, 90.0)
         elseif weaponType == "MELEE_BLADE" then
-            StartCam(move_coords.x-0.20, move_coords.y+0.3, move_coords.z+0.2, 90.0-15)
+            StartCam(move_coords.x+0.10, move_coords.y-0.15, move_coords.z+0.4, 90.0-15)
         end
         if Config.Debug then
             print('hey Cam Move',weaponType, hash, word, move_coords.x, move_coords.y, move_coords.z)
@@ -597,36 +597,35 @@ OpenComponentMenu = function(objecthash)
     local weaponData = Components.weapons_comp_list[weapon_type] or {}
     local weaponComponents = weaponData[currentName] or {}
     local coords = GetEntityCoords(wepobject)
-    if currentName ~= Config.WeaponRestriction then
-        for category, componentList in pairs(weaponComponents) do
-            local newElement = {
-                label = category,
-                value = 1,
-                type = "slider",
-                min = 1,
-                max = #componentList,
-                category = category,
-                components = {
-                },
-                id = #elements + 1
-            }
-            --[[ -- Insert "Original" option as the first component
+
+    for category, componentList in pairs(weaponComponents) do
+        local newElement = {
+            label = category,
+            value = 1,
+            type = "slider",
+            min = 1,
+            max = #componentList,
+            category = category,
+            components = {
+            },
+            id = #elements + 1
+        }
+        --[[ -- Insert "Original" option as the first component
+        table.insert(newElement.components, {
+            label = "Original",
+            value = nil,
+            v = nil,
+        }) ]]
+        for index, component in ipairs(componentList) do
+
             table.insert(newElement.components, {
-                label = "Original",
-                value = nil,
-                v = nil,
-            }) ]]
-            for index, component in ipairs(componentList) do
-
-                table.insert(newElement.components, {
-                    label = component.title,
-                    value = component.hashname,
-                    v = component.category_hashname,
-                })
-            end
-
-            table.insert(elements, newElement)
+                label = component.title,
+                value = component.hashname,
+                v = component.category_hashname,
+            })
         end
+
+        table.insert(elements, newElement)
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'component_weapon_menu', { title = 'Custom Component', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
@@ -670,30 +669,28 @@ OpenMaterialMenu = function(objecthash)
     local weaponData = Components.SharedComponents[weapon_type] or {}
     local coords = GetEntityCoords(wepobject)
 
-    if currentName ~= Config.WeaponRestriction then
-        for category, materialList in pairs(weaponData) do
-            local newElement = {
-                label = category,
-                value = 1,
-                type = "slider",
-                min = 1,
-                max = #materialList,
-                category = category,
-                materials = {},
-                id = #elements + 1
-            }
+    for category, materialList in pairs(weaponData) do
+        local newElement = {
+            label = category,
+            value = 1,
+            type = "slider",
+            min = 1,
+            max = #materialList,
+            category = category,
+            materials = {},
+            id = #elements + 1
+        }
 
-            for index, material in ipairs(materialList) do
-                table.insert(newElement.materials, {
-                    label = material.title,
-                    value = material.hashname,
-                    v = material.category_hashname,
-                })
-            end
-
-            table.insert(elements, newElement)
-
+        for index, material in ipairs(materialList) do
+            table.insert(newElement.materials, {
+                label = material.title,
+                value = material.hashname,
+                v = material.category_hashname,
+            })
         end
+
+        table.insert(elements, newElement)
+
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'material_weapon_menu', { title = 'Custom Materials', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
@@ -736,29 +733,27 @@ OpenEngravingMenu = function(objecthash)
     local weaponData = Components.SharedEngravingsComponents[weapon_type] or {}
     local coords = GetEntityCoords(wepobject)
 
-    if currentName ~= Config.WeaponRestriction then
-        for category, engravingList in pairs(weaponData) do
-            local newElement = {
-                label = category,
-                value = 1,
-                type = "slider",
-                min = 1,
-                max = #engravingList,
-                category = category,
-                engravings = {},
-                id = #elements + 1
-            }
+    for category, engravingList in pairs(weaponData) do
+        local newElement = {
+            label = category,
+            value = 1,
+            type = "slider",
+            min = 1,
+            max = #engravingList,
+            category = category,
+            engravings = {},
+            id = #elements + 1
+        }
 
-            for index, engraving in ipairs(engravingList) do
-                table.insert(newElement.engravings, {
-                    label = engraving.title,
-                    value = engraving.hashname,
-                    v = engraving.category_hashname,
-                })
-            end
-
-            table.insert(elements, newElement)
+        for index, engraving in ipairs(engravingList) do
+            table.insert(newElement.engravings, {
+                label = engraving.title,
+                value = engraving.hashname,
+                v = engraving.category_hashname,
+            })
         end
+
+        table.insert(elements, newElement)
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'engraving_weapon_menu', { title = 'Custom Engravings', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
@@ -801,29 +796,26 @@ OpenTintsMenu = function(objecthash)
     local weaponData = Components.SharedTintsComponents[weapon_type] or {}
     local coords = GetEntityCoords(wepobject)
 
-    if currentName ~= Config.WeaponRestriction then
-        for category, tintsList in pairs(weaponData) do
-            local newElement = {
-                label = category,
-                value = 1,
-                type = "slider",
-                min = 1,
-                max = #tintsList,
-                category = category,
-                tints = {},
-                id = #elements + 1
-            }
+    for category, tintsList in pairs(weaponData) do
+        local newElement = {
+            label = category,
+            value = 1,
+            type = "slider",
+            min = 1,
+            max = #tintsList,
+            category = category,
+            tints = {},
+            id = #elements + 1
+        }
 
-            for index, tint in ipairs(tintsList) do
-                table.insert(newElement.tints, {
-                    label = tint.title,
-                    value = tint.hashname,
-                    v = tint.category_hashname,
-                })
-            end
-            table.insert(elements, newElement)
-
+        for index, tint in ipairs(tintsList) do
+            table.insert(newElement.tints, {
+                label = tint.title,
+                value = tint.hashname,
+                v = tint.category_hashname,
+            })
         end
+        table.insert(elements, newElement)
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'tints_weapon_menu', { title = 'Custom tints', subtext = 'Options ' .. currentName, align = "bottom-left", elements = elements, itemHeight = "2vh",
