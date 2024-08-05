@@ -610,12 +610,12 @@ OpenComponentMenu = function(objecthash)
                 },
                 id = #elements + 1
             }
-            -- Insert "Original" option as the first component
+            --[[ -- Insert "Original" option as the first component
             table.insert(newElement.components, {
                 label = "Original",
                 value = nil,
                 v = nil,
-            })
+            }) ]]
             for index, component in ipairs(componentList) do
 
                 table.insert(newElement.components, {
@@ -1078,8 +1078,8 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
         c_offset = 0.15
     elseif weapon_type == 'GROUP_BOW' then
         animDict = "mech_weapons_special@bow@base"
-        animName = ""
-        c_zoom = 1.5
+        animName = "clean_loop"
+        c_zoom = 1.2
         c_offset = 0.15
     elseif weapon_type == 'MELEE_BLADE' then
         animDict = "amb_camp@world_camp_jack_es_seat_chair_table@eating@fork_knife@chewing@male_a@trans"
