@@ -184,6 +184,7 @@ CreateThread(function()
                     if IsControlJustReleased(0, RSGCore.Shared.Keybinds[Config.Keybinds]) then
                         TriggerEvent('rsg-weaponcomp:client:startcustom', v.custcoords)
                     end
+		    Wait(3000) -- prevent
                 end
             end
         end
@@ -353,7 +354,7 @@ local LoadModel = function(model)
 	end
 	RequestModel(model)
 	while not HasModelLoaded(model) do
-		Wait(0)
+		Wait(100)
 	end
 	return true
 end
@@ -387,10 +388,10 @@ function createobject(x, y, z, objecthash)
                 for i= 1, 100 do
                     if k2 == "BARREL" then
                         apply_weapon_component(v2[1].hashname)
-					end
-					if k2 == "GRIP" then
+                    end
+                    if k2 == "GRIP" then
                         apply_weapon_component(v2[1].hashname)
-					end
+                    end
                 end
             end
         end
