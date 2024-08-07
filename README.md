@@ -28,28 +28,8 @@ Basically it would be doing a debug, I think I am very organized and my programm
 # Admin
 
 ```
-/customweapon -- open menu
 /loadweapon -- refresh skin weapon
-/w_damage -- change damage wepaons
-/w_inspect -- inspect weapon
-/w_scope -- active scope in weapon
-```
-# option for ox_lib
-```lua
- { title = 'Weapon modifications',
-    icon = 'fa-solid fa-sack-dollar',
-    description = 'Modify a player's weapons!',
-    event ='rsg-weaponcomp:client:OpenCreatorWeapon',
-    arrow = true
- },
-```
-# client
-```lua
-TriggerEvent('rsg-weaponcomp:client:OpenCreatorWeapon')
-```
-# server
-```lua
-TriggerClientEvent('rsg-weaponcomp:client:OpenCreatorWeapon', src)
+/w_inspect -- inspect weapon need item weapon_repair_kit
 ```
 
 # Version oficial or learning thanks

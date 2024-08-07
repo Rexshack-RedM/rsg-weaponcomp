@@ -76,7 +76,7 @@ Components.LanguageWeapons = {
 
 Components.weapons_comp_list = {
 	['SHORTARM'] = { -- [1] BARREL, [7] GRIP, [5] SIGHT, [10] ROLE_ENGRAVING is off, [41] FRAME_ENGRAVING is off, [11] CLIP
-		['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = {},
+		-- ['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = {},
 		['WEAPON_REVOLVER_CATTLEMAN'] = {
 			-- SpecificComponents
 			[Components.LanguageWeapons[1]] = {
@@ -120,11 +120,11 @@ Components.weapons_comp_list = {
 				[2] = { title = 'Narrow Sight', price = 4, hashname = 'COMPONENT_REVOLVER_DOUBLEACTION_SIGHT_NARROW', category_hashname = 'sight', weapon_type = 'SHORTARM', type_weapon = 'WEAPON_REVOLVER_DOUBLEACTION',     },
 			},
 		},
-		['WEAPON_REVOLVER_DOUBLEACTION_EXOTIC'] = {
-			[Components.LanguageWeapons[7]] = {
-				[1] = { title = 'Exotic Grip', price = 4, hashname = 'COMPONENT_REVOLVER_DOUBLEACTION_GRIP_EXOTIC', category_hashname = 'grip', weapon_type = 'SHORTARM', type_weapon = 'WEAPON_REVOLVER_DOUBLEACTION_EXOTIC',    },
-			},
-		},
+		-- ['WEAPON_REVOLVER_DOUBLEACTION_EXOTIC'] = {
+		-- 	[Components.LanguageWeapons[7]] = {
+		-- 		[1] = { title = 'Exotic Grip', price = 4, hashname = 'COMPONENT_REVOLVER_DOUBLEACTION_GRIP_EXOTIC', category_hashname = 'grip', weapon_type = 'SHORTARM', type_weapon = 'WEAPON_REVOLVER_DOUBLEACTION_EXOTIC',    },
+		-- 	},
+		-- },
 		['WEAPON_REVOLVER_LEMAT'] = {
 			[Components.LanguageWeapons[1]] = {
 				[1] = { title = 'Short Barrel', price = 4, hashname = 'COMPONENT_REVOLVER_LEMAT_BARREL_SHORT', category_hashname = 'barrel', weapon_type = 'SHORTARM', type_weapon = 'WEAPON_REVOLVER_LEMAT',   },
@@ -183,7 +183,7 @@ Components.weapons_comp_list = {
 				[3] = {   title = 'Crossover Sight',  hashname = 'COMPONENT_REVOLVER_NAVY_SIGHT_CROSSOVER',  category_hashname = 'sight', weapon_type = 'SHORTARM', type_weapon = 'WEAPON_REVOLVER_NAVY',      },
 			},
 		},
-		['WEAPON_REVOLVER_NAVY_CROSSOVER'] = {},
+		-- ['WEAPON_REVOLVER_NAVY_CROSSOVER'] = {},
 		['WEAPON_PISTOL_MAUSER'] = {
 			[Components.LanguageWeapons[1]] = {
 				[1] = { title = 'Short Barrel', price = 4, hashname = 'COMPONENT_PISTOL_MAUSER_BARREL_SHORT', category_hashname = 'barrel',    },
@@ -370,7 +370,7 @@ Components.weapons_comp_list = {
 			-- 	[1] = { title = 'Winter Frame', price = 4, hashname = 'COMPONENT_LONGARM_ROLE_ENGRAVING_EVANS_WINTER', category_hashname = 'frame',    },
 			-- },
 		},
-		['WEAPON_SNIPERRIFLE_ROLLINGBLOCK'] = {
+		['WEAPON_SNIPERRIFLE_CARCANO'] = {
 			[Components.LanguageWeapons[7]] = {
 				[1] = { title = 'Grip', price = 4, hashname = 'COMPONENT_RIFLE_CARCANO_GRIP', category_hashname = 'grip',    },
 				[2] = { title = 'Engraved Grip', price = 4, hashname = 'COMPONENT_RIFLE_CARCANO_GRIP_ENGRAVED', category_hashname = 'grip',    },
@@ -394,7 +394,7 @@ Components.weapons_comp_list = {
 				[6] = { title = 'Wrap 6', price = 4, hashname = 'COMPONENT_RIFLE_CARCANO_WRAP6',  category_hashname = 'wrap',      },
 			},
 		},
-		['WEAPON_SNIPERRIFLE_CARCANO'] = {
+		['WEAPON_SNIPERRIFLE_ROLLINGBLOCK'] = {
 			[Components.LanguageWeapons[7]] = {
 				[1] = { title = 'Grip', price = 4, hashname = 'COMPONENT_SNIPERRIFLE_ROLLINGBLOCK_GRIP', category_hashname = 'grip',    },
 				[2] = { title = 'Exotic Grip', price = 4, hashname = 'COMPONENT_SNIPERRIFLE_ROLLINGBLOCK_GRIP_EXOTIC', category_hashname = 'grip',    },
@@ -708,11 +708,11 @@ Components.weapons_comp_list = {
 		['WEAPON_MELEE_HATCHET_VIKING'] = {},
 		['WEAPON_THROWN_TOMAHAWK'] = {},
 		['WEAPON_THROWN_THROWING_KNIVES'] = {},
-		["WEAPON_THROWN_DYNAMITE"] = {
-			[Components.LanguageWeapons[39]] = {
-				[1] = { title = 'Grip', price = 4, hashname = 'COMPONENT_DYNAMITE_MOLOTOV_TORCH_MATCHSTICK', category_hashname = 'grip', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_THROWN_DYNAMITE',},
-			},
-		},
+		-- ["WEAPON_THROWN_DYNAMITE"] = {
+		-- 	[Components.LanguageWeapons[39]] = {
+		-- 		[1] = { title = 'Grip', price = 4, hashname = 'COMPONENT_DYNAMITE_MOLOTOV_TORCH_MATCHSTICK', category_hashname = 'grip', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_THROWN_DYNAMITE',},
+		-- 	},
+		-- },
 		['WEAPON_MELEE_MACHETE'] = {},
 		['WEAPON_MELEE_MACHETE_COLLECTOR'] = {},
 		['WEAPON_BOW'] = {},
