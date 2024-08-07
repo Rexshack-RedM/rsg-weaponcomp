@@ -243,6 +243,38 @@ function apply_weapon_component(weapon_component_hash)
     end
 end
 
+local function apply_weapon_comp(weapon_component_hash)
+	local weapon_component_model_hash = Citizen.InvokeNative(0x59DE03442B6C9598, GetHashKey(weapon_component_hash))
+	if weapon_component_model_hash and weapon_component_model_hash ~= 0 then
+		RequestModel(weapon_component_model_hash)
+		local i = 0
+		while not HasModelLoaded(weapon_component_model_hash) and i <= 300 do
+			i = i + 1
+			Wait(100)
+		end
+		if HasModelLoaded(weapon_component_model_hash) then
+            if inCustom == true then
+                Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
+                SetModelAsNoLongerNeeded(weapon_component_model_hash)
+                Wait(100)
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+            else
+                Citizen.InvokeNative(0x74C9090FDD1BB48E, cache.ped, GetHashKey(weapon_component_hash), -1, true)
+                SetModelAsNoLongerNeeded(weapon_component_model_hash)
+                Wait(100)
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+            end
+        end
+	else
+        if inCustom == true then
+            Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+        else
+            Citizen.InvokeNative(0x74C9090FDD1BB48E, cache.ped, GetHashKey(weapon_component_hash), -1, true)
+            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+        end
+    end
+end
 ---------------------------------
 -- Cams and object
 ---------------------------------
@@ -308,14 +340,14 @@ function GameCam(hash, move_coords, objecthash)
             end
         elseif weaponType == "SHOTGUN" then
             if string.match(word, "SIGHT") then
-                StartCam(move_coords.x+0.15, move_coords.y-0.10, move_coords.z+0.20, 60.0-15.0)
+                StartCam(move_coords.x+0.15, move_coords.y-0.10, move_coords.z+0.20, 60.0)
             elseif string.match(word, "SCOPE") then
                 StartCam(move_coords.x+0.20, move_coords.y-0.05, move_coords.z+0.30, 60.0)
 
             elseif string.match(word, "WRAP") then
-                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-5.0)
+                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-10.0)
             elseif string.match(word, "GRIP") then
-                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-5.0)
+                StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-10.0)
 
             elseif string.match(word, "BARREL") then
                 StartCam(move_coords.x+0.40, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
@@ -339,9 +371,9 @@ function GameCam(hash, move_coords, objecthash)
             -- elseif string.match(word, "BARREL") then
             --     StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 60.0)
             elseif string.match(word, "SIGHT") then
-                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.20, 60.0-15.0)
-            -- elseif string.match(word, "CLIP") then
-            --     StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0-15.0)
+                StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.20, 60.0)
+            elseif string.match(word, "CLIP") then
+                StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0)
             -- elseif string.match(word, "CYLINDER") then
                 -- StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0-15.0)
             -- elseif string.match(word, "FRAME") then
@@ -351,7 +383,7 @@ function GameCam(hash, move_coords, objecthash)
             -- elseif string.match(word, "TRIGGER") then
             --     StartCam(move_coords.x-0.01, move_coords.y+0.03, move_coords.z+0.25, 60.0-25.0)
             else
-                StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 90.0)
+                StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 90.0-10.0)
             end
         elseif weaponType == "GROUP_BOW" then
             StartCam(move_coords.x-0.02, move_coords.y-0.1, move_coords.z+0.4, 90.0)
@@ -367,7 +399,7 @@ end
 local LoadModel = function(model)
 	if not IsModelInCdimage(model) then return false end
 	RequestModel(model)
-	while not HasModelLoaded(model) do Wait(0) end return true
+	while not HasModelLoaded(model) do Wait(100) end return true
 end
 
 local function applyfirst(objecthash)
@@ -385,34 +417,34 @@ local function applyfirst(objecthash)
             for k2, v2 in pairs(v) do
                 for i= 1, 100 do
                     if k2 == "BARREL" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "GRIP" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "MAG" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "CLIP" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "BINOCULARS" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "STOCK" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "TUBE" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "TORCH MATCHSTICK" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "FISHING" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                     if k2 == "SIGHT" then
-                        apply_weapon_component(v2[1].hashname)
+                        apply_weapon_comp(v2[1].hashname)
                     end
                 end
             end
@@ -595,8 +627,8 @@ elseif Config.MenuData == 'menu_base' then
     end)
 end
 
-local 
- =  or {}
+local creatorCache
+creatorCache = creatorCache or {}
 
 local mainWeaponCompMenus = {
     ["component"] = function(objecthash) OpenComponentMenu(objecthash) end,
@@ -1000,25 +1032,25 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp)
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
             if table_contains(readMaterial, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
             if table_contains(readEngraving, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
             if table_contains(readTints, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
         end
 
