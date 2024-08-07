@@ -34,15 +34,15 @@ Config.CustomLocations = {
     prompt = 'val_custom',
     gunsmithid = 'valgunsmith',
     coords = vector3(-280.98, 778.88, 119.50),
-    custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
+    custcoords = vector4(-281.40, 779.86, 119.58, 75.0),
     jobaccess = 'valgunsmith',
   },
   {
     name = 'Customs',
     prompt = 'rho_custom',
     gunsmithid = 'rhogunsmith',
-    coords = vector3(1323.16, -1321.54, 77.91),
-    custcoords = vector4(1323.07, -1322.34, 77.95, 0.0),
+    coords = vector3(1321.98, -1323.23, 77.89),
+    custcoords = vector4(1322.368, -1322.256, 77.937, 75.0),
     jobaccess = 'rhogunsmith',
   },
   {
@@ -50,26 +50,26 @@ Config.CustomLocations = {
     prompt = 'tum_custom',
     gunsmithid = 'tumgunsmith',
     coords = vector3(-5508.35, -2964.26, -0.54),
-    custcoords = vector4(-5507.34, -2963.81, -0.59, 60.0),
+    custcoords = vector4(-5507.34, -2963.81, -0.59, 75.0),
     jobaccess = 'tumgunsmith',
   },
   {
     name = 'Customs',
     prompt = 'std_custom',
     gunsmithid = 'stdgunsmith',
-    coords = vector3(2715.39, -1285.63, 49.80),
-    custcoords = vector4(2715.97, -1286.54, 49.72, 0.0),
+    coords = vector3(2716.06, -1287.55, 49.63),
+    custcoords = vector4(2715.55322265625, -1286.741455078125, 49.6799087524414, 75.0),
     jobaccess = 'stdgunsmith',
   },
   {
     name = 'Customs',
     prompt = 'Ann_custom',
     gunsmithid = 'anngunsmith',
-    coords = vector3(-280.98, 778.88, 119.50),
-    custcoords = vector4(-281.40, 779.86, 119.58, 90.0),
+    coords = vector3(2948.48, 1319.55, 44.82),
+    custcoords = vector4(2947.630, 1319.90, 44.86, 75.0),
     jobaccess = 'anngunsmith',
   },
-  --[[ 
+  --[[
   -- EXTRA LOCATIONS
   {
     name = 'Customs',
@@ -94,7 +94,8 @@ Config.CustomLocations = {
     coords = vector3(1322.02, -6980.69, 61.97),
     custcoords = vector4(1322.02, -6980.69, 61.97, 6.0),
     jobaccess = 'guagunsmith',
-  }, ]]
+  }, 
+  ]]
 }
 
 -------------------------
@@ -169,9 +170,9 @@ Config.WeaponRestriction = {
 
   'WEAPON_REVOLVER_CATTLEMAN_MEXICAN',
   'WEAPON_REVOLVER_NAVY_CROSSOVER',
-  'WEAPON_SNIPERRIFLE_CARCANO',
 
 }
+
 -------------------------
 -- EXTRA Webhooks / RANKING
 -----------------------
