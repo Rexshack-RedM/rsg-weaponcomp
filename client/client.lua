@@ -595,8 +595,8 @@ elseif Config.MenuData == 'menu_base' then
     end)
 end
 
-local creatorCache
-creatorCache = creatorCache or {}
+local 
+ =  or {}
 
 local mainWeaponCompMenus = {
     ["component"] = function(objecthash) OpenComponentMenu(objecthash) end,
@@ -641,7 +641,7 @@ mainCompMenu = function(objecthash)
         menu.close()
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- sql clean custom
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
-        creatorCache = nil
+
         Wait(1000)
 
     end)
@@ -693,10 +693,10 @@ OpenComponentMenu = function(objecthash)
 
             if selectedIndex == 0 then
                 selectedHash = nil
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
+                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
             elseif selectedIndex >= 1 and selectedIndex <= #data.current.components then
                 selectedHash = data.current.components[selectedIndex].value
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true) -- ApplyShopItemToPed
+                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true) -- ApplyShopItemToPed
             end
 
             if Config.Debug then print('selected', selectedHash) end
@@ -1000,25 +1000,25 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp)
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
             if table_contains(readMaterial, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
             if table_contains(readEngraving, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
             if table_contains(readTints, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
+                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
         end
 
