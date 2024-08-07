@@ -634,13 +634,13 @@ function OpenComponentMenu(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
 
-    local elementsA = {}
+    local elements = {}
     local weaponData = Components.weapons_comp_list[currentType]
     local weaponComponents = weaponData[currentName]
     local coords = GetEntityCoords(wepobject)
 
     for category, componentList in pairs(weaponComponents) do
-        local newElementA = {
+        local newElement = {
             label = category,
             value = 1,
             type = "slider",
@@ -652,17 +652,18 @@ function OpenComponentMenu(objecthash)
         }
 
         for i, component in ipairs(componentList) do
-            newElementA.components[#newElementA.components+1] = {label = component.title, value = component.hashname}
+            -- table.insert(newElement.components, {label = component.title, value = component.hashname})
+            newElement.components[#newElement.components+1] = {label = component.title, value = component.hashname}
         end
-
-        elementsA[#elementsA+1] = newElementA
+        -- table.insert(elements, newElement)
+        elements[#elements+1] = newElement
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'component_weapon_menu', {
         title = 'Custom Component',
         subtext = 'Options ' .. currentName,
         align = "bottom-left",
-        elements = elementsA,
+        elements = elements,
         itemHeight = "2vh"
     }, function(data, menu)
         if data.current then
@@ -696,12 +697,12 @@ function OpenMaterialMenu(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
 
-    local elementsB = {}
+    local elements = {}
     local weaponData = Components.SharedComponents[currentType]
     local coords = GetEntityCoords(wepobject)
 
     for category, materialList in pairs(weaponData) do
-        local newElementB = {
+        local newElement = {
             label = category,
             value = 1,
             type = "slider",
@@ -713,18 +714,18 @@ function OpenMaterialMenu(objecthash)
         }
 
         for i, material in ipairs(materialList) do
-            newElementB.materials[#newElementB.materials+1] = {label = material.title, value = material.hashname}
+            -- table.insert(newElement.materials, {label = material.title, value = material.hashname})
+            newElement.materials[#newElement.materials+1] = {label = material.title, value = material.hashname}
         end
-
-        elementsB[#elementsB+1] = newElementB
-
+        -- table.insert(elements, newElement)
+        elements[#elements+1] = newElement
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'material_weapon_menu', {
         title = 'Custom Materials',
         subtext = 'Options ' .. currentName,
         align = "bottom-left",
-        elements = elementsB,
+        elements = elements,
         itemHeight = "2vh",
     }, function(data, menu)
         if data.current then
@@ -759,12 +760,12 @@ function OpenEngravingMenu(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
 
-    local elementsC = {}
+    local elements = {}
     local weaponData = Components.SharedEngravingsComponents[currentType]
     local coords = GetEntityCoords(wepobject)
 
     for category, engravingList in pairs(weaponData) do
-        local newElementC = {
+        local newElement = {
             label = category,
             value = 1,
             type = "slider",
@@ -776,18 +777,18 @@ function OpenEngravingMenu(objecthash)
         }
 
         for i, engraving in ipairs(engravingList) do
-            newElementC.engravings[#newElementC.engravings+1] = {label = engraving.title, value = engraving.hashname}
+            -- table.insert(newElement.engravings, {label = engraving.title, value = engraving.hashname})
+            newElement.engravings[#newElement.engravings+1] = {label = engraving.title, value = engraving.hashname}
         end
-
-        elementsC[#elementsC+1] = newElementC
-
+        -- table.insert(elements, newElement)
+        elements[#elements+1] = newElement
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'engraving_weapon_menu', {
         title = 'Custom Engravings',
         subtext = 'Options ' .. currentName,
         align = "bottom-left",
-        elements = elementsC,
+        elements = elements,
         itemHeight = "2vh",
     }, function(data, menu)
         if data.current then
@@ -822,12 +823,12 @@ function OpenTintsMenu(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
 
-    local elementsD = {}
+    local elements = {}
     local weaponData = Components.SharedTintsComponents[currentType]
     local coords = GetEntityCoords(wepobject)
 
     for category, tintsList in pairs(weaponData) do
-        local newElementD = {
+        local newElement = {
             label = category,
             value = 1,
             type = "slider",
@@ -839,17 +840,18 @@ function OpenTintsMenu(objecthash)
         }
 
         for index, tint in ipairs(tintsList) do
-            newElementD.tints[#newElementD.tints+1] = {label = tint.title, value = tint.hashname}
+            -- table.insert(newElement.tints, {label = tint.title, value = tint.hashname})
+            newElement.tints[#newElement.tints+1] = {label = tint.title, value = tint.hashname}
         end
-        elementsD[#elementsD+1] = newElementD
-
+        -- table.insert(elements, newElement)
+        elements[#elements+1] = newElement
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'tints_weapon_menu', {
         title = 'Custom tints',
         subtext = 'Options ' .. currentName,
         align = "bottom-left",
-        elements = elementsD,
+        elements = elements,
         itemHeight = "2vh",
     }, function(data, menu)
 
