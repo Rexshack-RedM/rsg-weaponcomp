@@ -1,6 +1,5 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
-
 -----------------------------------
 -- UTILITYS -- INSPECTION - NEW
 -----------------------------------
@@ -93,9 +92,7 @@ local function initialize(player, weaponHash, weaponObject)
 
     local uiContainer = DatabindingAddDataContainerFromPath("", "ItemInspection")
 
-    if Config.showStats == true then
-        DatabindingAddDataBool(uiContainer, "Visible", true)
-    end
+    DatabindingAddDataBool(uiContainer, "Visible", true)
     updateWeaponStats(player, uiContainer, weaponHash, weaponObject)
 
     --Citizen.InvokeNative(0x10A93C057B6BD944, uiFlowBlock)
@@ -164,6 +161,33 @@ local function createStateMachine(uiFlowBlock)
 
     return 1
 end
+
+local GetWeaponType = function(objecthash)
+    local weapon_type = nil
+    if objecthash ~= nil then
+        if GetHashKey('GROUP_REPEATER') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "LONGARM"
+        elseif GetHashKey('GROUP_SHOTGUN') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "SHOTGUN"
+        elseif GetHashKey('GROUP_HEAVY') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "LONGARM"
+        elseif GetHashKey('GROUP_RIFLE') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "LONGARM"
+        elseif GetHashKey('GROUP_SNIPER') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "LONGARM"
+        elseif GetHashKey('GROUP_REVOLVER') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "SHORTARM"
+        elseif GetHashKey('GROUP_PISTOL') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "SHORTARM"
+        elseif GetHashKey('GROUP_BOW') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "GROUP_BOW"
+        elseif GetHashKey('GROUP_MELEE') == GetWeapontypeGroup(objecthash) then
+            weapon_type = "MELEE_BLADE"
+        end
+    end
+    return weapon_type
+end
+
 
 local function startWeaponInspection(hasGunOil, takeGunOilCallback)
     local _, weaponHash = GetCurrentPedWeapon(cache.ped, true, 0, true)
@@ -249,32 +273,6 @@ exports("startWeaponInspection", function(hasGunOil, takeGunOilCallback)
     startWeaponInspection(hasGunOil, takeGunOilCallback)
 end)
 
-local GetWeaponType = function(objecthash)
-    local weapon_type = nil
-    if objecthash ~= nil then
-        if GetHashKey('GROUP_REPEATER') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_SHOTGUN') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "SHOTGUN"
-        elseif GetHashKey('GROUP_HEAVY') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_RIFLE') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_SNIPER') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_REVOLVER') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "SHORTARM"
-        elseif GetHashKey('GROUP_PISTOL') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "SHORTARM"
-        elseif GetHashKey('GROUP_BOW') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "GROUP_BOW"
-        elseif GetHashKey('GROUP_MELEE') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "MELEE_BLADE"
-        end
-    end
-    return weapon_type
-end
-
 RegisterNetEvent("rsg-weaponcomp:client:InspectionWeaponNew")
 AddEventHandler("rsg-weaponcomp:client:InspectionWeaponNew", function()
     local _, weaponHash = GetCurrentPedWeapon(PlayerPedId(), true, 0, true)
@@ -295,9 +293,17 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeaponNew", function()
             interaction = "LONGARM_HOLD_ENTER"
             act = GetHashKey("LONGARM_CLEAN_ENTER")
         elseif IsWeaponOneHanded(weaponHash) and weaponType == 'GROUP_BOW' then
+            interaction = "LONGARM_HOLD_ENTER"
+            act = GetHashKey("LONGARM_CLEAN_ENTER")
         elseif IsWeaponOneHanded(weaponHash) and weaponType == 'MELEE_BLADE' then
+            interaction = "SHORTARM_HOLD_ENTER"
+            act = GetHashKey("SHORTARM_CLEAN_ENTER")
         end
-        local Cloth= CreateObject(GetHashKey('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
+
+        StartTaskItemInteraction(cache.ped, weaponHash, GetHashKey(interaction), 0,0,0)
+
+        local coords = GetEntityCoords(cache.ped)
+        local Cloth= CreateObject(GetHashKey('s_balledragcloth01x'), coords, false, true, false, false, true)
         local PropId = GetHashKey("CLOTH")
         Citizen.InvokeNative(0x72F52AA2D2B172CC, cache.ped, 1242464081, Cloth, PropId, act, 1, 0, -1.0) -- TaskItemInteraction2
         Wait(9500)
@@ -316,7 +322,7 @@ end)
 -----------------------------------
 -- UTILITYS -- INSPECTION - OLD
 -----------------------------------
---[[ 
+ 
 getWeaponStats = function(weaponHash)
     local emptyStruct = DataView.ArrayBuffer(256)
     local charStruct = DataView.ArrayBuffer(256)
@@ -409,4 +415,5 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
 
         if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
     end
-end) ]]
+end) 
+--[[]]

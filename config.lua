@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Debug = false
+Config.Debug = true
 
 Config.Notify            = 'ox_lib' -- 'ox_lib' or 'rnotify' notify selection
 Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase' menu selection
@@ -16,12 +16,7 @@ Config.JobType           = 'gunsmith' -- 'gunsmith' or 'weaponsmith'
 Config.RepairItem        = 'weapon_repair_kit'
 
 Config.StartCamObj       = true -- false / true Camera movements with category changes during selection
-Config.showStats         = false -- true / false can show stats inspect
-
-Config.CommandPermisions = {
-  ['Creator'] = 'admin',
-  ["Inspect"] = ''
-}
+Config.showStats         = true -- true / false can show stats inspect
 
 Config.Command = {
   ['inspect']       = "w_inspect",
@@ -146,8 +141,6 @@ Config.WeaponDamageModifiers = {
 -- LIMIT WEAPONS RESTRICTION
 --------------------
 Config.WeaponRestriction = {
-  'WEAPON_FISHINGROD',
-  'WEAPON_MELEE_KNIFE',
   'WEAPON_MELEE_KNIFE_CIVIL_WAR',
   'WEAPON_MELEE_KNIFE_JAWBONE',
   'WEAPON_MELEE_KNIFE_MINER',
@@ -163,7 +156,6 @@ Config.WeaponRestriction = {
   'WEAPON_THROWN_THROWING_KNIVES',
   "WEAPON_THROWN_DYNAMITE",
 
-  'WEAPON_BOW_IMPROVED',
   'WEAPON_KIT_BINOCULARS',
   'WEAPON_LASSO',
   'WEAPON_LASSO_REINFORCED',
@@ -172,7 +164,6 @@ Config.WeaponRestriction = {
   'WEAPON_REVOLVER_NAVY_CROSSOVER',
 
 }
-
 -------------------------
 -- EXTRA Webhooks / RANKING
 -----------------------

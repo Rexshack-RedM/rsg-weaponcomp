@@ -2,6 +2,7 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 
 local inCustom = false
 local wepobject = nil
+local camera = nil
 local currentSerial = nil
 local currentName = nil
 local currentWep = nil
@@ -81,7 +82,6 @@ end
 local ComponentsTables = function(Table)
     if Table ~= nil then
         for category, hashname in pairs(Table) do
-            -- local weaponFound = false
 
             for weaponType, weapons in pairs(Components.weapons_comp_list) do
                 for weaponName, categories in pairs(weapons) do
@@ -89,42 +89,38 @@ local ComponentsTables = function(Table)
                         for _, component in ipairs(categories[category]) do
                             if component.hashname == hashname then
                                 apply_weapon_component(hashname)
-                                -- weaponFound = true
                             end
                         end
                     end
                 end
             end
-
-            -- if weaponFound then
-                for weaponType, categories in pairs(Components.SharedComponents) do
-                    if categories[category] then
-                        for _, component in ipairs(categories[category]) do
-                            if component.hashname == hashname then
-                                apply_weapon_component(hashname)
-                            end
+            for weaponType, categories in pairs(Components.SharedComponents) do
+                if categories[category] then
+                    for _, component in ipairs(categories[category]) do
+                        if component.hashname == hashname then
+                            apply_weapon_component(hashname)
                         end
                     end
                 end
-                for weaponType, categories in pairs(Components.SharedEngravingsComponents) do
-                    if categories[category] then
-                        for _, component in ipairs(categories[category]) do
-                            if component.hashname == hashname then
-                                apply_weapon_component(hashname)
-                            end
+            end
+            for weaponType, categories in pairs(Components.SharedEngravingsComponents) do
+                if categories[category] then
+                    for _, component in ipairs(categories[category]) do
+                        if component.hashname == hashname then
+                            apply_weapon_component(hashname)
                         end
                     end
                 end
-                for weaponType, categories in pairs(Components.SharedTintsComponents) do
-                    if categories[category] then
-                        for _, component in ipairs(categories[category]) do
-                            if component.hashname == hashname then
-                                apply_weapon_component(hashname)
-                            end
+            end
+            for weaponType, categories in pairs(Components.SharedTintsComponents) do
+                if categories[category] then
+                    for _, component in ipairs(categories[category]) do
+                        if component.hashname == hashname then
+                            apply_weapon_component(hashname)
                         end
                     end
                 end
-            -- end
+            end
         end
     end
 end
@@ -243,57 +239,17 @@ function apply_weapon_component(weapon_component_hash)
     end
 end
 
-local function apply_weapon_comp(weapon_component_hash)
-	local weapon_component_model_hash = Citizen.InvokeNative(0x59DE03442B6C9598, GetHashKey(weapon_component_hash))
-	if weapon_component_model_hash and weapon_component_model_hash ~= 0 then
-		RequestModel(weapon_component_model_hash)
-		local i = 0
-		while not HasModelLoaded(weapon_component_model_hash) and i <= 300 do
-			i = i + 1
-			Wait(100)
-		end
-		if HasModelLoaded(weapon_component_model_hash) then
-            if inCustom == true then
-                Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
-                SetModelAsNoLongerNeeded(weapon_component_model_hash)
-                Wait(100)
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
-            else
-                Citizen.InvokeNative(0x74C9090FDD1BB48E, cache.ped, GetHashKey(weapon_component_hash), -1, true)
-                SetModelAsNoLongerNeeded(weapon_component_model_hash)
-                Wait(100)
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
-            end
-        end
-	else
-        if inCustom == true then
-            Citizen.InvokeNative(0x74C9090FDD1BB48E, wepobject, GetHashKey(weapon_component_hash), -1, true)
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
-        else
-            Citizen.InvokeNative(0x74C9090FDD1BB48E, cache.ped, GetHashKey(weapon_component_hash), -1, true)
-            Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(weapon_component_hash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
-        end
-    end
-end
 ---------------------------------
 -- Cams and object
 ---------------------------------
 function StartCam(x,y,z,zoom)
-    -- if zoom < 30 or zoom > 100 then if Config.Debug then print("Error: Zoom (30 - 100)") end return end
-    if not camera then
-        DestroyAllCams(true)
-        local camera_pos = GetObjectOffsetFromCoords(x, y, z ,0.0 ,1.0, 1.0, 1.0)
-        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z+0.5, -90.00, 00.00, -180.0, zoom, true, 0)
-
-        SetCamActive(camera ,true)
-        RenderScriptCams(true, true, 1000, true, true)
-    elseif camera then
+    if camera then
         DestroyCam(camera, true)
-
-        camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z, -90.00, 00.00, -180.0, zoom, true, 0)
-        SetCamActive(camera ,true)
-        RenderScriptCams(true, true, 1000, true, true)
+        camera = nil
     end
+    camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z, -90.00, 00.00, -180.0, zoom, true, 0)
+    SetCamActive(camera, true)
+    RenderScriptCams(true, true, 2000, true, true)
 end
 
 local function getWordsFromHash(hash)
@@ -307,8 +263,6 @@ end
 function GameCam(hash, move_coords, objecthash)
     local weaponType = GetWeaponType(objecthash)
     local words = getWordsFromHash(hash)
-    -- local weapon_dimensions = Components.weapons_coords[weaponType]
-    -- local dimensions = weapon_dimensions[objecthash]
 
     for _, word in ipairs(words) do
         if weaponType == "LONGARM" then
@@ -326,15 +280,8 @@ function GameCam(hash, move_coords, objecthash)
                 StartCam(move_coords.x+0.40, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "TRIGGER") then
                  StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.30, 60.0)
-
-
             elseif string.match(word, "CYLINDER") then
                 StartCam(move_coords.x+0.0, move_coords.y+0.00, move_coords.z+0.30, 75.0)
-            -- elseif string.match(word, "FRAME") then
-            --     StartCam(move_coords.x-0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
-            -- elseif string.match(word, "HAMMER") then
-            --     StartCam(move_coords.x+0.0, move_coords.y-0.05, move_coords.z+0.30, 60.0-15)
-
             else
                 StartCam(move_coords.x+0.20, move_coords.y, move_coords.z+0.5, 75.0)
             end
@@ -343,45 +290,26 @@ function GameCam(hash, move_coords, objecthash)
                 StartCam(move_coords.x+0.15, move_coords.y-0.10, move_coords.z+0.20, 60.0)
             elseif string.match(word, "SCOPE") then
                 StartCam(move_coords.x+0.20, move_coords.y-0.05, move_coords.z+0.30, 60.0)
-
             elseif string.match(word, "WRAP") then
                 StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-10.0)
             elseif string.match(word, "GRIP") then
                 StartCam(move_coords.x+0.20, move_coords.y+0.00, move_coords.z+0.40, 90.0-10.0)
-
             elseif string.match(word, "BARREL") then
                 StartCam(move_coords.x+0.40, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
             elseif string.match(word, "TRIGGER") then
                  StartCam(move_coords.x+0.00, move_coords.y+0.00, move_coords.z+0.30, 60.0)
-
-
             elseif string.match(word, "CYLINDER") then
                 StartCam(move_coords.x+0.0, move_coords.y+0.00, move_coords.z+0.30, 75.0)
-            -- elseif string.match(word, "FRAME") then
-            --     StartCam(move_coords.x-0.00, move_coords.y+0.00, move_coords.z+0.40, 90.0-15.0)
-            -- elseif string.match(word, "HAMMER") then
-            --     StartCam(move_coords.x+0.0, move_coords.y-0.05, move_coords.z+0.30, 60.0-15)
-
             else
                 StartCam(move_coords.x+0.20, move_coords.y, move_coords.z+0.5, 75.0)
             end
         elseif weaponType == "SHORTARM" then
             if string.match(word, "GRIP") then
                 StartCam(move_coords.x-0.08, move_coords.y+0.02, move_coords.z+0.25, 60.0)
-            -- elseif string.match(word, "BARREL") then
-            --     StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 60.0)
             elseif string.match(word, "SIGHT") then
                 StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.20, 60.0)
             elseif string.match(word, "CLIP") then
                 StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0)
-            -- elseif string.match(word, "CYLINDER") then
-                -- StartCam(move_coords.x+0.03, move_coords.y-0.02, move_coords.z+0.25, 60.0-15.0)
-            -- elseif string.match(word, "FRAME") then
-               --  StartCam(move_coords.x-0.04, move_coords.y+0.02, move_coords.z+0.40, 60.0-15.0)
-            -- elseif string.match(word, "HAMMER") then
-            --     StartCam(move_coords.x-0.01, move_coords.y-0.05, move_coords.z+0.25, 60.0-35.0)
-            -- elseif string.match(word, "TRIGGER") then
-            --     StartCam(move_coords.x-0.01, move_coords.y+0.03, move_coords.z+0.25, 60.0-25.0)
             else
                 StartCam(move_coords.x+0.08, move_coords.y, move_coords.z+0.30, 90.0-10.0)
             end
@@ -397,55 +325,24 @@ function GameCam(hash, move_coords, objecthash)
 end
 
 local LoadModel = function(model)
-	if not IsModelInCdimage(model) then return false end
-	RequestModel(model)
-	while not HasModelLoaded(model) do Wait(100) end return true
+	-- if not IsModelInCdimage(GetHashKey(model)) then return false end
+	RequestModel(GetHashKey(model))
+	while not HasModelLoaded(GetHashKey(model)) do
+        Wait(4)
+    end
+    return true
 end
 
 local function applyfirst(objecthash)
-
-    for k, v in pairs(Components.weaponObject) do
-        if GetHashKey(k) == objecthash then
-            LoadModel(v)
-        end
-    end
-
     local weapon_type = GetWeaponType(objecthash)
     local weaponData = Components.weapons_comp_list[weapon_type]
-    for k, v in pairs(weaponData) do
-        if GetHashKey(k) == objecthash then
-            for k2, v2 in pairs(v) do
-                for i= 1, 100 do
-                    if k2 == "BARREL" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "GRIP" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "MAG" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "CLIP" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "BINOCULARS" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "STOCK" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "TUBE" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "TORCH MATCHSTICK" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "FISHING" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
-                    if k2 == "SIGHT" then
-                        apply_weapon_comp(v2[1].hashname)
-                    end
+
+    for _, components in pairs(weaponData) do
+        for weaponObjectHash, weaponObjectName in pairs(Components.weaponObject) do
+            if GetHashKey(weaponObjectHash) == objecthash then
+                for componentCategory, componentList in pairs(components) do
+                    local componentHashname = componentList[1].hashname
+                    apply_weapon_component(componentHashname)
                 end
             end
         end
@@ -456,6 +353,7 @@ local function createobject(x, y, z, objecthash)
 
     if wepobject ~= nil and DoesEntityExist(wepobject) then
         DeleteObject(wepobject)
+        wepobject = nil
     end
 
     wepobject = Citizen.InvokeNative(0x9888652B8BA77F73, objecthash, 0, x, y, z, false, 1.0)
@@ -464,7 +362,7 @@ local function createobject(x, y, z, objecthash)
         SetEntityCoords(wepobject, x, y, z)
         SetEntityRotation(wepobject, 90.0, 0, 270, 1, true)
     else
-        print("Error al crear el objeto")
+        print("Error: No se pudo crear el objeto con el hash:", objecthash)
     end
 end
 
@@ -474,12 +372,16 @@ AddEventHandler("rsg-weaponcomp:client:StartCamObj", function(hash, coords, obje
         Wait(500)
     end
 
-    DoScreenFadeOut(250)
-    Wait(0)
-    DoScreenFadeIn(250)
+    DoScreenFadeOut(100)
+    Wait(100)
+    DoScreenFadeIn(100)
     GameCam(hash, coords, objecthash)
     if Config.Debug then print('hey Cam', coords.x, coords.y, coords.z) end
 end)
+
+---------------------------------
+-- EVENT PRINCIPAL ACCESS
+---------------------------------
 
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(prompt)-- , custcoords
     local weaponHash = GetPedCurrentHeldWeapon(cache.ped)
@@ -495,6 +397,7 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(prompt)-- , custc
     currentWep = wep
 
     if currentSerial == nil or weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
+    if playerjob ~= Config.JobType then lib.notify({ title = 'Item Needed Job', description = "You're not have job for custom weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
 
     inCustom = true
 
@@ -515,51 +418,48 @@ end)
 -----------------------------------
 -- LOAD COMP/MAT/ENG 
 -----------------------------------
-RegisterNetEvent("rsg-weaponcomp:client:LoadComponents") -- EQUIPED
+
+RegisterNetEvent("rsg-weaponcomp:client:LoadComponents")
 AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
     local weaponHash = GetPedCurrentHeldWeapon(cache.ped)
     local weaponInHands = exports['rsg-weapons']:weaponInHands()
     local wepSerial = weaponInHands[weaponHash]
     local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0)
     local componentsSql = {}
+    local callbackFinished = false
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
         if result and #result > 0 then
             for i = 1, #result do
                 componentsSql = json.decode(result[i].components)
             end
         end
+        callbackFinished = true
     end, wepSerial)
 
-    while next(componentsSql) == nil do Wait(100) end
-    Wait(0)
+    while not callbackFinished do Wait(100) end
 
-    if inCustom == false then
+    if componentsSql ~= nil and wep ~= nil then
+        if Config.Debug then print( 'rsg-weaponcomp:client:LoadComponents"')  print('weaponHash: ', weaponHash, 'component: ', json.encode(componentsSql)) end
+        for category, hashname in pairs(componentsSql) do
 
-        if componentsSql ~= nil and wep ~= nil then
-            if Config.Debug then print( 'rsg-weaponcomp:client:LoadComponents"')  print('weaponHash: ', weaponHash, 'component: ', json.encode(componentsSql)) end
-            for category, hashname in pairs(componentsSql) do
-
-                if Config.Debug then print('for category, hashname in pairs(componentsSql) do: ', category, hashname) end
-
-                if table_contains(readComponent, category)  then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-                end
-                if table_contains(readMaterial, category) then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-                end
-                if table_contains(readEngraving, category) then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-                end
-                if table_contains(readTints, category) then
-                    RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-                end
+            if table_contains(readComponent, category)  then
+                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
             end
-
-            ComponentsTables(componentsSql)
+            if table_contains(readMaterial, category) then
+                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+            end
+            if table_contains(readEngraving, category) then
+                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+            end
+            if table_contains(readTints, category) then
+                RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
+            end
         end
-        Wait(100)
-        componentsSql = nil
+
+        ComponentsTables(componentsSql)
     end
+    Wait(100)
+    componentsSql = nil
 end)
 
 exports('InWeaponCustom', function()
@@ -570,6 +470,7 @@ RegisterNetEvent("rsg-weaponcomp:client:LoadComponents_selection") -- SELECTION
 AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
     local componentsPreSql = {}
+    local callbackFinished = false
 
     RSGCore.Functions.TriggerCallback('rsg-weapons:server:getweaponinfo', function(result)
         if result and #result > 0 then
@@ -577,40 +478,32 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
                 componentsPreSql = json.decode(result[i].components_before)
             end
         end
+        callbackFinished = true
     end, currentSerial)
 
-    while next(componentsPreSql) == nil do Wait(100) end
-    Wait(0)
+    while not callbackFinished do Wait(100) end
 
-    if Config.Debug then print('do: ', json.encode(componentsPreSql)) end
+    if componentsPreSql ~= nil and currentWep ~= nil then
+        for category, hashname in pairs(componentsPreSql) do
 
-    if inCustom == true then
-
-        if componentsPreSql ~= nil and currentWep ~= nil then
-            for category, hashname in pairs(componentsPreSql) do
-
-                if Config.Debug then print('for category, hashname in pairs(componentsPreSql) do: ', category, hashname) end
-
-                if table_contains(readComponent, category)  then
-                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
-                end
-                if table_contains(readMaterial, category) then
-                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
-                end
-                if table_contains(readEngraving, category) then
-                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
-                end
-                if table_contains(readTints, category) then
-                    RemoveWeaponComponentFromWeaponObject(currentWep, GetHashKey(hashname))
-                end
-
+            if  table_contains(readComponent, category) or
+                table_contains(readMaterial, category) or
+                table_contains(readEngraving, category) or
+                table_contains(readTints, category) then
+            local componentHash = GetHashKey(hashname)
+            if componentHash then
+                RemoveWeaponComponentFromPed(currentWep, componentHash, -1)
+            else
+                print('Error: Hash del componente no vlido:', hashname)
             end
-
-            ComponentsTables(componentsPreSql)
         end
-        Wait(100)
-        componentsPreSql = nil
+
+        end
+
+        ComponentsTables(componentsPreSql)
     end
+    Wait(100)
+    componentsPreSql = nil
 end)
 
 -----------------------------------
@@ -627,8 +520,11 @@ elseif Config.MenuData == 'menu_base' then
     end)
 end
 
-local creatorCache
-creatorCache = creatorCache or {}
+local creatorCache = {}
+
+local function resetCache()
+    creatorCache = {}
+end
 
 local mainWeaponCompMenus = {
     ["component"] = function(objecthash) OpenComponentMenu(objecthash) end,
@@ -664,16 +560,20 @@ mainCompMenu = function(objecthash)
     elements = elements,
     itemHeight = "2vh"
     }, function(data, menu)
-
-        mainWeaponCompMenus[data.current.value](objecthash) -- MENU BUTTOMS
+        local action = mainWeaponCompMenus[data.current.value]
+        if action then
+            action(objecthash)
+        else
+            print('Error: Acción:', data.current.value)
+        end
         TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
 
     end, function(data, menu)
 
         menu.close()
-        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- sql clean custom
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
-
+        TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- sql clean custom
+        resetCache()
         Wait(1000)
 
     end)
@@ -683,13 +583,10 @@ end
 -- COMP SUB MENU WITH OPTIONS
 ---------------------
 OpenComponentMenu = function(objecthash)
-    TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
-    Wait(0)
-
     local elements = {}
     local weapon_type = GetWeaponType(objecthash)
-    local weaponData = Components.weapons_comp_list[weapon_type]
-    local weaponComponents = weaponData[currentName]
+    local weaponData = Components.weapons_comp_list[weapon_type] or {}
+    local weaponComponents = weaponData[currentName] or {}
     local coords = GetEntityCoords(wepobject)
 
     for category, componentList in pairs(weaponComponents) do
@@ -709,7 +606,7 @@ OpenComponentMenu = function(objecthash)
             v = nil,
         }) ]]
         for i, component in ipairs(componentList) do
-            table.insert(newElement.components, {label = component.title, value = component.hashname, v = component.category_hashname})
+            table.insert(newElement.components, {label = component.title, value = component.hashname, price = component.price})
         end
 
         table.insert(elements, newElement)
@@ -723,12 +620,13 @@ OpenComponentMenu = function(objecthash)
             local selectedIndex = data.current.value
             local selectedHash = nil
 
-            if selectedIndex == 0 then
-                selectedHash = nil
-                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
-            elseif selectedIndex >= 1 and selectedIndex <= #data.current.components then
+            -- if selectedIndex == 0 then
+            --     selectedHash = nil
+            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
+            -- else
+            if selectedIndex > 0 and selectedIndex <= #data.current.components then
                 selectedHash = data.current.components[selectedIndex].value
-                -- Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true) -- ApplyShopItemToPed
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true)
             end
 
             if Config.Debug then print('selected', selectedHash) end
@@ -738,6 +636,7 @@ OpenComponentMenu = function(objecthash)
                 if Config.StartCamObj == true then
                     TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
                 end
+                TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
             end
         end
         menu.refresh()
@@ -748,12 +647,9 @@ OpenComponentMenu = function(objecthash)
 end
 
 OpenMaterialMenu = function(objecthash)
-    TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
-    Wait(0)
-
     local weapon_type = GetWeaponType(objecthash)
     local elements = {}
-    local weaponData = Components.SharedComponents[weapon_type]
+    local weaponData = Components.SharedComponents[weapon_type] or {}
     local coords = GetEntityCoords(wepobject)
 
     for category, materialList in pairs(weaponData) do
@@ -766,9 +662,14 @@ OpenMaterialMenu = function(objecthash)
             category = category,
             materials = {}
         }
-
+        --[[ -- Insert "Original" option as the first component
+        table.insert(newElement.materials, {
+            label = "Original",
+            value = nil,
+            v = nil,
+        }) ]]
         for i, material in ipairs(materialList) do
-            table.insert(newElement.materials, {label = material.title, value = material.hashname, v = material.category_hashname})
+            table.insert(newElement.materials, {label = material.title, value = material.hashname, price = material.price})
         end
 
         table.insert(elements, newElement)
@@ -780,15 +681,15 @@ OpenMaterialMenu = function(objecthash)
         if data.current then
             local selectedCategory = data.current.category
             local selectedIndex = data.current.value
-            local selectedDeleted = data.current.value + 1
             local selectedHash = nil
 
+            -- if selectedIndex == 0 then
+            --     selectedHash = nil
+            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
+            -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.materials then
                 selectedHash = data.current.materials[selectedIndex].value
-            else
-                selectedHash = data.current.materials[selectedDeleted].value
             end
-
             if Config.Debug then print( 'selected', selectedHash) end
             if selectedHash ~= creatorCache[selectedCategory] then
                 creatorCache[selectedCategory] = selectedHash
@@ -796,6 +697,7 @@ OpenMaterialMenu = function(objecthash)
                 if Config.StartCamObj == true then
                     TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
                 end
+                TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
             end
         end
         menu.refresh()
@@ -807,12 +709,9 @@ OpenMaterialMenu = function(objecthash)
 end
 
 OpenEngravingMenu = function(objecthash)
-    TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
-    Wait(0)
-
     local weapon_type = GetWeaponType(objecthash)
     local elements = {}
-    local weaponData = Components.SharedEngravingsComponents[weapon_type]
+    local weaponData = Components.SharedEngravingsComponents[weapon_type] or {}
     local coords = GetEntityCoords(wepobject)
 
     for category, engravingList in pairs(weaponData) do
@@ -825,9 +724,15 @@ OpenEngravingMenu = function(objecthash)
             category = category,
             engravings = {}
         }
+        --[[ -- Insert "Original" option as the first component
+        table.insert(newElement.engravings, {
+            label = "Original",
+            value = nil,
+            v = nil,
+        }) ]]
 
         for i, engraving in ipairs(engravingList) do
-            table.insert(newElement.engravings, {label = engraving.title, value = engraving.hashname, v = engraving.category_hashname})
+            table.insert(newElement.engravings, {label = engraving.title, value = engraving.hashname, price = engraving.price})
         end
 
         table.insert(elements, newElement)
@@ -838,13 +743,14 @@ OpenEngravingMenu = function(objecthash)
         if data.current then
             local selectedCategory = data.current.category
             local selectedIndex = data.current.value
-            local selectedDeleted = data.current.value + 1
             local selectedHash = nil
 
+            -- if selectedIndex == 0 then
+            --     selectedHash = nil
+            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
+            -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.engravings then
                 selectedHash = data.current.engravings[selectedIndex].value
-            else
-                selectedHash = data.current.engravings[selectedDeleted].value
             end
 
             if Config.Debug then print( 'selected', selectedHash) end
@@ -854,6 +760,7 @@ OpenEngravingMenu = function(objecthash)
                 if Config.StartCamObj == true then
                     TriggerEvent('rsg-weaponcomp:client:StartCamObj', selectedHash, coords, objecthash)
                 end
+                TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
             end
         end
         menu.refresh()
@@ -870,7 +777,7 @@ OpenTintsMenu = function(objecthash)
 
     local weapon_type = GetWeaponType(objecthash)
     local elements = {}
-    local weaponData = Components.SharedTintsComponents[weapon_type]
+    local weaponData = Components.SharedTintsComponents[weapon_type] or {}
     local coords = GetEntityCoords(wepobject)
 
     for category, tintsList in pairs(weaponData) do
@@ -884,8 +791,14 @@ OpenTintsMenu = function(objecthash)
             tints = {}
         }
 
+        --[[ -- Insert "Original" option as the first component
+        table.insert(newElement.tints, {
+            label = "Original",
+            value = nil,
+            price = nil,
+        }) ]]
         for index, tint in ipairs(tintsList) do
-            table.insert(newElement.tints, {label = tint.title, value = tint.hashname, v = tint.category_hashname})
+            table.insert(newElement.tints, {label = tint.title, value = tint.hashname, price = tint.price})
         end
         table.insert(elements, newElement)
     end
@@ -896,13 +809,14 @@ OpenTintsMenu = function(objecthash)
         if data.current then
             local selectedCategory = data.current.category
             local selectedIndex = data.current.value
-            local selectedDeleted = data.current.value + 1
             local selectedHash = nil
 
+            -- if selectedIndex == 0 then
+            --     selectedHash = nil
+            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
+            -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.tints then
                 selectedHash = data.current.tints[selectedIndex].value
-            else
-                selectedHash = data.current.tints[selectedDeleted].value
             end
 
             if Config.Debug then print( 'selected', selectedHash) end
@@ -964,7 +878,10 @@ ButtomApplyAllComponents = function (objecthash)
     if input[1] == 'yes' then
 
         TriggerServerEvent('rsg-weaponcomp:server:price', currentPrice, objecthash)
+        Wait(1000)
         TriggerServerEvent("rsg-weaponcomp:server:apply_weapon_components", creatorCache, currentName, currentSerial)
+        Wait(100)
+        resetCache()
     end
 
 end
@@ -1008,6 +925,8 @@ ButtomRemoveAllComponents = function (objecthash)
         Wait(1000)
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents", "DEFAULT", currentName, currentSerial) -- update SQL
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- update SQL
+        Wait(100)
+        resetCache()
     end
     componentsRemoveSql = nil
 end
@@ -1141,35 +1060,31 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
         c_zoom = 1.2
         c_offset = 0.15
     elseif weapon_type == 'GROUP_BOW' then
-        animDict = "mech_weapons_special@bow@base"
-        animName = "clean_loop"
-        c_zoom = 1.2
+        c_zoom = 1.5
         c_offset = 0.15
     elseif weapon_type == 'MELEE_BLADE' then
-        animDict = "amb_camp@world_camp_jack_es_seat_chair_table@eating@fork_knife@chewing@male_a@trans"
-        animName = "chewing_trans_chewing_06"
         c_zoom = 1.2
         c_offset = 0.15
     end
 
-    Wait(100)
-    AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
     StartCamClean(c_zoom, c_offset)
-
-    lib.progressBar({
-        duration = tonumber(Config.animationSave),
-        useWhileDead = false,
-        canCancel = false,
-        disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
-        anim = { dict = animDict, clip = animName, flag = 15, },
-        label = 'Weapon Attachments.. ',
-    })
-
-    SetEntityAsNoLongerNeeded(Cloth)
-    DeleteEntity(Cloth)
+    Wait(100)
+    if animDict ~= nil and animName ~= nil then
+      AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
+      lib.progressBar({
+	duration = tonumber(Config.animationSave),
+	useWhileDead = false,
+	canCancel = false,
+	disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
+	anim = { dict = animDict, clip = animName, flag = 15, },
+	label = 'Weapon Attachments.. ',
+      })
+      SetEntityAsNoLongerNeeded(Cloth)
+      DeleteEntity(Cloth)
+    end
     TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     TriggerEvent('rsg-weaponcomp:client:ExitCam')
-    creatorCache = nil
+    resetCache()
 end)
 
 RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
@@ -1189,7 +1104,7 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     MenuData.CloseAll()
     inCustom = false
-    
+
     DoScreenFadeOut(1000)
     Wait(0)
     DoScreenFadeIn(1000)
@@ -1205,6 +1120,46 @@ end)
 -----------------------------------
 -- START AND STOP RESOURCE CLEAN UP
 -----------------------------------
+
+local function PreloadAllComponents()
+    local function preloadComponentFirst(componentList, categoryName)
+        for weaponType, componentsListA in pairs(componentList) do
+            for k, v in pairs(Components.weaponObject) do
+                for weaponName, components in pairs(componentsListA) do
+                    if k == weaponName then
+                        for _, category in pairs(components) do
+                            for _, component in pairs(category) do
+                                LoadModel(component.hashname)
+                                print('Componente precargado exitosamente en ' .. categoryName .. ':', component.hashname)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local function preloadComponentList(componentList, categoryName)
+        for weaponType, components in pairs(componentList) do
+            for _, v in pairs(components) do
+                for _, component in pairs(v) do
+                    LoadModel(component.hashname)
+                    print('Componente precargado exitosamente en ' .. categoryName .. ':', component.hashname)
+                end
+            end
+        end
+    end
+
+    preloadComponentFirst(Components.weapons_comp_list, 'Componentes de armas')
+    preloadComponentList(Components.SharedComponents, 'Materiales compartidos')
+    preloadComponentList(Components.SharedEngravingsComponents, 'Grabados compartidos')
+    preloadComponentList(Components.SharedTintsComponents, 'Tintes compartidos')
+end
+
+RegisterCommand('preloadModels', function()
+        PreloadAllComponents()
+end, false)
+
 AddEventHandler('RSGCore:Client:OnPlayerLoaded', function()
     LocalPlayer.state:set('isLoggedIn', true, false)
     PlayerData = RSGCore.Functions.GetPlayerData()
@@ -1215,6 +1170,7 @@ end)
 AddEventHandler('onResourceStart', function(r)
     if GetCurrentResourceName() ~= r then return end
     TriggerEvent('RSGCore:client:OnPlayerLoaded')
+    -- PreloadAllComponents()
 end)
 
 RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
