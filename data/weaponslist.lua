@@ -715,6 +715,16 @@ Components.weapons_comp_list = {
 		-- },
 		['WEAPON_MELEE_MACHETE'] = {},
 		['WEAPON_MELEE_MACHETE_COLLECTOR'] = {},
+		['WEAPON_KIT_CAMERA'] = {},
+		['WEAPON_KIT_CAMERA_ADVANCED'] = {},
+		['WEAPON_KIT_BINOCULARS'] = {
+			[Components.LanguageWeapons[38]] = {
+				[1] = { title = 'Binoculars with Scope', price = 4, hashname = 'COMPONENT_BINOCULARS_SCOPE01', category_hashname = 'torch_matchstick', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_KIT_BINOCULARS', },
+			},
+		},
+		['WEAPON_KIT_BINOCULARS_ADVANCED'] = {},
+	},
+	['GROUP_BOW'] = { -- [31] FISHING , [39] TORCH_MATCHSTICK, [38] BINOCULARS
 		['WEAPON_BOW'] = {},
 		['WEAPON_BOW_IMPROVED'] = {
 			[Components.LanguageWeapons[7]] = {
@@ -725,14 +735,6 @@ Components.weapons_comp_list = {
 				[5] = { title = 'Wooden Inlay Grip', price = 4, hashname = 'COMPONENT_BOW_IMPROVED_GRIP_WOODEN_INLAY', category_hashname = 'grip', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_BOW_IMPROVED',  },
 			},
 		},
-		['WEAPON_KIT_CAMERA'] = {},
-		['WEAPON_KIT_CAMERA_ADVANCED'] = {},
-		['WEAPON_KIT_BINOCULARS'] = {
-			[Components.LanguageWeapons[38]] = {
-				[1] = { title = 'Binoculars with Scope', price = 4, hashname = 'COMPONENT_BINOCULARS_SCOPE01', category_hashname = 'torch_matchstick', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_KIT_BINOCULARS', },
-			},
-		},
-		['WEAPON_KIT_BINOCULARS_ADVANCED'] = {},
 	}
 }
 
@@ -770,6 +772,10 @@ Components.weapons_coords = {
 		['WEAPON_SHOTGUN_SAWEDOFF'] = {x = 0.50, y = 0.04, z = 0.20},
 		['WEAPON_SHOTGUN_SEMIAUTO'] = {x = 0.70, y = 0.04, z = 0.17},
 	},
+    ['GROUP_BOW'] =	{
+		['WEAPON_BOW'] = {},
+		['WEAPON_BOW_IMPROVED'] = {},
+	},
 	['MELEE_BLADE'] = {
 		['WEAPON_LASSO'] = {},
 		['WEAPON_LASSO_REINFORCED'] = {},
@@ -790,8 +796,6 @@ Components.weapons_coords = {
 		["WEAPON_THROWN_DYNAMITE"] = {},
 		['WEAPON_MELEE_MACHETE'] = {},
 		['WEAPON_MELEE_MACHETE_COLLECTOR'] = {},
-		['WEAPON_BOW'] = {},
-		['WEAPON_BOW_IMPROVED'] = {},
 
 		['WEAPON_KIT_CAMERA'] = {},
 		['WEAPON_KIT_CAMERA_ADVANCED'] = {},
@@ -1309,6 +1313,14 @@ Components.SharedEngravingsComponents = {
 			[14] = { title = 'M_14', price = 4, hashname = 'COMPONENT_LONGARM_FRAME_ENGRAVING_MATERIAL_14', category_hashname = 'frame',    },
 		},
 	},
+    ['GROUP_BOW'] =	{
+		[Components.LanguageWeapons[8]] = {
+			[1] = { title = 'Alligator Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_ALLIGATOR', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED',  },
+			[2] = { title = 'Horned Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_HORNED', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED', },
+			[3] = { title = 'Jaguar Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_JAGUAR', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED', },
+			[4] = { title = 'Wooden Inlay Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_WOODEN_INLAY', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED', },
+		},
+	},
     ['MELEE_BLADE'] =	{ -- [33] MELEE_BLADE_ENGRAVING, [34] MELEE_BLADE_ENGRAVING_MATERIAL, [8] BOW_ROLE_ENGRAVING_IMPROVED
         [Components.LanguageWeapons[33]] = {
 			[1] = { title = 'ENG_1', price = 4, hashname = 'COMPONENT_MELEE_BLADE_ENGRAVING_1', category_hashname = 'melee_blade',    },
@@ -1331,12 +1343,6 @@ Components.SharedEngravingsComponents = {
 			[13] = { title = 'M_13', price = 4, hashname = 'COMPONENT_MELEE_BLADE_ENGRAVING_MATERIAL_13', category_hashname = 'melee_blade',    },
 			[14] = { title = 'M_14', price = 4, hashname = 'COMPONENT_MELEE_BLADE_ENGRAVING_MATERIAL_14', category_hashname = 'melee_blade',    },
         },
-		[Components.LanguageWeapons[8]] = {
-			[1] = { title = 'Alligator Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_ALLIGATOR', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED',  },
-			[2] = { title = 'Horned Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_HORNED', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED', },
-			[3] = { title = 'Jaguar Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_JAGUAR', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED', },
-			[4] = { title = 'Wooden Inlay Frame', price = 4, hashname = 'COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_WOODEN_INLAY', category_hashname = 'bow_role', type_weapon = 'WEAPON_BOW_IMPROVED', },
-		},
 	},
 }
 
@@ -1563,7 +1569,7 @@ Components.SharedTintsComponents = {
 			[8] = { title = 'S_T_A_8', price = 4, hashname = 'COMPONENT_LONGARM_STRAP_TINT_A_8', category_hashname = 'strap',    }
 		},
 	},
-    ['MELEE_BLADE'] =	{-- [29] BOW_GRIPSTOCK_TINT, [30] BOW_TRIGGER_TINT, [28] BOW_FRAME_TINT, [18] MELEE_GRIP_TINT
+    ['GROUP_BOW'] =	{
 		[Components.LanguageWeapons[29]] = {
 			[1] = { title = 'G_T_1', price = 4, hashname = 'COMPONENT_BOW_GRIPSTOCK_TINT_A_1', category_hashname = 'grip', type_weapon = 'WEAPON_BOW_IMPROVED',  },
 			[2] = { title = 'G_T_2', price = 4, hashname = 'COMPONENT_BOW_GRIPSTOCK_TINT_A_2', category_hashname = 'grip', type_weapon = 'WEAPON_BOW_IMPROVED',  },
@@ -1594,6 +1600,9 @@ Components.SharedTintsComponents = {
 			[7] = { title = 'F_W_T_7', price = 4, hashname = 'COMPONENT_BOW_FRAME_TINT_A_7', category_hashname = 'cylinder', type_weapon = 'WEAPON_BOW_IMPROVED',  },
 			[8] = { title = 'F_W_T_8', price = 4, hashname = 'COMPONENT_BOW_FRAME_TINT_A_8', category_hashname = 'cylinder', type_weapon = 'WEAPON_BOW_IMPROVED',  },
 		},
+	},
+    ['MELEE_BLADE'] =	{-- [29] BOW_GRIPSTOCK_TINT, [30] BOW_TRIGGER_TINT, [28] BOW_FRAME_TINT, [18] MELEE_GRIP_TINT
+		
         [Components.LanguageWeapons[18]] = {
 			[1] = { title = 'G_T_A_1', price = 4, hashname = 'COMPONENT_MELEE_GRIP_TINT_A_1', category_hashname = 'grip',    },
 			[2] = { title = 'G_T_A_2', price = 4, hashname = 'COMPONENT_MELEE_GRIP_TINT_A_2', category_hashname = 'grip',    },

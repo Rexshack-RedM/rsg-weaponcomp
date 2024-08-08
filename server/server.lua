@@ -22,12 +22,7 @@ end
 --------------------------------------------
 -- COMMAND 
 --------------------------------------------
-local permissions = {
-    ["CreatorWeapon"] = Config.CommandPermisions.Creator,
-    ["InspectWeapon"] = Config.CommandPermisions.Inspect,
-}
-
--- RSGCore.Commands.Add("w_inspect", "Opens the inpect Weapon", {}, false, function(source)
+-- RSGCore.Commands.Add("w_inspect_old", "Opens the inpect Weapon", {}, false, function(source)
 --     local src = source
 --     if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command.w_inspect')  then
 --         TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
@@ -36,15 +31,14 @@ local permissions = {
 --     end
 -- end)
 
+RSGCore.Commands.Add("w_inspect_old", "Opens the inpect Weapon", {}, false, function(source)
+    local src = source
+    TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
+end)
+
 RSGCore.Commands.Add(Config.Command.inspect, "Opens the new inpect Weapon", {}, false, function(source)
     local src = source
-    if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command.w_inspect')  then
-        TriggerClientEvent('rsg-weaponcomp:client:InspectionWeaponNew', src)
-    elseif RSGCore.Functions.HasPermission(src, permissions['InspectWeapon']) then
-        TriggerClientEvent('rsg-weaponcomp:client:InspectionWeaponNew', src)
-    else
-        TriggerClientEvent('ox_lib:notify', src, {title = 'No have permissions', description = 'No are admin', type = 'inform' })
-    end
+    TriggerClientEvent('rsg-weaponcomp:client:InspectionWeaponNew', src)
 end)
 
 RSGCore.Commands.Add(Config.Command.loadweapon, "Loading skinthe Custom Weapon", {}, false, function(source)
