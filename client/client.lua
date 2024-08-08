@@ -2,7 +2,7 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 
 local inCustom = false
 local wepobject = nil
-local camera = nil -- Variable global para mantener la referencia de la cámara
+local camera = nil
 local currentSerial = nil
 local currentName = nil
 local currentWep = nil
@@ -372,9 +372,9 @@ AddEventHandler("rsg-weaponcomp:client:StartCamObj", function(hash, coords, obje
         Wait(500)
     end
 
-    DoScreenFadeOut(250)
-    Wait(250)
-    DoScreenFadeIn(250)
+    DoScreenFadeOut(100)
+    Wait(100)
+    DoScreenFadeIn(100)
     GameCam(hash, coords, objecthash)
     if Config.Debug then print('hey Cam', coords.x, coords.y, coords.z) end
 end)
@@ -564,16 +564,14 @@ mainCompMenu = function(objecthash)
         if action then
             action(objecthash)
         else
-            print('Error: Acción no definida para:', data.current.value)
+            print('Error: Acción:', data.current.value)
         end
-        -- mainWeaponCompMenus[data.current.value](objecthash) -- MENU BUTTOMS
         TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
 
     end, function(data, menu)
 
         menu.close()
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
-        Wait(1000)
         TriggerServerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", currentSerial) -- sql clean custom
         resetCache()
         Wait(1000)
@@ -628,7 +626,7 @@ OpenComponentMenu = function(objecthash)
             -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.components then
                 selectedHash = data.current.components[selectedIndex].value
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true) -- ApplyShopItemToPed
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true)
             end
 
             if Config.Debug then print('selected', selectedHash) end
@@ -1062,35 +1060,31 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
         c_zoom = 1.2
         c_offset = 0.15
     elseif weapon_type == 'GROUP_BOW' then
-        animDict = nil
-        animName = nil
-        c_zoom = 1.2
+        c_zoom = 1.5
         c_offset = 0.15
     elseif weapon_type == 'MELEE_BLADE' then
-        animDict = nil
-        animName = nil
         c_zoom = 1.2
         c_offset = 0.15
     end
 
-    Wait(100)
-    AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
     StartCamClean(c_zoom, c_offset)
-
-    lib.progressBar({
-        duration = tonumber(Config.animationSave),
-        useWhileDead = false,
-        canCancel = false,
-        disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
-        anim = { dict = animDict, clip = animName, flag = 15, },
-        label = 'Weapon Attachments.. ',
-    })
-
-    SetEntityAsNoLongerNeeded(Cloth)
-    DeleteEntity(Cloth)
+    Wait(100)
+    if animDict ~= nil and animName ~= nil then
+      AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
+      lib.progressBar({
+	duration = tonumber(Config.animationSave),
+	useWhileDead = false,
+	canCancel = false,
+	disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
+	anim = { dict = animDict, clip = animName, flag = 15, },
+	label = 'Weapon Attachments.. ',
+      })
+      SetEntityAsNoLongerNeeded(Cloth)
+      DeleteEntity(Cloth)
+    end
     TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     TriggerEvent('rsg-weaponcomp:client:ExitCam')
-    creatorCache = {}
+    resetCache()
 end)
 
 RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
