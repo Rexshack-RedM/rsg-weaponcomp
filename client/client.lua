@@ -1,4 +1,5 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
+
 local num = tonumber
 local match = string.match
 local inCustom = false
@@ -180,18 +181,6 @@ local WeaponCustomPrompt = function()
     PromptRegisterEnd(WeaponCustom)
 end
 
-local showblip = true
-Citizen.CreateThread(function()
-    local npc = vector3(499.3971, 342.6591, 106.6018)
-
-        if showblip == true then
-            local SellVendorBlip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, npc)
-            SetBlipSprite(SellVendorBlip, -145868367, true)
-            SetBlipScale(SellVendorBlip, 0.2)
-			Citizen.InvokeNative(0x9CB1A1623062F402, SellVendorBlip, "Weapon Customize")
-        end
-end)
-
 CreateThread(function()
     WeaponCustomPrompt()
     while true do
@@ -263,7 +252,6 @@ function StartCam(x,y,z,zoom)
     camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", x, y, z, -90.00, 00.00, -180.0, zoom, true, 0)
     SetCamActive(camera, true)
     RenderScriptCams(true, true, 2000, true, true)
-	print("Cam:ST")
 end
 
 local function getWordsFromHash(hash)
@@ -404,20 +392,20 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(prompt)-- , custc
     local serial = weaponInHands[weaponHash]
     local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0)
     local PlayerData = RSGCore.Functions.GetPlayerData()
-    local playerjob = PlayerData.job
+    local playerjob = PlayerData.job.type
 
     currentSerial = serial
     currentName = weaponName
     currentWep = wep
 
     if currentSerial == nil or weaponHash == -1569615261 then lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
-    --if playerjob.label == Config.Jobs then 
+    if playerjob ~= Config.JobType then lib.notify({ title = 'Item Needed Job', description = "You're not have job for custom weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000}) return end
 
-		inCustom = true
+    inCustom = true
 
-		for i = 1, #Config.CustomLocations do
-			local customlocation = Config.CustomLocations[i]
-			--if playerjob == jobaccess and customlocation.prompt == prompt then
+    for i = 1, #Config.CustomLocations do
+        local customlocation = Config.CustomLocations[i]
+        if playerjob == Config.JobType and customlocation.prompt == prompt then
             StartCam(customlocation.custcoords.x+0.2, customlocation.custcoords.y+0.15 , customlocation.custcoords.z+1.0, customlocation.custcoords.w)
             Wait(500)
             mainCompMenu(weaponHash) -- ENTER MENU
@@ -425,12 +413,8 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(prompt)-- , custc
             createobject(customlocation.custcoords.x, customlocation.custcoords.y, customlocation.custcoords.z, weaponHash)
 
             applyfirst(weaponHash)
-			--end
-		end
-		print("Cam:")
-	--else 
-		--lib.notify({ title = 'Item Needed Job', description = "You do not have job for custom weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
-	--return end
+        end
+    end
 end)
 
 -----------------------------------
@@ -473,13 +457,11 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
                 RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
             end
         end
-		print("Cam:")
+
         ComponentsTables(componentsSql)
-		
     end
     Wait(100)
     componentsSql = nil
-	
 end)
 RegisterNetEvent("rsg-weaponcomp:client:LoadComponents")
 AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepHash)
@@ -552,6 +534,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepH
     Wait(5)
 
 end)
+
 exports('InWeaponCustom', function()
     return inCustom
 end)
@@ -1044,28 +1027,24 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp)
                 end
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
-			print("Cam:1")
             if table_contains(readMaterial, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
-			print("Cam:2")
             if table_contains(readEngraving, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
-			print("Cam:3")
             if table_contains(readTints, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
-			print("Cam:4")
         end
 
         Wait(100)
