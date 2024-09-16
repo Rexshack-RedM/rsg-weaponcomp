@@ -524,7 +524,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepH
         ::continue::
     end
 
-    for k, v in pairs(specific) do
+    --[[for k, v in pairs(specific) do
         if num(GetHashKey(k)) ~= num(wepHash) then goto continue end
 
         for k2, v2 in pairs(v) do
@@ -544,7 +544,9 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepH
         end
 
         ::continue::
-    end
+    end]]
+
+    -- Todo  Ajust Specific Weapon Parts ---
 
     Wait(0)
 
