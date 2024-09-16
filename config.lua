@@ -12,6 +12,7 @@ Config.RemovePrice       = .3 -- (0 - 1) = 100 % cost remove component 120%
 Config.animationSave     = 10000 -- Waiting time for application or removal components
 
 -- Job
+Config.Usejob            = false
 Config.JobType           = 'weaponsmith' -- 'gunsmith' or 'weaponsmith'
 Config.RepairItem        = 'weapon_repair_kit'
 Config.Jobs				 = {"Valentine Weaponsmith"}
@@ -32,14 +33,16 @@ Config.CustomLocations = {
     custcoords = vector4(-281.3081, 779.7899, 119.6094, 40.0),
     jobaccess = 'valweaponsmith',
   },
-  --[[{
+  --[[
+  {
     name = 'Customs',
     prompt = 'rho_custom',
-    gunsmithid = 'rhogunsmith',
+    gunsmithid = 'rhoweaponsmith',
     coords = vector3(1321.98, -1323.23, 77.89),
     custcoords = vector4(1322.368, -1322.256, 77.937, 75.0),
-    jobaccess = 'rhogunsmith',
+    jobaccess = 'rhoweaponsmith',
   },
+  
   {
     name = 'Customs',
     prompt = 'tum_custom',
