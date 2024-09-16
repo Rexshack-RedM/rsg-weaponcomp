@@ -28,8 +28,8 @@ Config.CustomLocations = {
     name = 'Customs',
     prompt = 'val_custom',
     gunsmithid = 'valweaponsmith',
-    coords = vector3(499.3971, 342.6591, 106.6018),
-    custcoords = vector4(498.7136, 342.0194, 106.6113, 236.4677),
+    coords = vector3(-281.3202, 778.9372, 119.5440),
+    custcoords = vector4(-281.3081, 779.7899, 119.6094, 40.0),
     jobaccess = 'valweaponsmith',
   },
   --[[{
