@@ -415,20 +415,21 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(job)-- , custcoor
 	        return end
         end
     else
-    if Config.Debug then print("Job : ",job) end ----------- Debug
+        if Config.Debug then print("Job : ",job) end ----------- Debug
  
-	    inCustom = true
+	        inCustom = true
 
-	    for i = 1, #Config.CustomLocations do
-	    local customlocation = Config.CustomLocations[i]
+	        for i = 1, #Config.CustomLocations do
+	        local customlocation = Config.CustomLocations[i]
 
-               StartCam(customlocation.custcoords.x+0.2, customlocation.custcoords.y+0.15 , customlocation.custcoords.z+1.0, customlocation.custcoords.w)
-               Wait(500)
-               mainCompMenu(weaponHash) -- ENTER MENU
+                   StartCam(customlocation.custcoords.x+0.2, customlocation.custcoords.y+0.15 , customlocation.custcoords.z+1.0, customlocation.custcoords.w)
+                   Wait(500)
+                   mainCompMenu(weaponHash) -- ENTER MENU
 
-               createobject(customlocation.custcoords.x, customlocation.custcoords.y, customlocation.custcoords.z, weaponHash)
+                   createobject(customlocation.custcoords.x, customlocation.custcoords.y, customlocation.custcoords.z, weaponHash)
 
-               applyfirst(weaponHash)
+                   applyfirst(weaponHash)
+            end
         end
     end
 end)
