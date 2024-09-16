@@ -8,13 +8,13 @@ Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase' menu 
 Config.Keybinds          = 'J'
 Config.Payment           = 'money' --  'item' or  'money'
 Config.PaymentType       = 'cash' -- Payment = money you can select 'cash' or 'bloodmoney' / Payment = item you can select 'cash' or 'bloodmoney'
-Config.RemovePrice       = 1.2 -- (0 - 1) = 100 % cost remove component 120%
+Config.RemovePrice       = .3 -- (0 - 1) = 100 % cost remove component 120%
 Config.animationSave     = 10000 -- Waiting time for application or removal components
 
 -- Job
-Config.JobType           = 'gunsmith' -- 'gunsmith' or 'weaponsmith'
+Config.JobType           = 'weaponsmith' -- 'gunsmith' or 'weaponsmith'
 Config.RepairItem        = 'weapon_repair_kit'
-
+Config.Jobs				 = {"Valentine Weaponsmith"}
 Config.StartCamObj       = true -- false / true Camera movements with category changes during selection
 Config.showStats         = true -- true / false can show stats inspect
 
@@ -27,12 +27,12 @@ Config.CustomLocations = {
   {
     name = 'Customs',
     prompt = 'val_custom',
-    gunsmithid = 'valgunsmith',
-    coords = vector3(-280.98, 778.88, 119.50),
-    custcoords = vector4(-281.40, 779.86, 119.58, 75.0),
-    jobaccess = 'valgunsmith',
+    gunsmithid = 'valweaponsmith',
+    coords = vector3(499.3971, 342.6591, 106.6018),
+    custcoords = vector4(498.7136, 342.0194, 106.6113, 236.4677),
+    jobaccess = 'valweaponsmith',
   },
-  {
+  --[[{
     name = 'Customs',
     prompt = 'rho_custom',
     gunsmithid = 'rhogunsmith',
@@ -63,7 +63,7 @@ Config.CustomLocations = {
     coords = vector3(2948.48, 1319.55, 44.82),
     custcoords = vector4(2947.630, 1319.90, 44.86, 75.0),
     jobaccess = 'anngunsmith',
-  },
+  },]]
   --[[
   -- EXTRA LOCATIONS
   {
@@ -170,6 +170,8 @@ Config.WeaponRestriction = {
 Config.Webhooks = {
     ['weaponCustom'] = '',
 }
+
+
 
 Config.Specific =
 {
