@@ -9,6 +9,7 @@ local currentName = nil
 local currentWep = nil
 local createdEntries = {}
 
+
 -- LIST POSSIBLES CATEGORYES
 local readComponent = {Components.LanguageWeapons[1], Components.LanguageWeapons[7], Components.LanguageWeapons[5], Components.LanguageWeapons[10], Components.LanguageWeapons[41], Components.LanguageWeapons[11], Components.LanguageWeapons[36],  Components.LanguageWeapons[2], Components.LanguageWeapons[37], Components.LanguageWeapons[27], Components.LanguageWeapons[31], Components.LanguageWeapons[39], Components.LanguageWeapons[38]}
 local readMaterial = {Components.LanguageWeapons[13], Components.LanguageWeapons[19], Components.LanguageWeapons[3], Components.LanguageWeapons[4], Components.LanguageWeapons[6], Components.LanguageWeapons[9], Components.LanguageWeapons[16], Components.LanguageWeapons[21], Components.LanguageWeapons[24], Components.LanguageWeapons[26], Components.LanguageWeapons[22],  Components.LanguageWeapons[23], Components.LanguageWeapons[32]}
@@ -181,13 +182,12 @@ local WeaponCustomPrompt = function()
     PromptRegisterEnd(WeaponCustom)
 end
 
-
 CreateThread(function()
-    for k, v in pairs(Config.CustomLocations) do
+    for k, v in pairs(Config.CustomLocations.locations) do
         exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'], "" .. v.name, {
             type = 'client',
             event = 'rsg-weaponcomp:client:startcustom',
-            args = { job = v.jobaccess}
+            
         })
 
         createdEntries[#createdEntries + 1] = { type = 'PROMPT', handle = v.prompt }
@@ -375,7 +375,7 @@ end)
 ---------------------------------
 
 
-RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(job)-- , custcoords
+RegisterNetEvent('rsg-weaponcomp:client:startcustom', function()-- , custcoords
     local weaponHash = GetPedCurrentHeldWeapon(cache.ped)
     local weaponInHands = exports['rsg-weapons']:weaponInHands()
     local weaponName = Citizen.InvokeNative(0x89CF5FF3D363311E, weaponHash, Citizen.ResultAsString())
@@ -383,6 +383,15 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(job)-- , custcoor
     local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0)
     local PlayerData = RSGCore.Functions.GetPlayerData()
     local playerjob = PlayerData.job
+	local player = (GetEntityCoords(PlayerPedId()))
+	local current_district = Citizen.InvokeNative(0x43AD8FC02B429D33, player, 1)
+	local Towns = {
+		[1] = { townname = 'Valentine', zone = 459833523 },
+        [2] = { townname = 'Rhodes', zone = 2046780049 },
+		[3] = { townname = 'Tumbleweed', zone = -1524959147 },
+		[4] = { townname = 'StDenis', zone = -765540529 },
+        [5] = { townname = 'Annesburg', zone = 7359335 },
+	}
     
     currentSerial = serial
     currentName = weaponName
@@ -393,42 +402,232 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(job)-- , custcoor
     return end
 
     if Config.Usejob then
-        if Config.Debug then print("Job : ",job) end ----------- Debug
-            if playerjob.name == job then 
+		if playerjob.name == Config.CustomLocations.locations.Valentine.jobaccess then 
+			if current_district == 459833523 then 
+				goto Val
+			else
+				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+			return end
+		end
+		if playerjob.name == Config.CustomLocations.locations.Rhodes.jobaccess then
+			if current_district == 2046780049 then 
+				goto Rds
+			else
+				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+			return end
+		end
+		if playerjob.name == Config.CustomLocations.locations.Tumbleweed.jobaccess then
+			if current_district == -1524959147 then 
+				goto Tum
+			else
+				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+			return end
+		end
+		if playerjob.name == Config.CustomLocations.locations.StDen.jobaccess then
+			if current_district == -765540529 then 
+				goto StDen
+			else
+				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+			return end
+		end
+		if playerjob.name == Config.CustomLocations.locations.Annsb.jobaccess then
+			if current_district == 7359335 then 
+				goto Anns
+			else
+				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+			return end
+		end
+		
+	else
 
-	        	inCustom = true
+		if current_district == 459833523 then
+			goto Val2
+		end
+		if current_district == 2046780049 then
+			goto Rds2
+		end
+		if current_district == -1524959147 then
+			goto Tum2
+		end
+		if current_district == -765540529 then
+			goto StDen2
+		end
+		if current_district == 7359335 then
+			goto Anns2
+		end
+    return end	
+	---
+-- Valentine --
+	---
+		::Val::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Valentine.jobaccess) print("Coords :",v.Valentine.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					if playerjob.name == v.Valentine.jobaccess then
+						inCustom = true
+						StartCam(v.Valentine.custcoords.x+0.2, v.Valentine.custcoords.y+0.15 , v.Valentine.custcoords.z+1.0, v.Valentine.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Valentine.custcoords.x, v.Valentine.custcoords.y, v.Valentine.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)
+					else
+						lib.notify({ title = 'Job Required', description = "You're not a Valentine Gunsmith!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+					return end
+					
+			return end
+		::Val2::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Valentine.jobaccess) print("Coords :",v.Valentine.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					
+						inCustom = true
+						StartCam(v.Valentine.custcoords.x+0.2, v.Valentine.custcoords.y+0.15 , v.Valentine.custcoords.z+1.0, v.Valentine.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Valentine.custcoords.x, v.Valentine.custcoords.y, v.Valentine.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)
+					
+			return end
+		
+	---
+-- Rhodes --
+	---
+		
+		::Rds::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Rhodes.jobaccess) print("Coords :",v.Rhodes.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					if playerjob.name == v.Rhodes.jobaccess then
+						inCustom = true
+						StartCam(v.Rhodes.custcoords.x+0.2, v.Rhodes.custcoords.y+0.15 , v.Rhodes.custcoords.z+1.0, v.Rhodes.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Rhodes.custcoords.x, v.Rhodes.custcoords.y, v.Rhodes.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)
+					else
+						lib.notify({ title = 'Job Required', description = "You're not a Rhodes Gunsmith!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+					return end						
+			return end
+		::Rds2::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Rhodes.jobaccess) print("Coords :",v.Rhodes.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					
+						inCustom = true
+						StartCam(v.Rhodes.custcoords.x+0.2, v.Rhodes.custcoords.y+0.15 , v.Rhodes.custcoords.z+1.0, v.Rhodes.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Rhodes.custcoords.x, v.Rhodes.custcoords.y, v.Rhodes.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)
+						
+			return end
+	---
+-- Tumbleweed --
+	---
+		
+		::Tum::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Tumbleweed.jobaccess) print("Coords :",v.Tumbleweed.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					if Config.Usejob and playerjob.name == v.Tumbleweed.jobaccess then
+						inCustom = true
+						StartCam(v.Tumbleweed.custcoords.x+0.2, v.Tumbleweed.custcoords.y+0.15 , v.Tumbleweed.custcoords.z+1.0, v.Tumbleweed.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Tumbleweed.custcoords.x, v.Tumbleweed.custcoords.y, v.Tumbleweed.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)	
+					else
+						lib.notify({ title = 'Job Required', description = "You're not a Tumbleweed Gunsmith!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+					return end
+			return end
+		::Tum2::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Tumbleweed.jobaccess) print("Coords :",v.Tumbleweed.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					
+						inCustom = true
+						StartCam(v.Tumbleweed.custcoords.x+0.2, v.Tumbleweed.custcoords.y+0.15 , v.Tumbleweed.custcoords.z+1.0, v.Tumbleweed.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Tumbleweed.custcoords.x, v.Tumbleweed.custcoords.y, v.Tumbleweed.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)	
 
-	        	for i = 1, #Config.CustomLocations do
-	        	local customlocation = Config.CustomLocations[i]
+			return end
+	---
+-- St Denise --
+	---
+		
+		::StDen::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.StDen.jobaccess) print("Coords :",v.StDen.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					if Config.Usejob and playerjob.name == v.StDen.jobaccess then
+						inCustom = true
+						StartCam(v.StDen.custcoords.x+0.2, v.StDen.custcoords.y+0.15 , v.StDen.custcoords.z+1.0, v.StDen.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.StDen.custcoords.x, v.StDen.custcoords.y, v.StDen.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)				
+					else
+						lib.notify({ title = 'Job Required', description = "You're not a Saint Denise Gunsmith!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+					return end
+			return end
+		::StDen2::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.StDen.jobaccess) print("Coords :",v.StDen.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
 
-                    StartCam(customlocation.custcoords.x+0.2, customlocation.custcoords.y+0.15 , customlocation.custcoords.z+1.0, customlocation.custcoords.w)
-                    Wait(500)
-                    mainCompMenu(weaponHash) -- ENTER MENU
+						inCustom = true
+						StartCam(v.StDen.custcoords.x+0.2, v.StDen.custcoords.y+0.15 , v.StDen.custcoords.z+1.0, v.StDen.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.StDen.custcoords.x, v.StDen.custcoords.y, v.StDen.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)				
 
-                    createobject(customlocation.custcoords.x, customlocation.custcoords.y, customlocation.custcoords.z, weaponHash)
+			return end
+	---
+-- Annsb --
+	---
+		
+		::Anns::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Annsb.jobaccess) print("Coords :",v.Annsb.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+					if Config.Usejob and playerjob.name == v.Annsb.jobaccess then
+						inCustom = true
+						StartCam(v.Annsb.custcoords.x+0.2, v.Annsb.custcoords.y+0.15 , v.Annsb.custcoords.z+1.0, v.Annsb.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Annsb.custcoords.x, v.Annsb.custcoords.y, v.Annsb.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)
+					else
+						lib.notify({ title = 'Job Required', description = "You're not a Annesburg Gunsmith!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+					return end
+			return end	
+		::Anns2::
+			for k, v in pairs(Config.CustomLocations) do
+				if Config.Debug then print("Job :",v.Annsb.jobaccess) print("Coords :",v.Annsb.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
 
-                    applyfirst(weaponHash)
-                end
+						inCustom = true
+						StartCam(v.Annsb.custcoords.x+0.2, v.Annsb.custcoords.y+0.15 , v.Annsb.custcoords.z+1.0, v.Annsb.custcoords.w)
+						Wait(500)
+						mainCompMenu(weaponHash) -- ENTER MENU
+				
+						createobject(v.Annsb.custcoords.x, v.Annsb.custcoords.y, v.Annsb.custcoords.z, weaponHash)
+				
+						applyfirst(weaponHash)
 
-	        else 
-	        	lib.notify({ title = 'Job Required', description = "You do not have job for custom weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
-	        return end
-        
-    else
-        inCustom = true
+			return end			
 
-	    for i = 1, #Config.CustomLocations do
-	    local customlocation = Config.CustomLocations[i]
-
-               StartCam(customlocation.custcoords.x+0.2, customlocation.custcoords.y+0.15 , customlocation.custcoords.z+1.0, customlocation.custcoords.w)
-               Wait(500)
-               mainCompMenu(weaponHash) -- ENTER MENU
-
-               createobject(customlocation.custcoords.x, customlocation.custcoords.y, customlocation.custcoords.z, weaponHash)
-
-               applyfirst(weaponHash)
-        end
-    end
 end)
 
 -----------------------------------
@@ -549,7 +748,27 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepH
                     Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
                 end
 
-                if k2 == 'SIGHT' then
+                if k2 == 'MAG' then
+                    Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
+                end
+                
+                if k2 == 'STOCK' then
+                    Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
+                end
+
+                if k2 == 'FRAME_VERTDATA' then
+                    Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
+                end
+
+                if k2 == 'TUBE' then
+                    Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
+                end
+
+                if k2 == 'TORCH_MATCHSTICK' then
+                    Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
+                end
+
+                if k2 == 'GRIPSTOCK' then
                     Citizen.InvokeNative(0x74C9090FDD1BB48E, ped, GetHashKey(v2[1]), wepHash, true)
                 end
             end
