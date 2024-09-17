@@ -25,25 +25,24 @@ Config.Command = {
 }
 
 Config.CustomLocations = {
-  {
-    name = 'Customs',
+locations = {
+  Valentine = {
+    name = 'Valentine Customs',
     prompt = 'val_custom',
     gunsmithid = 'valweaponsmith',
     coords = vector3(-281.3202, 778.9372, 119.5440),
     custcoords = vector4(-281.3081, 779.7899, 119.6094, 40.0),
     jobaccess = 'valweaponsmith',
   },
-  --[[
-  {
-    name = 'Customs',
+  Rhodes = {
+    name = 'Rhodes Customs',
     prompt = 'rho_custom',
     gunsmithid = 'rhoweaponsmith',
     coords = vector3(1321.98, -1323.23, 77.89),
     custcoords = vector4(1322.368, -1322.256, 77.937, 75.0),
     jobaccess = 'rhoweaponsmith',
   },
-  
-  {
+  Tumbleweed = {
     name = 'Customs',
     prompt = 'tum_custom',
     gunsmithid = 'tumgunsmith',
@@ -51,7 +50,7 @@ Config.CustomLocations = {
     custcoords = vector4(-5507.34, -2963.81, -0.59, 75.0),
     jobaccess = 'tumgunsmith',
   },
-  {
+  StDen = {
     name = 'Customs',
     prompt = 'std_custom',
     gunsmithid = 'stdgunsmith',
@@ -59,14 +58,14 @@ Config.CustomLocations = {
     custcoords = vector4(2715.55322265625, -1286.741455078125, 49.6799087524414, 75.0),
     jobaccess = 'stdgunsmith',
   },
-  {
+  Annsb = {
     name = 'Customs',
     prompt = 'Ann_custom',
     gunsmithid = 'anngunsmith',
     coords = vector3(2948.48, 1319.55, 44.82),
     custcoords = vector4(2947.630, 1319.90, 44.86, 75.0),
     jobaccess = 'anngunsmith',
-  },]]
+  },
   --[[
   -- EXTRA LOCATIONS
   {
@@ -94,6 +93,7 @@ Config.CustomLocations = {
     jobaccess = 'guagunsmith',
   }, 
   ]]
+  }
 }
 
 -------------------------
@@ -511,6 +511,29 @@ Config.Shared =
         'COMPONENT_LONGARM_GRIPSTOCK_ENGRAVING_4',
         'COMPONENT_LONGARM_GRIPSTOCK_ENGRAVING_5',
         'COMPONENT_LONGARM_GRIPSTOCK_ENGRAVING_6'
+      },
+      ['GRIPSTOCK_TINT'] =
+       {
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_1",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_2",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_3",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_4",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_5",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_6",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_7",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_8",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_1",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_2",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_3",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_4",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_5",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_6",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_7",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_B_8",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_GUTTAPERCHA",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_PEARL",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_GRAY_BIRCH",
+          "COMPONENT_SHORTARM_GRIPSTOCK_TINT_BURLED",
       },
       ['WRAP_MATERIAL'] =
       {
