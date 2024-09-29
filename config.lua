@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Debug = true
+Config.Debug = false
 
 Config.Notify            = 'ox_lib' -- 'ox_lib' or 'rnotify' notify selection
 Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase' menu selection
