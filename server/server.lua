@@ -63,7 +63,7 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash)
             return
         else
             Player.Functions.RemoveItem(Config.PaymentType, tonumber(price), 'custom-weapon')
-            TriggerClientEvent('inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.PaymentType], "remove")
+            TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.PaymentType], "remove")
 
             if Config.Notify == 'rnotify' then
                 TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
@@ -217,6 +217,6 @@ AddEventHandler('rsg-weaponcomp:server:inspectkitConsume', function()
         return
     else
         Player.Functions.RemoveItem(Config.RepairItem, 1, 'custom-weapon')
-        TriggerClientEvent('inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.RepairItem], "remove")
+        TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.RepairItem], "remove")
     end
 end)
