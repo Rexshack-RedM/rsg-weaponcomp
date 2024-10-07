@@ -685,11 +685,11 @@ Components.weapons_comp_list = {
 	['MELEE_BLADE'] = { -- [31] FISHING , [39] TORCH_MATCHSTICK, [38] BINOCULARS
 		['WEAPON_LASSO'] = {},
 		['WEAPON_LASSO_REINFORCED'] = {},
-		['WEAPON_FISHINGROD'] = {
-			[Components.LanguageWeapons[31]] = {
-				[1] = { title = 'Fishing Line', price = 4, hashname = 'COMPONENT_FISHING_LINE', category_hashname = 'component_fishing_line', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_FISHINGROD',  },
-			},
-		},
+		-- ['WEAPON_FISHINGROD'] = {
+		-- 	[Components.LanguageWeapons[31]] = {
+		-- 		[1] = { title = 'Fishing Line', price = 4, hashname = 'COMPONENT_FISHING_LINE', category_hashname = 'component_fishing_line', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_FISHINGROD',  },
+		-- 	},
+		-- },
 		['WEAPON_MELEE_KNIFE'] = {
 			[Components.LanguageWeapons[7]] = {
 				[1] = { title = 'Knife Grip 1', price = 4, hashname = 'COMPONENT_MELEE_KNIFE02_GRIP', category_hashname = 'grip', weapon_type = 'MELEE_BLADE', type_weapon = 'WEAPON_MELEE_KNIFE',  },
