@@ -1606,9 +1606,9 @@ Config.Specific = {
         },
     },
 
-    ["WEAPON_FISHINGROD"] = {
-        ["COMPONENT_FISHING_LINE"] = {
-          "COMPONENT_FISHING_LINE",
-        },
-    },
+    -- ["WEAPON_FISHINGROD"] = {
+    --     ["COMPONENT_FISHING_LINE"] = {
+    --       "COMPONENT_FISHING_LINE",
+    --     },
+    -- },
 }
