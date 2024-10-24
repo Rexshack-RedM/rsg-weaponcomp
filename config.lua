@@ -512,7 +512,7 @@ Config.Shared =
         'COMPONENT_LONGARM_GRIPSTOCK_ENGRAVING_5',
         'COMPONENT_LONGARM_GRIPSTOCK_ENGRAVING_6'
       },
-      ['GRIPSTOCK_TINT'] =
+      --[[ ['GRIPSTOCK_TINT'] =
        {
           "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_1",
           "COMPONENT_SHORTARM_GRIPSTOCK_TINT_A_2",
@@ -534,13 +534,13 @@ Config.Shared =
           "COMPONENT_SHORTARM_GRIPSTOCK_TINT_PEARL",
           "COMPONENT_SHORTARM_GRIPSTOCK_TINT_GRAY_BIRCH",
           "COMPONENT_SHORTARM_GRIPSTOCK_TINT_BURLED",
-      },
+      }, ]]--
       ['WRAP_MATERIAL'] =
       {
         'COMPONENT_LONGARM_WRAP_MATERIAL_LEATHER',
         'COMPONENT_LONGARM_WRAP_MATERIAL_CLOTH'
       },
-      ['WRAP_TINT'] =
+      --[[ ['WRAP_TINT'] =
       {
         'COMPONENT_LONGARM_WRAP_TINT_WHITE',
         'COMPONENT_LONGARM_WRAP_TINT_BLACK',
@@ -605,7 +605,7 @@ Config.Shared =
         'COMPONENT_LONGARM_WRAP_TINT_E_8',
         'COMPONENT_LONGARM_WRAP_TINT_E_9',
         'COMPONENT_LONGARM_WRAP_TINT_E_10'
-      },
+      }, ]]--
         ['BARREL_RIFLING'] =
         {
           'COMPONENT_LONGARM_BARREL_RIFLING_1'
@@ -786,7 +786,7 @@ Config.Shared =
         'COMPONENT_LONGARM_WRAP_MATERIAL_LEATHER',
         'COMPONENT_LONGARM_WRAP_MATERIAL_CLOTH'
       },
-      ['WRAP_TINT'] =
+      --[[ ['WRAP_TINT'] =
       {
         'COMPONENT_LONGARM_WRAP_TINT_WHITE',
         'COMPONENT_LONGARM_WRAP_TINT_BLACK',
@@ -851,7 +851,7 @@ Config.Shared =
         'COMPONENT_LONGARM_WRAP_TINT_E_8',
         'COMPONENT_LONGARM_WRAP_TINT_E_9',
         'COMPONENT_LONGARM_WRAP_TINT_E_10'
-      }
+      } ]]--
     },
     ['MELEE_BLADE'] =
     {
@@ -889,7 +889,7 @@ Config.Shared =
           'COMPONENT_MELEE_BLADE_ENGRAVING_MATERIAL_13',
           'COMPONENT_MELEE_BLADE_ENGRAVING_MATERIAL_14'
         },
-        ['GRIP_TINT'] =
+        --[[ ['GRIP_TINT'] =
         {
           'COMPONENT_MELEE_GRIP_TINT_A_1',
           'COMPONENT_MELEE_GRIP_TINT_A_2',
@@ -908,7 +908,7 @@ Config.Shared =
           'COMPONENT_MELEE_GRIP_TINT_B_7',
           'COMPONENT_MELEE_GRIP_TINT_B_8',
           'COMPONENT_MELEE_GRIP_TINT_GRAY_BIRCH'
-        }
+        } ]]--
     }
 }
 
