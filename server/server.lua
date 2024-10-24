@@ -22,14 +22,6 @@ end
 --------------------------------------------
 -- COMMAND 
 --------------------------------------------
--- RSGCore.Commands.Add('w_inspect_old', 'Opens the inpect Weapon', {}, false, function(source)
---     local src = source
---     if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command.w_inspect')  then
---         TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
---     else
---         TriggerClientEvent('ox_lib:notify', src, {title = 'No have permissions', description = 'No are admin', type = 'inform' })
---     end
--- end)
 
 RSGCore.Commands.Add('w_inspect_old', 'Opens the inpect Weapon', {}, false, function(source)
     local src = source

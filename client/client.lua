@@ -13,7 +13,7 @@ local createdEntries = {}
 local readComponent = {Components.LanguageWeapons[1], Components.LanguageWeapons[7], Components.LanguageWeapons[5], Components.LanguageWeapons[10], Components.LanguageWeapons[41], Components.LanguageWeapons[11], Components.LanguageWeapons[36],  Components.LanguageWeapons[2], Components.LanguageWeapons[37], Components.LanguageWeapons[27], Components.LanguageWeapons[31], Components.LanguageWeapons[39], Components.LanguageWeapons[38]}
 local readMaterial = {Components.LanguageWeapons[13], Components.LanguageWeapons[19], Components.LanguageWeapons[3], Components.LanguageWeapons[4], Components.LanguageWeapons[6], Components.LanguageWeapons[9], Components.LanguageWeapons[16], Components.LanguageWeapons[21], Components.LanguageWeapons[24], Components.LanguageWeapons[26], Components.LanguageWeapons[22],  Components.LanguageWeapons[23], Components.LanguageWeapons[32]}
 local readEngraving = {Components.LanguageWeapons[14], Components.LanguageWeapons[20], Components.LanguageWeapons[40], Components.LanguageWeapons[17], Components.LanguageWeapons[15], Components.LanguageWeapons[12], Components.LanguageWeapons[42], Components.LanguageWeapons[33], Components.LanguageWeapons[8], Components.LanguageWeapons[34] }
-local readTints = {Components.LanguageWeapons[18], Components.LanguageWeapons[23], Components.LanguageWeapons[25], Components.LanguageWeapons[28], Components.LanguageWeapons[29], Components.LanguageWeapons[30], Components.LanguageWeapons[35],}
+-- local readTints = {Components.LanguageWeapons[18], Components.LanguageWeapons[23], Components.LanguageWeapons[25], Components.LanguageWeapons[28], Components.LanguageWeapons[29], Components.LanguageWeapons[30], Components.LanguageWeapons[35],}
 
 ---------------------------------
 -- Price function
@@ -22,7 +22,7 @@ local CalculatePrice = function(Table)
     local priceComp = 0.0
     local priceMat = 0.0
     local priceEng = 0.0
-    local priceTint = 0.0
+    -- local priceTint = 0.0
     local totalprice = 0.0
 
     if Table ~= nil then
@@ -60,7 +60,7 @@ local CalculatePrice = function(Table)
                 end
             end
 
-            for weaponType, categories in pairs(Components.SharedTintsComponents) do
+            --[[ for weaponType, categories in pairs(Components.SharedTintsComponents) do
                 if categories[category] then
                     for _, tint in ipairs(categories[category]) do
                         if tint.hashname == hashname and tint.price ~= nil then
@@ -68,14 +68,14 @@ local CalculatePrice = function(Table)
                         end
                     end
                 end
-            end
+            end ]]--
 
         end
         Wait(0)
     end
 
-    if Config.Debug then print('totalprice', priceComp, priceMat, priceEng, priceTint) end
-    totalprice = priceComp + priceMat + priceEng + priceTint
+    if Config.Debug then print('totalprice', priceComp, priceMat, priceEng) end -- , priceTint) end
+    totalprice = priceComp + priceMat + priceEng -- + priceTint
 
     Wait(0)
     return totalprice
@@ -114,7 +114,7 @@ local ComponentsTables = function(Table)
                     end
                 end
             end
-            for weaponType, categories in pairs(Components.SharedTintsComponents) do
+            --[[ for weaponType, categories in pairs(Components.SharedTintsComponents) do
                 if categories[category] then
                     for _, component in ipairs(categories[category]) do
                         if component.hashname == hashname then
@@ -122,7 +122,7 @@ local ComponentsTables = function(Table)
                         end
                     end
                 end
-            end
+            end ]]--
         end
     end
 end
@@ -640,9 +640,9 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
             if table_contains(readEngraving, category) then
                 RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
             end
-            if table_contains(readTints, category) then
+            --[[ if table_contains(readTints, category) then
                 RemoveWeaponComponentFromPed(wep, GetHashKey(hashname), -1)
-            end
+            end ]]--
         end
         ComponentsTables(componentsSql)
     end
@@ -782,8 +782,8 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
 
             if  table_contains(readComponent, category) or
                 table_contains(readMaterial, category) or
-                table_contains(readEngraving, category) or
-                table_contains(readTints, category) then
+                table_contains(readEngraving, category) -- or table_contains(readTints, category) 
+		then
             local componentHash = GetHashKey(hashname)
             if componentHash then
                 RemoveWeaponComponentFromPed(currentWep, componentHash, -1)
@@ -825,7 +825,7 @@ local mainWeaponCompMenus = {
     ["component"] = function(objecthash) OpenComponentMenu(objecthash) end,
     ["material"] = function(objecthash) OpenMaterialMenu(objecthash) end,
     ["engraving"] = function(objecthash) OpenEngravingMenu(objecthash) end,
-    ["tints"] = function(objecthash) OpenTintsMenu(objecthash) end,
+    -- ["tints"] = function(objecthash) OpenTintsMenu(objecthash) end,
     ["applycommponent"] = function(objecthash) ButtomApplyAllComponents(objecthash) end,
     ["removecommponent"] = function(objecthash) ButtomRemoveAllComponents(objecthash) end,
     ["exitcommponent"] = function() TriggerEvent('rsg-weaponcomp:client:ExitCam') end
@@ -842,7 +842,7 @@ mainCompMenu = function(objecthash)
         {label = 'Components',  value = 'component',        desc = ""},
         {label = 'Materials',   value = 'material',         desc = ""},
         {label = 'Engravings',  value = 'engraving',        desc = ""},
-        {label = 'Tints',       value = 'tints',            desc = ""},
+        -- {label = 'Tints',       value = 'tints',            desc = ""},
         {label = 'Apply $',     value = 'applycommponent',  desc = ""},
         {label = 'Remove $',    value = 'removecommponent', desc = ""},
         {label = 'EXIT',        value = 'exitcommponent',   desc = ""},
@@ -1038,7 +1038,7 @@ OpenEngravingMenu = function(objecthash)
     end)
 end
 
-OpenTintsMenu = function(objecthash)
+--[[ OpenTintsMenu = function(objecthash)
     TriggerServerEvent("rsg-weaponcomp:server:check_comps_selection")
     Wait(0)
 
@@ -1091,7 +1091,7 @@ OpenTintsMenu = function(objecthash)
         menu.close()
         mainCompMenu(objecthash)
     end)
-end
+end ]]--
 
 -----------------------------------
 -- APPLY BUTTOM -- REMOVE BUTTOM -- JOB
@@ -1226,12 +1226,12 @@ AddEventHandler("rsg-weaponcomp:client:update_selection", function(selectedComp)
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
             end
 
-            if table_contains(readTints, category) then
+            --[[ if table_contains(readTints, category) then
                 for i = 1, #selectedAdd do
                     if selectedAdd[i] ~= 0 then RemoveWeaponComponentFromPed(currentWep, GetHashKey(selectedAdd[i]), -1) end
                 end
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, currentWep, GetHashKey(component), true, true, true)
-            end
+            end ]]--
 
         end
 
