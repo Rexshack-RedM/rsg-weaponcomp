@@ -171,7 +171,7 @@ Config.WeaponRestriction = {
 -- EXTRA Webhooks / RANKING
 -----------------------
 Config.Webhooks = {
-    ['weaponCustom'] = 'https://discord.com/api/webhooks/1265455996126494801/5ZJgoOekdzaY50UTE_rkAcKxUSraqqvHFJpI9Av5tuYDtnA6wZ55hNrA623Nnnpdokww',
+    ['weaponCustom'] = '',
 }
 
 Config.Shared =
