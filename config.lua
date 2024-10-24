@@ -3,7 +3,7 @@ Config = {}
 Config.Debug = true
 
 Config.Notify            = 'ox_lib' -- 'ox_lib' or 'rnotify' notify selection
-Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase' menu selection
+Config.MenuData          = 'menu_base' -- 'menu_base' or 'rsg-menubase' menu selection
 
 Config.Keybinds          = 'J'
 Config.Payment           = 'money' --  'item' or  'money'
