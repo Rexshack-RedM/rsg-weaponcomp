@@ -9,7 +9,6 @@ local currentName = nil
 local currentWep = nil
 local createdEntries = {}
 
-
 -- LIST POSSIBLES CATEGORYES
 local readComponent = {Components.LanguageWeapons[1], Components.LanguageWeapons[7], Components.LanguageWeapons[5], Components.LanguageWeapons[10], Components.LanguageWeapons[41], Components.LanguageWeapons[11], Components.LanguageWeapons[36],  Components.LanguageWeapons[2], Components.LanguageWeapons[37], Components.LanguageWeapons[27], Components.LanguageWeapons[31], Components.LanguageWeapons[39], Components.LanguageWeapons[38]}
 local readMaterial = {Components.LanguageWeapons[13], Components.LanguageWeapons[19], Components.LanguageWeapons[3], Components.LanguageWeapons[4], Components.LanguageWeapons[6], Components.LanguageWeapons[9], Components.LanguageWeapons[16], Components.LanguageWeapons[21], Components.LanguageWeapons[24], Components.LanguageWeapons[26], Components.LanguageWeapons[22],  Components.LanguageWeapons[23], Components.LanguageWeapons[32]}
@@ -166,30 +165,12 @@ end
 ---------------------------------------
 -- weapon custom prompt
 ---------------------------------------
-local WeaponCustomGroup = GetRandomIntInRange(0, 0xffffff)
-local WeaponCustom = nil
-
-local WeaponCustomPrompt = function()
-    local str = 'Customise Weapon'
-    local stra = CreateVarString(10, 'LITERAL_STRING', str)
-    WeaponCustom = PromptRegisterBegin()
-    PromptSetControlAction(WeaponCustom, RSGCore.Shared.Keybinds[Config.Keybinds])
-    PromptSetText(WeaponCustom, stra)
-    PromptSetEnabled(WeaponCustom, 1)
-    PromptSetVisible(WeaponCustom, 1)
-    PromptSetHoldMode(WeaponCustom, true)
-    PromptSetGroup(WeaponCustom, WeaponCustomGroup)
-    PromptRegisterEnd(WeaponCustom)
-end
-
 CreateThread(function()
     for k, v in pairs(Config.CustomLocations.locations) do
         exports['rsg-core']:createPrompt(v.prompt, v.coords, RSGCore.Shared.Keybinds['J'], "" .. v.name, {
             type = 'client',
             event = 'rsg-weaponcomp:client:startcustom',
-            
         })
-
         createdEntries[#createdEntries + 1] = { type = 'PROMPT', handle = v.prompt }
     end
 end)
@@ -316,7 +297,6 @@ function GameCam(hash, move_coords, objecthash)
 end
 
 local LoadModel = function(model)
-	-- if not IsModelInCdimage(GetHashKey(model)) then return false end
 	RequestModel(GetHashKey(model))
 	while not HasModelLoaded(GetHashKey(model)) do
         Wait(4)
@@ -327,13 +307,16 @@ end
 local function applyfirst(objecthash)
     local weapon_type = GetWeaponType(objecthash)
     local weaponData = Components.weapons_comp_list[weapon_type]
-
+    -- local list = {'BARREL', 'GRIP', 'SIGHT', 'CLIP', 'MAG', 'STOCK', 'FRAME_VERTDATA', 'TUBE', 'TORCH_MATCHSTICK', 'GRIPSTOCK' }
+    local list = {'BARREL', 'GRIP'}
     for _, components in pairs(weaponData) do
         for weaponObjectHash, weaponObjectName in pairs(Components.weaponObject) do
             if GetHashKey(weaponObjectHash) == objecthash then
                 for componentCategory, componentList in pairs(components) do
-                    local componentHashname = componentList[1].hashname
-                    apply_weapon_component(componentHashname)
+                    if list == componentCategory then
+                        local componentHashname = componentList[1].hashname
+                        apply_weapon_component(componentHashname)
+                    end
                 end
             end
         end
@@ -374,7 +357,6 @@ end)
 -- EVENT PRINCIPAL ACCESS
 ---------------------------------
 
-
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function()-- , custcoords
     local weaponHash = GetPedCurrentHeldWeapon(cache.ped)
     local weaponInHands = exports['rsg-weapons']:weaponInHands()
@@ -392,52 +374,51 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function()-- , custcoords
 		[4] = { townname = 'StDenis', zone = -765540529 },
         [5] = { townname = 'Annesburg', zone = 7359335 },
 	}
-    
+
     currentSerial = serial
     currentName = weaponName
     currentWep = wep
 
-    if currentSerial == nil or weaponHash == -1569615261 then 
+    if currentSerial == nil or weaponHash == -1569615261 then
         lib.notify({ title = 'Item Needed', description = "You're not holding a weapon!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
     return end
 
     if Config.Usejob then
-		if playerjob.name == Config.CustomLocations.locations.Valentine.jobaccess then 
-			if current_district == 459833523 then 
+		if playerjob.name == Config.CustomLocations.locations.Valentine.jobaccess then
+			if current_district == 459833523 then
 				goto Val
 			else
 				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
 			return end
 		end
 		if playerjob.name == Config.CustomLocations.locations.Rhodes.jobaccess then
-			if current_district == 2046780049 then 
+			if current_district == 2046780049 then
 				goto Rds
 			else
 				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
 			return end
 		end
 		if playerjob.name == Config.CustomLocations.locations.Tumbleweed.jobaccess then
-			if current_district == -1524959147 then 
+			if current_district == -1524959147 then
 				goto Tum
 			else
 				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
 			return end
 		end
 		if playerjob.name == Config.CustomLocations.locations.StDen.jobaccess then
-			if current_district == -765540529 then 
+			if current_district == -765540529 then
 				goto StDen
 			else
 				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
 			return end
 		end
 		if playerjob.name == Config.CustomLocations.locations.Annsb.jobaccess then
-			if current_district == 7359335 then 
+			if current_district == 7359335 then
 				goto Anns
 			else
 				lib.notify({ title = 'Job Required', description = "You're not at your shop!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
 			return end
 		end
-		
 	else
 
 		if current_district == 459833523 then
@@ -455,46 +436,39 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function()-- , custcoords
 		if current_district == 7359335 then
 			goto Anns2
 		end
-    return end	
-	---
--- Valentine --
-	---
-		::Val::
-			for k, v in pairs(Config.CustomLocations) do
-				if Config.Debug then print("Job :",v.Valentine.jobaccess) print("Coords :",v.Valentine.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
-					if playerjob.name == v.Valentine.jobaccess then
-						inCustom = true
-						StartCam(v.Valentine.custcoords.x+0.2, v.Valentine.custcoords.y+0.15 , v.Valentine.custcoords.z+1.0, v.Valentine.custcoords.w)
-						Wait(500)
-						mainCompMenu(weaponHash) -- ENTER MENU
-				
-						createobject(v.Valentine.custcoords.x, v.Valentine.custcoords.y, v.Valentine.custcoords.z, weaponHash)
-				
-						applyfirst(weaponHash)
-					else
-						lib.notify({ title = 'Job Required', description = "You're not a Valentine Gunsmith!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
-					return end
-					
-			return end
-		::Val2::
-			for k, v in pairs(Config.CustomLocations) do
-				if Config.Debug then print("Job :",v.Valentine.jobaccess) print("Coords :",v.Valentine.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
-					
-						inCustom = true
-						StartCam(v.Valentine.custcoords.x+0.2, v.Valentine.custcoords.y+0.15 , v.Valentine.custcoords.z+1.0, v.Valentine.custcoords.w)
-						Wait(500)
-						mainCompMenu(weaponHash) -- ENTER MENU
-				
-						createobject(v.Valentine.custcoords.x, v.Valentine.custcoords.y, v.Valentine.custcoords.z, weaponHash)
-				
-						applyfirst(weaponHash)
-					
-			return end
-		
-	---
--- Rhodes --
-	---
-		
+    return end
+
+        ::Val::
+            for k, v in pairs(Config.CustomLocations) do
+                if Config.Debug then print("Job :",v.Valentine.jobaccess) print("Coords :",v.Valentine.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+                if playerjob.name == v.Valentine.jobaccess then
+                    inCustom = true
+                    StartCam(v.Valentine.custcoords.x+0.2, v.Valentine.custcoords.y+0.15 , v.Valentine.custcoords.z+1.0, v.Valentine.custcoords.w)
+                    Wait(500)
+                    mainCompMenu(weaponHash) -- ENTER MENU
+
+                    createobject(v.Valentine.custcoords.x, v.Valentine.custcoords.y, v.Valentine.custcoords.z, weaponHash)
+
+                    applyfirst(weaponHash)
+                else
+                    lib.notify({ title = 'Job Required', description = "You're not a Valentine Gunsmith!", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+                return end
+
+            return end
+        ::Val2::
+            for k, v in pairs(Config.CustomLocations) do
+                if Config.Debug then print("Job :",v.Valentine.jobaccess) print("Coords :",v.Valentine.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
+
+                inCustom = true
+                StartCam(v.Valentine.custcoords.x+0.2, v.Valentine.custcoords.y+0.15 , v.Valentine.custcoords.z+1.0, v.Valentine.custcoords.w)
+                Wait(500)
+                mainCompMenu(weaponHash) -- ENTER MENU
+
+                createobject(v.Valentine.custcoords.x, v.Valentine.custcoords.y, v.Valentine.custcoords.z, weaponHash)
+
+                applyfirst(weaponHash)
+                    
+            return end
 		::Rds::
 			for k, v in pairs(Config.CustomLocations) do
 				if Config.Debug then print("Job :",v.Rhodes.jobaccess) print("Coords :",v.Rhodes.custcoords) print("Your Job :" , playerjob.name) end ----------- Debug
@@ -671,12 +645,11 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function()
             end
         end
         ComponentsTables(componentsSql)
-		
     end
     Wait(100)
     componentsSql = nil
-	
 end)
+
 RegisterNetEvent("rsg-weaponcomp:client:LoadComponents")
 AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepHash)
     local ped = PlayerPedId()
@@ -782,6 +755,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents", function(component, wepH
     Wait(0)
 
 end)
+
 exports('InWeaponCustom', function()
     return inCustom
 end)
@@ -814,7 +788,7 @@ AddEventHandler("rsg-weaponcomp:client:LoadComponents_selection", function()
             if componentHash then
                 RemoveWeaponComponentFromPed(currentWep, componentHash, -1)
             else
-                print('Error: Hash del componente no vlido:', hashname)
+                print('Error: Hash comp:', hashname)
             end
         end
 
@@ -920,12 +894,7 @@ OpenComponentMenu = function(objecthash)
             category = category,
             components = {}
         }
-        --[[ -- Insert "Original" option as the first component
-        table.insert(newElement.components, {
-            label = "Original",
-            value = nil,
-            v = nil,
-        }) ]]
+
         for i, component in ipairs(componentList) do
             table.insert(newElement.components, {label = component.title, value = component.hashname, price = component.price})
         end
@@ -941,10 +910,6 @@ OpenComponentMenu = function(objecthash)
             local selectedIndex = data.current.value
             local selectedHash = nil
 
-            -- if selectedIndex == 0 then
-            --     selectedHash = nil
-            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
-            -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.components then
                 selectedHash = data.current.components[selectedIndex].value
                 Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, GetHashKey(selectedHash), true, true, true)
@@ -983,12 +948,7 @@ OpenMaterialMenu = function(objecthash)
             category = category,
             materials = {}
         }
-        --[[ -- Insert "Original" option as the first component
-        table.insert(newElement.materials, {
-            label = "Original",
-            value = nil,
-            v = nil,
-        }) ]]
+
         for i, material in ipairs(materialList) do
             table.insert(newElement.materials, {label = material.title, value = material.hashname, price = material.price})
         end
@@ -1004,10 +964,6 @@ OpenMaterialMenu = function(objecthash)
             local selectedIndex = data.current.value
             local selectedHash = nil
 
-            -- if selectedIndex == 0 then
-            --     selectedHash = nil
-            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
-            -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.materials then
                 selectedHash = data.current.materials[selectedIndex].value
             end
@@ -1045,12 +1001,6 @@ OpenEngravingMenu = function(objecthash)
             category = category,
             engravings = {}
         }
-        --[[ -- Insert "Original" option as the first component
-        table.insert(newElement.engravings, {
-            label = "Original",
-            value = nil,
-            v = nil,
-        }) ]]
 
         for i, engraving in ipairs(engravingList) do
             table.insert(newElement.engravings, {label = engraving.title, value = engraving.hashname, price = engraving.price})
@@ -1066,10 +1016,6 @@ OpenEngravingMenu = function(objecthash)
             local selectedIndex = data.current.value
             local selectedHash = nil
 
-            -- if selectedIndex == 0 then
-            --     selectedHash = nil
-            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
-            -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.engravings then
                 selectedHash = data.current.engravings[selectedIndex].value
             end
@@ -1112,12 +1058,6 @@ OpenTintsMenu = function(objecthash)
             tints = {}
         }
 
-        --[[ -- Insert "Original" option as the first component
-        table.insert(newElement.tints, {
-            label = "Original",
-            value = nil,
-            price = nil,
-        }) ]]
         for index, tint in ipairs(tintsList) do
             table.insert(newElement.tints, {label = tint.title, value = tint.hashname, price = tint.price})
         end
@@ -1132,10 +1072,6 @@ OpenTintsMenu = function(objecthash)
             local selectedIndex = data.current.value
             local selectedHash = nil
 
-            -- if selectedIndex == 0 then
-            --     selectedHash = nil
-            --     Citizen.InvokeNative(0xD3A7B003ED343FD9, wepobject, -1, true, true, true) -- ApplyShopItemToPed (reloading the original model)
-            -- else
             if selectedIndex > 0 and selectedIndex <= #data.current.tints then
                 selectedHash = data.current.tints[selectedIndex].value
             end
@@ -1251,6 +1187,7 @@ ButtomRemoveAllComponents = function (objecthash)
     end
     componentsRemoveSql = nil
 end
+
 -----------------------------------
 -- UPDATE SELECTION
 -----------------------------------
@@ -1358,7 +1295,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash)
 
     if wepobject ~= nil and DoesEntityExist(wepobject) then
         DeleteObject(wepobject)
-        wepobject = nil -- Limpiar la variable después de eliminar el objeto
+        wepobject = nil
     else
         if Config.Debug then print("No hay objeto para eliminar o ya ha sido eliminado -- Animacion save") end
     end
@@ -1422,9 +1359,7 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
     if wepobject ~= nil and DoesEntityExist(wepobject) then
         DeleteObject(wepobject)
-        wepobject = nil -- Limpiar la variable después de eliminar el objeto
-    else
-        if Config.Debug then print("No hay objeto para eliminar o ya ha sido eliminado -- Exit Menu") end
+        wepobject = nil
     end
 
     MenuData.CloseAll()
@@ -1446,45 +1381,6 @@ end)
 -- START AND STOP RESOURCE CLEAN UP
 -----------------------------------
 
-local function PreloadAllComponents()
-    local function preloadComponentFirst(componentList, categoryName)
-        for weaponType, componentsListA in pairs(componentList) do
-            for k, v in pairs(Components.weaponObject) do
-                for weaponName, components in pairs(componentsListA) do
-                    if k == weaponName then
-                        for _, category in pairs(components) do
-                            for _, component in pairs(category) do
-                                LoadModel(component.hashname)
-                                print('Componente precargado exitosamente en ' .. categoryName .. ':', component.hashname)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    local function preloadComponentList(componentList, categoryName)
-        for weaponType, components in pairs(componentList) do
-            for _, v in pairs(components) do
-                for _, component in pairs(v) do
-                    LoadModel(component.hashname)
-                    print('Componente precargado exitosamente en ' .. categoryName .. ':', component.hashname)
-                end
-            end
-        end
-    end
-
-    preloadComponentFirst(Components.weapons_comp_list, 'Componentes de armas')
-    preloadComponentList(Components.SharedComponents, 'Materiales compartidos')
-    preloadComponentList(Components.SharedEngravingsComponents, 'Grabados compartidos')
-    preloadComponentList(Components.SharedTintsComponents, 'Tintes compartidos')
-end
-
-RegisterCommand('preloadModels', function()
-        PreloadAllComponents()
-end, false)
-
 AddEventHandler('RSGCore:Client:OnPlayerLoaded', function()
     LocalPlayer.state:set('isLoggedIn', true, false)
     PlayerData = RSGCore.Functions.GetPlayerData()
@@ -1495,7 +1391,6 @@ end)
 AddEventHandler('onResourceStart', function(r)
     if GetCurrentResourceName() ~= r then return end
     TriggerEvent('RSGCore:client:OnPlayerLoaded')
-    -- PreloadAllComponents()
 end)
 
 RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()

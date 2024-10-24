@@ -6,15 +6,15 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 local sendToDiscord = function(color, name, message, footer, type)
     local embed = {
             {
-                ["color"] = color,
-                ["title"] = "**".. name .."**",
-                ["description"] = message,
-                ["footer"] = {
-                ["text"] = footer
+                ['color'] = color,
+                ['title'] = '**'.. name ..'**',
+                ['description'] = message,
+                ['footer'] = {
+                ['text'] = footer
             }
         }
     }
-    if type == "weapons" then
+    if type == 'weapons' then
     	PerformHttpRequest(Config['Webhooks']['weaponCustom'], function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
     end
 end
@@ -22,7 +22,7 @@ end
 --------------------------------------------
 -- COMMAND 
 --------------------------------------------
--- RSGCore.Commands.Add("w_inspect_old", "Opens the inpect Weapon", {}, false, function(source)
+-- RSGCore.Commands.Add('w_inspect_old', 'Opens the inpect Weapon', {}, false, function(source)
 --     local src = source
 --     if RSGCore.Functions.HasPermission(src, permissions['CreatorWeapon']) or IsPlayerAceAllowed(src, 'command.w_inspect')  then
 --         TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
@@ -31,19 +31,19 @@ end
 --     end
 -- end)
 
-RSGCore.Commands.Add("w_inspect_old", "Opens the inpect Weapon", {}, false, function(source)
+RSGCore.Commands.Add('w_inspect_old', 'Opens the inpect Weapon', {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
 end)
 
-RSGCore.Commands.Add(Config.Command.inspect, "Opens the new inpect Weapon", {}, false, function(source)
+RSGCore.Commands.Add(Config.Command.inspect, 'Opens the new inpect Weapon', {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeaponNew', src)
 end)
 
-RSGCore.Commands.Add(Config.Command.loadweapon, "Loading skinthe Custom Weapon", {}, false, function(source)
+RSGCore.Commands.Add(Config.Command.loadweapon, 'Loading skinthe Custom Weapon', {}, false, function(source)
     local src = source
-    TriggerClientEvent("rsg-weaponcomp:client:LoadComponents", src)
+    TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
 end)
 
 -------------------------------------------
@@ -63,13 +63,8 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash)
             return
         else
             Player.Functions.RemoveItem(Config.PaymentType, tonumber(price), 'custom-weapon')
-            TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.PaymentType], "remove")
-
-            if Config.Notify == 'rnotify' then
-                TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
-            elseif Config.Notify == 'ox_lib' then
-                TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
-            end
+            TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.PaymentType], 'remove')
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
         end
     elseif Config.Payment == 'money' then
         local currentCash = Player.Functions.GetMoney(Config.PaymentType)
@@ -79,12 +74,7 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash)
             return
         else
             Player.Functions.RemoveMoney(Config.PaymentType, tonumber(price))
-
-            if Config.Notify == 'rnotify' then
-                TriggerClientEvent('rNotify:NotifyLeft', src, 'Custom $:' ..tonumber(price), 'your weapon is now', "generic_textures", "tick", 4000)
-            elseif Config.Notify == 'ox_lib' then
-                TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
-            end
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
         end
     end
 
@@ -107,16 +97,11 @@ AddEventHandler('rsg-weaponcomp:server:apply_weapon_components', function(compon
     }, function(rowsChanged)
         if rowsChanged > 0 then
 
-            sendToDiscord(16753920,	"Craft | WEAPON CUSTOM", "**Citizenid:** "..Player.PlayerData.citizenid.."\n**Ingame ID:** "..Player.PlayerData.cid.. "\n**Name:** "..Player.PlayerData.charinfo.firstname.." "..Player.PlayerData.charinfo.lastname.. "\n**Job:** ".. 'job' .."\n**Weapon:** "..weaponName .. "\n**Serial:** "..serial .. "\n**Components Specific:** ".. json.encode(components),	"Weapon Craft  for RSG Framework", "weapons")
+            sendToDiscord(16753920,	'Craft | WEAPON CUSTOM', '**Citizenid:** '..Player.PlayerData.citizenid..'\n**Ingame ID:** '..Player.PlayerData.cid.. '\n**Name:** '..Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname.. '\n**Job:** '.. 'job' ..'\n**Weapon:** '..weaponName .. '\n**Serial:** '..serial .. '\n**Components Specific:** '.. json.encode(components),	'Weapon Craft  for RSG Framework', 'weapons')
             Wait(1000)
-            if Config.Notify == 'rnotify' then
-                TriggerClientEvent('rNotify:NotifyLeft', src, 'Components and assets', 'updated successfully!', "generic_textures", "tick", 4000)
-            elseif Config.Notify == 'ox_lib' then
-                TriggerClientEvent('ox_lib:notify', src, {title = 'Components and assets updated successfully!', type = 'inform', duration = 5000 })
-            end
-            if Config.Debug then
-                print('Weapon components have been successfully updated for the serial:', serial, json.encode(components))
-            end
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Components and assets updated successfully!', type = 'inform', duration = 5000 })
+
+            if Config.Debug then print('Weapon components have been successfully updated for the serial:', serial, json.encode(components)) end
 
             Wait(100)
             TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
@@ -125,7 +110,7 @@ AddEventHandler('rsg-weaponcomp:server:apply_weapon_components', function(compon
 
     -- DELETE CUSTOM TABLE
     Wait(100)
-    TriggerEvent("rsg-weaponcomp:server:removeComponents_selection", "DEFAULT", serial) -- update SQL
+    TriggerEvent('rsg-weaponcomp:server:removeComponents_selection', 'DEFAULT', serial) -- update SQL
 
 end)
 
@@ -149,18 +134,14 @@ end)
 RegisterServerEvent('rsg-weaponcomp:server:removeComponents', function(components, weaponName, serial)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
-    if components == "DEFAULT" then
+    if components == 'DEFAULT' then
         MySQL.Async.execute('UPDATE player_weapons SET components = DEFAULT WHERE serial = @serial', {
             ['@serial'] = serial
         }, function(rowsChanged)
             if rowsChanged > 0 then
-                sendToDiscord(16753920,	"Craft | WEAPON CUSTEM", "**Citizenid:** "..Player.PlayerData.citizenid.."\n**Ingame ID:** "..Player.PlayerData.cid.. "\n**Name:** "..Player.PlayerData.charinfo.firstname.." "..Player.PlayerData.charinfo.lastname.. "\n**Job:** ".. 'job' .."\n**Weapon:** ".. weaponName .. "\n**Serial:** "..serial .. "\n**Components Specific:** ".. '{}',	"Weapon Craft  for RSG Framework", "weapons")
+                sendToDiscord(16753920,	'Craft | WEAPON CUSTEM', '**Citizenid:** '..Player.PlayerData.citizenid..'\n**Ingame ID:** '..Player.PlayerData.cid.. '\n**Name:** '..Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname.. '\n**Job:** '.. 'job' ..'\n**Weapon:** '.. weaponName .. '\n**Serial:** '..serial .. '\n**Components Specific:** '.. '{}',	'Weapon Craft  for RSG Framework', 'weapons')
                 Wait(2000)
-                if Config.Notify == 'rnotify' then
-                    TriggerClientEvent('rNotify:NotifyLeft', src, "Components and assets", "removed successfully!" ,"generic_textures", "tick", 4000)
-                elseif Config.Notify == 'ox_lib' then
-                    TriggerClientEvent('ox_lib:notify', src, {title = 'Components and assets removed successfully!', type = 'inform', duration = 5000 })
-                end
+                TriggerClientEvent('ox_lib:notify', src, {title = 'Components and assets removed successfully!', type = 'inform', duration = 5000 })
 
                 Wait(100)
                 TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
@@ -172,7 +153,7 @@ end)
 
 RegisterServerEvent('rsg-weaponcomp:server:removeComponents_selection', function(components, serial)
     local src = source
-    if components == "DEFAULT" then
+    if components == 'DEFAULT' then
         MySQL.Async.execute('UPDATE player_weapons SET components_before = DEFAULT WHERE serial = @serial', {
             ['@serial'] = serial
         }, function()
@@ -217,6 +198,6 @@ AddEventHandler('rsg-weaponcomp:server:inspectkitConsume', function()
         return
     else
         Player.Functions.RemoveItem(Config.RepairItem, 1, 'custom-weapon')
-        TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.RepairItem], "remove")
+        TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.RepairItem], 'remove')
     end
 end)

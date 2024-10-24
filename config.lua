@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Debug = false
+Config.Debug = true
 
 Config.Notify            = 'ox_lib' -- 'ox_lib' or 'rnotify' notify selection
 Config.MenuData          = 'rsg-menubase' -- 'menu_base' or 'rsg-menubase' menu selection
@@ -171,7 +171,7 @@ Config.WeaponRestriction = {
 -- EXTRA Webhooks / RANKING
 -----------------------
 Config.Webhooks = {
-    ['weaponCustom'] = '',
+    ['weaponCustom'] = 'https://discord.com/api/webhooks/1265455996126494801/5ZJgoOekdzaY50UTE_rkAcKxUSraqqvHFJpI9Av5tuYDtnA6wZ55hNrA623Nnnpdokww',
 }
 
 Config.Shared =
