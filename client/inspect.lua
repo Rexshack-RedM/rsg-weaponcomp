@@ -1,5 +1,6 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
+lib.locale()
 -----------------------------------
 -- UTILITYS -- INSPECTION - NEW
 -----------------------------------
@@ -312,7 +313,7 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeaponNew", function()
     end
 
     if not hasRepairItem then
-        lib.notify({ title = 'Item Needed', description = "You're not holding a weapons kit repair !", type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
+        lib.notify({ title = locale('title_37'), description = locale('title_38'), type = 'error', icon = 'fa-solid fa-gun', iconAnimation = 'shake', duration = 7000})
         return
     else
         startWeaponInspection(hasRepairItem, takeRepairItemCallback)
@@ -342,7 +343,7 @@ showstats = function()
         local uiFlowBlock = RequestFlowBlock(GetHashKey("PM_FLOW_WEAPON_INSPECT"))
         local uiContainer = DatabindingAddDataContainerFromPath("" , "ItemInspection")
         Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, "stats", getWeaponStats(weapon), PlayerPedId())
-        DatabindingAddDataString(uiContainer, "tipText", 'Weapon Information')
+        DatabindingAddDataString(uiContainer, "tipText", locale('title_54'))
         DatabindingAddDataHash(uiContainer, "itemLabel", weapon)
         DatabindingAddDataBool(uiContainer, "Visible", true)
 
@@ -415,5 +416,5 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
 
         if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
     end
-end) 
+end)
 --[[]]

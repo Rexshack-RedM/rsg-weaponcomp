@@ -1,34 +1,5 @@
 Components ={}
 
-Components.Language = {
-	[1] = {text = "Weapon store"},
-	[2] = {text = "You dont have money."},
-	[3] = {text = "You buy components for :"},
-	[4] = {text = "You buy weapon for :"},
-	[5] = {text = "You cant hold more weapons."},
-	[6] = {text = "You cant hold more ammo."},
-	[7] = {text = "You refill your weapon."},
-	[8] = {text = "You have wrong weapon in equipment."},
-	[9] = {text = "Accept"},
-	[10] = {text = "How much you need buy?"},
-	[11] = {text = "Open store"},
-	[12] = {text = "Open customization"},
-	[13] = {text = "Someone is much close."},
-	[15] = {text = "You buy ammo for : "},
-	[16] = {text = "Your weapon is full, you get back box : "},
-	[17] = {text = "You have under 50% ammo, you refill your weapon."}
-}
-
-Components.LanguageFilter = {
-	[1] = "Revolver",
-	[2] = "Pistol",
-	[3] = "Repeater",
-	[4] = "Rifle",
-	[5] = "Shotgun",
-	[6] = "Arrows",
-	[7] = "Varmint",
-}
-
 Components.LanguageWeapons = {
 	[1] = "BARREL",
 	[2] = "WRAP",
