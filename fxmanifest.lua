@@ -7,12 +7,9 @@ description 'rsg-weaponcomp'
 version '1.1.7'
 
 shared_script {
-    'config.lua',
-    'data/weaponslist.lua',
     '@ox_lib/init.lua',
-    '@rsg-core/shared/locale.lua',
-    'locale/en.lua',
-    -- 'locale/*.lua',
+    'data/weaponslist.lua',
+    'config.lua',
 }
 
 server_scripts {
@@ -24,9 +21,14 @@ client_scripts {
     'client/*.lua'
 }
 
+files {
+    'locales/*.json'
+}
+
 dependencies {
-    'rsg-core',
+    'oxmysql',
     'ox_lib',
+    'rsg-core',
 }
 
 lua54 'yes'

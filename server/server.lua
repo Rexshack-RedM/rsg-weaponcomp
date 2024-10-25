@@ -1,5 +1,6 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
+lib.locale()
 ---------------------------------------------
 -- send To Discord
 -------------------------------------------
@@ -23,17 +24,17 @@ end
 -- COMMAND 
 --------------------------------------------
 
-RSGCore.Commands.Add('w_inspect_old', 'Opens the inpect Weapon', {}, false, function(source)
+RSGCore.Commands.Add('w_inspect_old', locale('label_39'), {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
 end)
 
-RSGCore.Commands.Add(Config.Command.inspect, 'Opens the new inpect Weapon', {}, false, function(source)
+RSGCore.Commands.Add(Config.Command.inspect, locale('label_40'), {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeaponNew', src)
 end)
 
-RSGCore.Commands.Add(Config.Command.loadweapon, 'Loading skinthe Custom Weapon', {}, false, function(source)
+RSGCore.Commands.Add(Config.Command.loadweapon, locale('label_41'), {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
 end)
@@ -51,22 +52,22 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash)
     	local cashAmount = cashItem.amount
 
         if not cashItem and tonumber(cashAmount) < tonumber(price) then
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $'.. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
+            TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_42').. tonumber(price), description = locale('notify_43'), type = 'error', duration = 5000 })
             return
         else
             Player.Functions.RemoveItem(Config.PaymentType, tonumber(price), 'custom-weapon')
             TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.PaymentType], 'remove')
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
+            TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_44') ..tonumber(price), description = locale('notify_45'), type = 'inform', duration = 5000 })
         end
     elseif Config.Payment == 'money' then
         local currentCash = Player.Functions.GetMoney(Config.PaymentType)
         if currentCash < tonumber(price) then
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Cash! $' .. tonumber(price), description = 'you need more cash to do that!', type = 'error', duration = 5000 })
+            TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_46') .. tonumber(price), description = locale('notify_47'), type = 'error', duration = 5000 })
             TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
             return
         else
             Player.Functions.RemoveMoney(Config.PaymentType, tonumber(price))
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Custom $:' ..tonumber(price), description = 'your weapon is now', type = 'inform', duration = 5000 })
+            TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_48') ..tonumber(price), description = locale('notify_49'), type = 'inform', duration = 5000 })
         end
     end
 
@@ -91,7 +92,7 @@ AddEventHandler('rsg-weaponcomp:server:apply_weapon_components', function(compon
 
             sendToDiscord(16753920,	'Craft | WEAPON CUSTOM', '**Citizenid:** '..Player.PlayerData.citizenid..'\n**Ingame ID:** '..Player.PlayerData.cid.. '\n**Name:** '..Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname.. '\n**Job:** '.. 'job' ..'\n**Weapon:** '..weaponName .. '\n**Serial:** '..serial .. '\n**Components Specific:** '.. json.encode(components),	'Weapon Craft  for RSG Framework', 'weapons')
             Wait(1000)
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Components and assets updated successfully!', type = 'inform', duration = 5000 })
+            TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_50'), type = 'inform', duration = 5000 })
 
             if Config.Debug then print('Weapon components have been successfully updated for the serial:', serial, json.encode(components)) end
 
@@ -133,7 +134,7 @@ RegisterServerEvent('rsg-weaponcomp:server:removeComponents', function(component
             if rowsChanged > 0 then
                 sendToDiscord(16753920,	'Craft | WEAPON CUSTEM', '**Citizenid:** '..Player.PlayerData.citizenid..'\n**Ingame ID:** '..Player.PlayerData.cid.. '\n**Name:** '..Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname.. '\n**Job:** '.. 'job' ..'\n**Weapon:** '.. weaponName .. '\n**Serial:** '..serial .. '\n**Components Specific:** '.. '{}',	'Weapon Craft  for RSG Framework', 'weapons')
                 Wait(2000)
-                TriggerClientEvent('ox_lib:notify', src, {title = 'Components and assets removed successfully!', type = 'inform', duration = 5000 })
+                TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_51'), type = 'inform', duration = 5000 })
 
                 Wait(100)
                 TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
@@ -186,7 +187,7 @@ AddEventHandler('rsg-weaponcomp:server:inspectkitConsume', function()
     local cashItem = Player.Functions.GetItemByName(Config.RepairItem)
 
     if not cashItem then
-        TriggerClientEvent('ox_lib:notify', src, {title = 'Not Enough Kit! $', description = 'you need kit!', type = 'error', duration = 5000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_52'), description = locale('notify_53'), type = 'error', duration = 5000 })
         return
     else
         Player.Functions.RemoveItem(Config.RepairItem, 1, 'custom-weapon')
