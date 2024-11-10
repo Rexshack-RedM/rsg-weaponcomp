@@ -307,17 +307,44 @@ local LoadModel = function(model)
 end
 
 local function applyfirst(objecthash)
+    
+    while not DoesEntityExist(wepobject) do
+        Wait(10)
+    end
+    
     local weapon_type = GetWeaponType(objecthash)
+    if not weapon_type then return end
+    
+    
+    local weaponObject = nil
+    for hash, model in pairs(Components.weaponObject) do
+        if GetHashKey(hash) == objecthash then
+            weaponObject = model
+            break
+        end
+    end
+    
+    if not weaponObject then return end
+    
+    RequestModel(GetHashKey(weaponObject))
+    while not HasModelLoaded(GetHashKey(weaponObject)) do
+        Wait(10)
+    end
+
+    
     local weaponData = Components.weapons_comp_list[weapon_type]
-    -- local list = {'BARREL', 'GRIP', 'SIGHT', 'CLIP', 'MAG', 'STOCK', 'FRAME_VERTDATA', 'TUBE', 'TORCH_MATCHSTICK', 'GRIPSTOCK' }
-    local list = {'BARREL', 'GRIP'}
+    if not weaponData then return end
+
     for _, components in pairs(weaponData) do
         for weaponObjectHash, weaponObjectName in pairs(Components.weaponObject) do
             if GetHashKey(weaponObjectHash) == objecthash then
                 for componentCategory, componentList in pairs(components) do
-                    if list == componentCategory then
-                        local componentHashname = componentList[1].hashname
-                        apply_weapon_component(componentHashname)
+                    
+                    if componentCategory == Components.LanguageWeapons[1] or componentCategory == Components.LanguageWeapons[7] then
+                        if componentList[1] and componentList[1].hashname then
+                            apply_weapon_component(componentList[1].hashname)
+                            Wait(50) 
+                        end
                     end
                 end
             end
