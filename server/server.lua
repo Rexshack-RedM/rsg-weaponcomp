@@ -19,39 +19,6 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(sou
   cb(res or 0)
 end)
 
--- Save weapon components
-RegisterNetEvent('rsg-weaponcomp:server:saveWeaponComponents', function(serial, components)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-
-    MySQL.update(
-        "UPDATE player_weapons SET components = ? WHERE serial = ?",
-        { json.encode(components), serial }
-    )
-
-    TriggerEvent('rsg-weaponcomp:server:updateProps', src)
-
-    local citizenid = Player.PlayerData.citizenid
-    local ingameId = Player.PlayerData.cid
-    local firstname = Player.PlayerData.charinfo.firstname
-    local lastname = Player.PlayerData.charinfo.lastname
-    local job = Player.PlayerData.job.name
-    local msg = 'Citizenid:** ' .. citizenid .. '**' ..
-      '\nIngame ID:** ' .. ingameId .. '**' ..
-      '\nName:** ' .. firstname .. ' ' .. lastname .. '**' ..
-      '\nJob:** ' .. job .. '**' ..
-      '\nSerial:** ' .. serial .. '**' ..
-      '\nComponents Specific:** ' .. json.encode(components) .. '**'
-
-    TriggerEvent('rsg-log:server:CreateLog',
-        Config.WebhookName,
-        Config.WebhookTitle,
-        Config.WebhookColour,
-        msg
-    )
-end)
-
 -- Provide saved components
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
   local res = MySQL.query.await(
@@ -238,18 +205,6 @@ AddEventHandler('rsg-weaponcomp:server:updateProps', function()
     TriggerClientEvent('rsg-weaponcomp:client:updatePropData', src, Config.PlayerProps)
 end)
 
----------------------------------------------
--- getPlayerWeaponComponents
----------------------------------------------
-RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
-    local result = MySQL.query.await("SELECT components FROM player_weapons WHERE serial = ?", { serial })
-    if result[1] then
-        cb({ components = json.decode(result[1].components_before) })
-    else
-        cb({})
-    end
-end)
-
 -- --------------------------------------------
 -- -- COMMAND 
 -- --------------------------------------------
@@ -271,26 +226,72 @@ RegisterServerEvent('rsg-weaponcomp:server:price')
 AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, serial, selectedCache)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player then return end
 
     if Config.Payment == 'money' then
         local currentCash = Player.Functions.GetMoney(Config.PaymentType)
-        if currentCash < tonumber(price) then
-            TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_46') .. tonumber(price), description = locale('notify_47'), type = 'error', duration = 5000 })
-            TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
+        if currentCash < price then
+            TriggerClientEvent('ox_lib:notify', src, { title = locale('notify_46', price), description = locale('notify_47'), type = 'error' })
             return
-        else
-            if selectedCache ~= nil then
-                TriggerEvent('rsg-weaponcomp:server:saveWeaponComponents', src, serial, selectedCache)
-            else
-                TriggerEvent('rsg-weaponcomp:server:saveWeaponComponents', src, serial, nil)
-            end
-            Player.Functions.RemoveMoney(Config.PaymentType, tonumber(price))
-            TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
-
-            TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_48') ..tonumber(price), description = locale('notify_49'), type = 'inform', duration = 5000 })
         end
-    end
 
+        -- Cobrar y guardar
+        Player.Functions.RemoveMoney(Config.PaymentType, price)
+        print(objecthash, serial, selectedCache, json.encode(selectedCache))
+        TriggerEvent('rsg-weaponcomp:server:saveWeaponComponents', serial, selectedCache)
+        if selectedCache then
+            MySQL.update.await(
+                "UPDATE player_weapons SET components = ? WHERE serial = ?",
+                { json.encode(selectedCache), serial }
+            )
+
+            for _, item in pairs(Player.PlayerData.items) do
+                if item.type == 'weapon' and item.info.serie == serial then
+                    item.info.components = selectedCache
+                    -- item.info.components = json.encode(components)
+                    print("item.info", serial, selectedCache, json.encode(selectedCache))
+                    break
+                end
+            end
+            Player.Functions.SetInventory(Player.PlayerData.items)
+        else
+            MySQL.update.await(
+                "UPDATE player_weapons SET components = DEFAULT WHERE serial = ?",
+                { serial }
+            )
+
+            for _, item in pairs(Player.PlayerData.items) do
+                if item.type == 'weapon' and item.info.serie == serial then
+                    item.info.components = {}
+                    break
+                end
+            end
+            Player.Functions.SetInventory(Player.PlayerData.items)
+        end
+
+        TriggerEvent('rsg-weaponcomp:server:updateProps', src)
+
+        local citizenid = Player.PlayerData.citizenid
+        local ingameId = Player.PlayerData.cid
+        local firstname = Player.PlayerData.charinfo.firstname
+        local lastname = Player.PlayerData.charinfo.lastname
+        local job = Player.PlayerData.job.name
+        local msg = 'Citizenid:** ' .. citizenid .. '**' ..
+          '\nIngame ID:** ' .. ingameId .. '**' ..
+          '\nName:** ' .. firstname .. ' ' .. lastname .. '**' ..
+          '\nJob:** ' .. job .. '**' ..
+          '\nSerial:** ' .. serial .. '**' ..
+          '\nComponents Specific:** ' .. json.encode(selectedCache) .. '**'
+
+        TriggerEvent('rsg-log:server:CreateLog',
+            Config.WebhookName,
+            Config.WebhookTitle,
+            Config.WebhookColour,
+            msg
+        )
+        TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
+        TriggerClientEvent('ox_lib:notify', src, { title = locale('notify_48', price), description = locale('notify_49'), type = 'inform' })
+    end
 end)
 
 -- --------------------------------------------
@@ -301,109 +302,3 @@ AddEventHandler('rsg-weaponcomp:server:check_comps', function(serial)
     local src = source
     TriggerClientEvent('rsg-weapons:client:reloadWeapon', src, serial)
 end)
-
--- --------------------------------------------
--- -- ADD COMPONENTS SQL
--- --------------------------------------------
--- -- Server event for storing components in the database
--- RegisterNetEvent('rsg-weaponcomp:server:apply_weapon_components')
--- AddEventHandler('rsg-weaponcomp:server:apply_weapon_components', function(components, weaponName, serial)
---     local src = source
---     local Player = RSGCore.Functions.GetPlayer(src)
-
---     -- ADD CUSTOM EVER
---     MySQL.Async.execute('UPDATE player_weapons SET components = @components WHERE serial = @serial', {
---         ['@components'] = json.encode(components),
---         ['@serial'] = serial
---     }, function(rowsChanged)
---         if rowsChanged > 0 then
-
---             sendToDiscord(16753920,	'Craft | WEAPON CUSTOM', '**Citizenid:** '..Player.PlayerData.citizenid..'\n**Ingame ID:** '..Player.PlayerData.cid.. '\n**Name:** '..Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname.. '\n**Job:** '.. 'job' ..'\n**Weapon:** '..weaponName .. '\n**Serial:** '..serial .. '\n**Components Specific:** '.. json.encode(components),	'Weapon Craft  for RSG Framework', 'weapons')
---             Wait(1000)
---             TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_50'), type = 'inform', duration = 5000 })
-
---             if Config.Debug then print('Weapon components have been successfully updated for the serial:', serial, json.encode(components)) end
-
---             Wait(100)
---             TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
---         end
---     end)
-
---     -- DELETE CUSTOM TABLE
---     Wait(100)
---     TriggerEvent('rsg-weaponcomp:server:removeComponents_selection', 'DEFAULT', serial) -- update SQL
-
--- end)
-
--- RegisterNetEvent('rsg-weaponcomp:server:update_selection')
--- AddEventHandler('rsg-weaponcomp:server:update_selection', function(components, serial)
---     local src = source
---     -- ADD CUSTOM SELECTION
---     MySQL.Async.execute('UPDATE player_weapons SET components_before = @components_before WHERE serial = @serial', {
---         ['@components_before'] = json.encode(components),
---         ['@serial'] = serial
---     }, function(rowsChanged)
---         if rowsChanged > 0 then
---             TriggerClientEvent('rsg-weaponcomp:client:LoadComponents_selection', src)
---         end
---     end)
--- end)
-
--- -------------------------------------------
--- -- update/REMOVE components SQL
--- -------------------------------------------
--- RegisterServerEvent('rsg-weaponcomp:server:removeComponents', function(components, weaponName, serial)
---     local src = source
---     local Player = RSGCore.Functions.GetPlayer(src)
---     if components == 'DEFAULT' then
---         MySQL.Async.execute('UPDATE player_weapons SET components = DEFAULT WHERE serial = @serial', {
---             ['@serial'] = serial
---         }, function(rowsChanged)
---             if rowsChanged > 0 then
---                 sendToDiscord(16753920,	'Craft | WEAPON CUSTEM', '**Citizenid:** '..Player.PlayerData.citizenid..'\n**Ingame ID:** '..Player.PlayerData.cid.. '\n**Name:** '..Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname.. '\n**Job:** '.. 'job' ..'\n**Weapon:** '.. weaponName .. '\n**Serial:** '..serial .. '\n**Components Specific:** '.. '{}',	'Weapon Craft  for RSG Framework', 'weapons')
---                 Wait(2000)
---                 TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_51'), type = 'inform', duration = 5000 })
-
---                 Wait(100)
---                 TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
-
---             end
---         end)
---     end
--- end)
-
--- RegisterServerEvent('rsg-weaponcomp:server:removeComponents_selection', function(components, serial)
---     local src = source
---     if components == 'DEFAULT' then
---         MySQL.Async.execute('UPDATE player_weapons SET components_before = DEFAULT WHERE serial = @serial', {
---             ['@serial'] = serial
---         }, function()
---             TriggerClientEvent('rsg-weaponcomp:client:LoadComponents_selection', src)
---         end)
---     end
--- end)
-
--- --------------------------------------------
--- -- VISION COMPONENTS / IN TEST
--- --------------------------------------------
--- RegisterNetEvent('rsg-weaponcomp:server:inspectWeapon')
--- AddEventHandler('rsg-weaponcomp:server:inspectWeapon', function(weaponHash)
---     local src = source
---     local stats = getWeaponStats(weaponHash)
---     TriggerClientEvent('rsg-weaponcomp:client:viewweapon', src, weaponHash, stats)
--- end)
-
-
--- RegisterNetEvent('rsg-weaponcomp:server:inspectkitConsume')
--- AddEventHandler('rsg-weaponcomp:server:inspectkitConsume', function()
---     local src = source
---     local cashItem = Player.Functions.GetItemByName(Config.RepairItem)
-
---     if not cashItem then
---         TriggerClientEvent('ox_lib:notify', src, {title = locale('notify_52'), description = locale('notify_53'), type = 'error', duration = 5000 })
---         return
---     else
---         Player.Functions.RemoveItem(Config.RepairItem, 1, 'custom-weapon')
---         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.RepairItem], 'remove')
---     end
--- end)

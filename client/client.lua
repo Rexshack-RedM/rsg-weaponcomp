@@ -155,15 +155,17 @@ end
 
 -- Initialize first set
 local function applyDefaults(obj, wHash)
-    local name  = Citizen.InvokeNative(0x89CF5FF3D363311E, wHash, Citizen.ResultAsString())
+    local name = Citizen.InvokeNative(0x89CF5FF3D363311E, wHash, Citizen.ResultAsString())
     local comps = GetAvailableComponents(name, wHash)
-    -- local listcomps = {'BARREL', 'GRIP'}
-    -- local listcomps = {'BARREL', 'GRIP', 'SIGHT', 'CLIP', 'MAG', 'STOCK', 'TUBE', 'TORCH_MATCHSTICK', 'GRIPSTOCK' }
-    for cat, list in pairs(comps) do
-        if list[1] then
-            local hash = GetHashKey(list[1])
-            applyWeaponComponent(obj, nil, hash, wHash)
-            selectedCache[cat] = list[1]
+    local listcomps = { 'BARREL', 'GRIP' }
+    -- local listcomps = { 'BARREL','GRIP','SIGHT','CLIP','MAG','STOCK','TUBE','TORCH_MATCHSTICK','GRIPSTOCK' }
+    for _, cat in ipairs(listcomps) do
+        local options = comps[cat]
+        if options and #options > 0 then
+            local defaultComp = options[1]                     -- nombre del componente
+            local compHash    = GetHashKey(defaultComp)       -- su hash
+            applyWeaponComponent(obj, nil, compHash, wHash)   -- lo aplicas
+            selectedCache[cat] = defaultComp                  -- y lo guardas en la caché
         end
     end
 end
@@ -328,6 +330,10 @@ function MainWeaponMenu(wname, wHash, serial, propid)
     MenuData.CloseAll()
 
     applyDefaults(wepObj, wHash)
+    for cat, compName in pairs(selectedCache) do
+        local compHash = GetHashKey(compName)
+        applyWeaponComponent(wepObj, nil, compHash, wHash)
+    end
 
     local el = {
         { label='Customize Specific',   value='specific'  },
@@ -352,29 +358,34 @@ function MainWeaponMenu(wname, wHash, serial, propid)
             OpenEngravingMenu(wname, wHash, serial)
 
         elseif data.current.value == 'buy' then
-            local componentsSql = selectedCache or {}
-            local price = CalculatePrice(componentsSql)
-            if price == 0.00 or componentsSql == nil then TriggerEvent('rsg-weaponcomp:client:ExitCam') return end
-            TriggerServerEvent('rsg-weaponcomp:server:price', price, wHash, serial, componentsSql)
-            lib.notify({ title="Purchase Successful", description="$"..price, type="success" })
-            menu.close()
-            componentsSql = {}
-
+            local price = CalculatePrice(selectedCache)
+            if price > 0 then
+                TriggerServerEvent('rsg-weaponcomp:server:price',
+                    price, wHash, serial, selectedCache
+                )
+                lib.notify({ title="Compra OK", description="$"..price, type="success" })
+                menu.close()
+                -- Ojo: si quieres que la próxima vez empiece limpio,
+                selectedCache = {}
+            else
+                lib.notify({ title="Nada que comprar", type="error" })
+            end
         elseif data.current.value == 'reset' then
-            local componentsRemoveSql = {}
-            RSGCore.Functions.TriggerCallback('weaponcomp:server:getPlayerWeaponComponents', function(result)
-                if result and #result > 0 then
-                    for i = 1, #result do
-                        componentsRemoveSql = json.decode(result[i].components)
-                    end
+            RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
+                local dbComps = d.components or {}
+                local price   = CalculatePrice(dbComps) * Config.RemovePrice
+
+                if price > 0 then
+                    TriggerServerEvent('rsg-weaponcomp:server:price',
+                        price, wHash, serial, {}
+                    )
+                    lib.notify({ title="Reset comprado", description="$"..price, type="success" })
+                    selectedCache = {}
+                    menu.close()
+                else
+                    lib.notify({ title="Nada que resetear", type="error" })
                 end
             end, serial)
-            local price = CalculatePrice(componentsRemoveSql) * Config.RemovePrice
-            if price == 0.00 or componentsRemoveSql == nil then TriggerEvent('rsg-weaponcomp:client:ExitCam') return end
-            TriggerServerEvent('rsg-weaponcomp:server:price', price, wHash, serial, nil)
-            lib.notify({ title=locale('cl_lang_clean_purchased'), description="$"..price, type="success" })
-            menu.close()
-            componentsRemoveSql = {}
 
         elseif data.current.value == 'packup' then
             TriggerEvent('rsg-weaponcomp:client:confirmpackup', propid)
@@ -401,7 +412,6 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
     Wait(500)
     StartCamOnWeapon(wepObj, Config.distFov)
     MainWeaponMenu(weaponName, wHash, serial, propid)
-
     isBusy = false
 end)
 
@@ -527,19 +537,26 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 end)
 
 -- interaction with SQL Load
-local function loadPlayerComponents(serial)
-    local result = nil
-    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeapon', function(data)
-        result = data
+local function loadPlayerComponents(serial, cb)
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(data)
+        cb(data.components or {})
     end, serial)
-    while not result do Wait(50) end
-    return result.components or {}
 end
 
 RegisterNetEvent("rsg-weapons:client:reloadWeapon")
 AddEventHandler("rsg-weapons:client:reloadWeapon", function(serial)
-    loadPlayerComponents(serial)
+    local ped = PlayerPedId()
+    local _, wHash = GetCurrentPedWeapon(ped, true)
+    if wHash == nil or wHash == 0 then return end
+
+    loadPlayerComponents(serial, function(components)
+        -- RemoveAllPedWeaponComponents(ped, wHash)
+        for _, compHash in ipairs(components) do
+            GiveWeaponComponentToPed(ped, wHash, compHash)
+        end
+    end)
 end)
+
 --------------------------
 -- Spawn & track existing props + zones + targets
 ----------------------------
@@ -760,7 +777,6 @@ AddEventHandler('onResourceStop', function(resource)
 
     isBusy         = false
     camera         = nil
-    targetCoords   = nil
     selectedCache  = {}
 
 end)
