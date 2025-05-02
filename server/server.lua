@@ -22,19 +22,18 @@ end)
 -- Provide saved components
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
     local Player = RSGCore.Functions.GetPlayer(source)
-    if not Player then cb({}); return end
+    if not Player then cb(nil); return end
 
     for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info and item.info.serie == serial then
-            local comps = item.info.components or {}
+            local comps = item.info.components or nil
             cb({ components = comps })
             return
         end
     end
 
-    cb({}) -- En caso de que no se encuentre el arma
+    cb(nil)
 end)
-
 
 ---------------------------------------------
 -- create new gunsite in database
@@ -222,7 +221,8 @@ RSGCore.Commands.Add(Config.Commandinspect, locale('label_40'), {}, false, funct
 end)
 
 RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_41'), {}, false, function(source)
-    TriggerClientEvent('rsg-weaponcomp:client:requestReload', source)
+    local src = source
+    TriggerEvent('rsg-weaponcomp:server:check_comps', src)
 end)
 
 -- -------------------------------------------
@@ -273,10 +273,9 @@ end)
 -- -- CHECK COMPONENTS SQL
 -- --------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:server:check_comps') -- EQUIPED
-AddEventHandler('rsg-weaponcomp:server:check_comps', function(source)
+AddEventHandler('rsg-weaponcomp:server:check_comps', function()
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-
-    TriggerClientEvent('rsg-weaponcomp:client:requestReload', src)
+    TriggerClientEvent('rsg-weapons:client:reloadWeapon', src)
 end)

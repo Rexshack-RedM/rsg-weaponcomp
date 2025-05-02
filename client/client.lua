@@ -46,13 +46,11 @@ local function GetAvailableComponents(weaponName, wHash)
     local merged   = {}
     local group    = GetWeaponType(wHash)
 
-    -- Shared (group) components
-    if group and Config.Shared[group] then
+    if group and Config.Shared[group] then    -- Shared (group) components
         mergeComponents(merged, Config.Shared[group])
     end
 
-    -- Specific components
-    mergeComponents(merged, specific)
+    mergeComponents(merged, specific)    -- Specific components
     return merged
 end
 
@@ -74,7 +72,6 @@ end
 -- Get spawnpos on the prop using local offset
 -- Spawn weapon on the prop
 local function spawnWeaponOnProp(propObj, spawnPos, wHash)
-    -- delete previous
     if wepObj ~= nil and DoesEntityExist(wepObj) then
         DeleteObject(wepObj)
         wepObj = nil
@@ -91,25 +88,19 @@ end
 -- start camera
 function StartCamOnWeapon(obj, fov)
     if not (obj and DoesEntityExist(obj)) then return end
-
-    -- Obtenemos la matriz (forward, right, up, origin)
     local forward, right, up, origin = table.unpack({ GetEntityMatrix(obj) })
-    -- Parámetros de distancia
+
     local distBack = Config.distBack
     local distSide = Config.distSide
     local distUp   = Config.distUp
 
-    -- Calculamos la posición de la cámara
     local camPos = vector3(
         origin.x - forward.x * distBack + right.x * distSide + up.x * distUp,
         origin.y - forward.y * distBack + right.y * distSide + up.y * distUp,
         origin.z - forward.z * distBack + right.z * distSide + up.z * distUp
     )
 
-    -- Creamos/movemos la cámara
-    if camera then
-        DestroyCam(camera, true)
-    end
+    if camera then DestroyCam(camera, true) end
     camera = CreateCamWithParams(
         "DEFAULT_SCRIPTED_CAMERA",
         camPos.x, camPos.y, camPos.z,
@@ -117,10 +108,9 @@ function StartCamOnWeapon(obj, fov)
         fov or 75.0,
         false, 0
     )
+
     SetCamActive(camera, true)
     RenderScriptCams(true, true, 2000, true, true)
-
-    -- Siempre mira al centro del arma (ligero offset en Z)
     PointCamAtCoord(camera, origin.x, origin.y, origin.z + 0.1)
 end
 
@@ -396,19 +386,16 @@ function MainWeaponMenu(wname, wHash, serial, propid)
         menu.close()
     end)
 end
-
+--[[ 
 RegisterNetEvent('rsg-weaponcomp:client:requestReload')
 AddEventHandler('rsg-weaponcomp:client:requestReload', function()
     local ped = PlayerPedId()
-
-    -- 1) Averiguamos qué arma lleva en la mano
     local _, wHash = GetCurrentPedWeapon(ped, true)
     if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then
         lib.notify({ title = "No weapon in hand", type = "error" })
         return
     end
 
-    -- 2) Con nuestro export sacamos el serial usando ese hash
     local serialMap = exports['rsg-weapons']:weaponInHands()
     local serial = serialMap[wHash]
     if not serial then
@@ -416,9 +403,8 @@ AddEventHandler('rsg-weaponcomp:client:requestReload', function()
         return
     end
 
-    -- 3) Disparamos tu evento de recarga, pasándole ya el serial
-    TriggerEvent('rsg-weapons:client:reloadWeapon', serial)
-end)
+    -- TriggerEvent('rsg-weapons:client:reloadWeapon', serial)
+end) ]]
 
 -- START CUSTOM EVENT
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, serial, weaponName)
@@ -431,7 +417,6 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
     local coords = GetEntityCoords(propObj)
     spawnWeaponOnProp(propObj, coords, wHash)
 
-    -- cámara
     Wait(500)
     StartCamOnWeapon(wepObj, Config.distFov)
     MainWeaponMenu(weaponName, wHash, serial, propid)
@@ -559,59 +544,28 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 
 end)
 
--- interaction with SQL Load
---[[ local function loadPlayerComponents(serial, cb)
-    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(data)
-        cb(data.components or {})
-    end, serial)
-end
-
-RegisterNetEvent("rsg-weapons:client:reloadWeapon")
-AddEventHandler("rsg-weapons:client:reloadWeapon", function(serial)
-    local ped = PlayerPedId()
-    local _, wHash = GetCurrentPedWeapon(ped, true)
-    if wHash == nil or wHash == 0 then return end
-
-    loadPlayerComponents(serial, function(components)
-        -- RemoveAllPedWeaponComponents(ped, wHash)
-        for _, compHash in ipairs(components) do
-            GiveWeaponComponentToPed(ped, wHash, compHash)
-        end
-    end)
-end) ]]
-
-local function loadPlayerComponentsFromInventory(serial)
-    local components = {}
-    -- RSGCore en el cliente también tiene tu inventario cacheado
-    local PlayerData = RSGCore.Functions.GetPlayerData()
-    for _, item in ipairs(PlayerData.items) do
-        if item.type == 'weapon' and item.info.serie == serial then
-            print(item.type, item, item.info.serie, json.encode(item.info.components))
-            components = item.info.components or {}
-            break
-        end
-    end
-    return components
-end
-
 -- Evento para recargar el arma
 RegisterNetEvent("rsg-weapons:client:reloadWeapon")
-AddEventHandler("rsg-weapons:client:reloadWeapon", function(serial)
+AddEventHandler("rsg-weapons:client:reloadWeapon", function()
     local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
+    local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0)
+    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
     if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
-
-    -- 1) Carga components desde el inventario local
-    local components = loadPlayerComponentsFromInventory(serial)
-
-    -- 2) (Opcional) quitar todos los actuales
-    -- RemoveAllPedWeaponComponents(ped, wHash)
-
-    print(components, json.encode(components))
-    -- 3) Aplicar cada component
-    for _, compHash in ipairs(components) do
-        Citizen.InvokeNative(0x74C9090FDD1BB48E, cache.ped, wHash, compHash, -1, true)
-        Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(compHash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
-    end
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
+        local dbComps = d.components or {}
+        print("apli use", dbComps, json.encode(dbComps))
+        for _, cat in ipairs(dbComps) do
+            local options = dbComps[cat]
+            if options and #options > 0 then
+                local defaultComp = options[1]                     -- nombre del componente
+                local compHash    = GetHashKey(defaultComp)       -- su hash
+                applyWeaponComponent(wep, nil, compHash, wHash)   -- lo aplicas
+                GiveWeaponComponentToEntity(wep, compHash, wHash, true)
+                Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, compHash, true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
+                Wait(100)
+            end
+        end
+    end, serial)
 end)
 
 --------------------------
