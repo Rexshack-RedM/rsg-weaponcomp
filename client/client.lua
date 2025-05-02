@@ -289,10 +289,9 @@ local function applyDefaults(obj, wHash)
         end
     end
 end
-local PrimaryOrder = {
-"BARREL","GRIP","SIGHT","CLIP","MAG","STOCK",
-"TUBE","TORCH_MATCHSTICK","GRIPSTOCK"
-}
+
+local PrimaryOrder = { "BARREL","GRIP","SIGHT","CLIP","MAG","STOCK","TUBE","TORCH_MATCHSTICK","GRIPSTOCK"}
+
 -- Initialize player set comp
 local primaryIndex = {}
 for i, cat in ipairs(PrimaryOrder) do
@@ -324,32 +323,21 @@ local function getSortedKeys(t)
     return ks
 end
 
---[[
-local function ensureWeaponMaterialDict()
-    local txd = "weapons_tint_maps"
-    RequestStreamedTextureDict(txd, false)
-    local timeout = GetGameTimer()+2000
-    while not HasStreamedTextureDictLoaded(txd) and GetGameTimer()<timeout do
-      Wait(10)
-    end  
-end
-
-local function applyWeaponTint(ped, wHash, tintIndex)
-    -- tintIndex: 0..7
-    Citizen.InvokeNative(0x50969B9B89ED5738, ped, wHash, tintIndex)
-end
-]]
-
-local function applyPlayerWeaponComponent(ped, prevComp, nextComp, wHash)
+local function applyPlayerWeaponComponent(ped, nextComp, wHash)
+    -- local wep = GetCurrentPedWeaponEntityIndex(ped, 0)
     local mdl = GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
     if mdl and mdl ~= 0 then
         RequestModel(mdl)
-        while not HasModelLoaded(mdl) do Wait(50) end
+        while not HasModelLoaded(mdl) do
+            Wait(100)
+        end
     end
-    if prevComp then RemoveWeaponComponentFromPed(ped, prevComp, wHash) end
+    -- if prevComp then RemoveWeaponComponentFromPed(ped, prevComp, wHash) end
     if IsEntityAPed(ped) then
         GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
         ApplyShopItemToPed(ped, wHash, true, true, true)
+    --else
+    --    GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
     end
 end
 
@@ -361,24 +349,21 @@ AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
     local ped   = PlayerPedId()
     local wHash = GetPedCurrentHeldWeapon(ped)
     local serial = exports['rsg-weapons']:weaponInHands()[wHash]
-    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
+    -- if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
 
-    RSGCore.Functions.TriggerCallback(
-      'rsg-weaponcomp:server:getPlayerWeaponComponents',
-      function(data)
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(data)
         local comps = data.components or {}
         local keys = getSortedKeys(comps)
         for _, cat in ipairs(keys) do
             local compName = comps[cat]
             if compName and compName ~= "" then
-                -- print(compName)
+                print(compName)
                 local compHash = GetHashKey(compName)
-                applyPlayerWeaponComponent(ped, nil, compHash, wHash)
+                applyPlayerWeaponComponent(ped, compHash, wHash)
+                Wait(100)
             end
         end
-      end,
-      serial
-    )
+      end, serial)
 end)
 
 ----------------------------------------
