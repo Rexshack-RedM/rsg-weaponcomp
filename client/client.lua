@@ -1,20 +1,18 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 lib.locale()
 
-local SpawnedProps   = {}        -- [propid] = { obj }
-local PackingUpProps = {} -- [propid] = true
+local SpawnedProps   = {}
+local PackingUpProps = {}
 local gunZones       = {}
 local ingunZone      = false
 local isBusy         = false
 local wepObj         = nil
 local camera         = nil
-local targetCoords   = nil
 local selectedCache  = {}
 
-local function debug(msg)
-    print(("[weaponcomp] %s"):format(msg))
-end
-
+----------------------------------------
+-- Basics
+----------------------------------------
 local WeaponTypeMap = {
     [GetHashKey('GROUP_REPEATER')] = "LONGARM",
     [GetHashKey('GROUP_SHOTGUN'  )] = "SHOTGUN",
@@ -69,8 +67,9 @@ local function CanPlacePropHere(pos)
     return true
 end
 
--- Get spawnpos on the prop using local offset
+----------------------------------------
 -- Spawn weapon on the prop
+----------------------------------------
 local function spawnWeaponOnProp(propObj, spawnPos, wHash)
     if wepObj ~= nil and DoesEntityExist(wepObj) then
         DeleteObject(wepObj)
@@ -85,8 +84,10 @@ local function spawnWeaponOnProp(propObj, spawnPos, wHash)
     end
 end
 
--- start camera
-function StartCamOnWeapon(obj, fov)
+----------------------------------------
+-- cameras
+----------------------------------------
+local function StartCamOnWeapon(obj, fov)
     if not (obj and DoesEntityExist(obj)) then return end
     local forward, right, up, origin = table.unpack({ GetEntityMatrix(obj) })
 
@@ -114,8 +115,134 @@ function StartCamOnWeapon(obj, fov)
     PointCamAtCoord(camera, origin.x, origin.y, origin.z + 0.1)
 end
 
+local c_zoom = 1.5
+local c_offset = 0.20
+
+local function StartCamClean(zoom, offset)
+    DoScreenFadeOut(1000)
+    Wait(0)
+    DoScreenFadeIn(1000)
+
+    local zoomOffset = tonumber(zoom)
+    local coords = GetEntityCoords(cache.ped)
+    local playerHeading = GetEntityHeading(cache.ped)
+    local angle
+    if playerHeading == nil then
+        angle = playerHeading * math.pi / 180.0
+    else
+        angle = playerHeading * math.pi / 180.0
+    end
+
+    local pos = {
+        x = coords.x - tonumber(zoomOffset * math.sin(angle)),
+        y = coords.y + tonumber(zoomOffset * math.cos(angle)),
+        z = coords.z + offset
+    }
+
+    local camera_pos = GetObjectOffsetFromCoords(pos.x, pos.y, pos.z, 0.0, 1.0, 1.0, 1.0)
+
+    camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", pos.x, pos.y, pos.z + 0.5, 300.00, 0.00, 0.00, 50.00, false, 0)
+    local pCoords = GetEntityCoords(cache.ped)
+    PointCamAtCoord(camera, pCoords.x, pCoords.y, pCoords.z + offset)
+
+    SetCamActive(camera, true)
+    RenderScriptCams(true, true, 1000, true, true)
+end
+
+RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
+AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, serial)
+    SetCurrentPedWeapon(cache.ped, objecthash, true)
+    if camera then DestroyCam(camera,true) end
+    camera = nil
+
+    if wepObj ~= nil and DoesEntityExist(wepObj) then
+        SetEntityAsMissionEntity(wepObj, false)
+        FreezeEntityPosition(wepObj, false)
+        DeleteObject(wepObj)
+    end
+
+    local weapon_type = GetWeaponType(objecthash)
+    local boneIndex2 = GetEntityBoneIndexByName(cache.ped, "SKEL_L_Finger00")
+    local Cloth = CreateObject(GetHashKey('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
+    local animDict = nil
+    local animName = nil
+
+    if weapon_type == 'SHORTARM' then
+       animDict = "mech_inspection@weapons@shortarms@volcanic@base"
+       animName = "clean_loop"
+        c_zoom = 0.85
+        c_offset = 0.10
+    elseif weapon_type == 'LONGARM' then
+        animDict = "mech_inspection@weapons@longarms@sniper_carcano@base"
+        animName = "clean_loop"
+        c_zoom = 1.5
+        c_offset = 0.20
+    elseif weapon_type == 'SHOTGUN' then
+        animDict = "mech_inspection@weapons@longarms@shotgun_double_barrel@base"
+        animName = "clean_loop"
+        c_zoom = 1.2
+        c_offset = 0.15
+    elseif weapon_type == 'GROUP_BOW' then
+        c_zoom = 1.5
+        c_offset = 0.15
+    elseif weapon_type == 'MELEE_BLADE' then
+        c_zoom = 1.2
+        c_offset = 0.15
+    end
+
+    StartCamClean(c_zoom, c_offset)
+    Wait(100)
+
+    if animDict ~= nil and animName ~= nil then
+        AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
+
+        lib.progressBar({
+            duration = tonumber(Config.animationSave),
+            useWhileDead = false,
+            canCancel = false,
+            disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
+            anim = { dict = animDict, clip = animName, flag = 15, },
+            label = locale('label_36'),
+        })
+
+        if Cloth ~= nil and DoesEntityExist(Cloth) then
+            SetEntityAsNoLongerNeeded(Cloth)
+            DeleteEntity(Cloth)
+        end
+    end
+
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps")
+    TriggerEvent('rsg-weaponcomp:client:ExitCam')
+end)
+
+RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
+AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
+
+    RenderScriptCams(false, true, 2000, true, false)
+    if camera then DestroyCam(camera,true) end
+    camera = nil
+    DestroyAllCams(true)
+
+    if wepObj ~= nil and DoesEntityExist(wepObj) then
+        SetEntityAsMissionEntity(wepObj, false)
+        FreezeEntityPosition(wepObj, false)
+        DeleteObject(wepObj)
+    end
+    selectedCache  = {}
+    MenuData.CloseAll()
+    DoScreenFadeOut(1000)
+    Wait(0)
+    DoScreenFadeIn(1000)
+
+end)
+
+----------------------------------------
 -- for change camera WIP
---[[ local function Lerp(a,b,t) return a + (b-a)*t end
+----------------------------------------
+--[[ 
+
+local targetCoords   = nil
+local function Lerp(a,b,t) return a + (b-a)*t end
 local function FocusCam(obj)
     if not(obj and camera and DoesEntityExist(obj)) then return end
     local pos = GetEntityCoords(obj)
@@ -133,6 +260,9 @@ local function FocusCam(obj)
     SetCamRot(camera, rot.x,rot.y,rot.z,2)
 end ]]
 
+----------------------------------------
+-- aply menu
+----------------------------------------
 local function applyWeaponComponent(obj, prevComp, nextComp, wHash)
     local mdl = GetWeaponComponentTypeModel(nextComp)
     if mdl and mdl ~= 0 then
@@ -143,8 +273,7 @@ local function applyWeaponComponent(obj, prevComp, nextComp, wHash)
     GiveWeaponComponentToEntity(obj, nextComp, wHash, true)
 end
 
-
--- Initialize first set
+-- Initialize first set comp
 local function applyDefaults(obj, wHash)
     local name = Citizen.InvokeNative(0x89CF5FF3D363311E, wHash, Citizen.ResultAsString())
     local comps = GetAvailableComponents(name, wHash)
@@ -161,6 +290,109 @@ local function applyDefaults(obj, wHash)
     end
 end
 
+-- Initialize player set comp
+local primaryIndex = {}
+for idx, cat in ipairs(Config.Specific) do
+    primaryIndex[cat] = idx
+end
+
+local function suffixPriority(cat)
+    if cat:find("_TINT$") then
+        return 5
+    elseif cat:find("_ENGRAVING_MATERIAL$") then
+        return 4
+    elseif cat:find("_ENGRAVING$") then
+        return 3
+    elseif cat:find("_MATERIAL$") then
+        return 2
+    else
+        return 1
+    end
+end
+
+local function cmpCategories(a, b)
+    local ia, ib = primaryIndex[a], primaryIndex[b]
+    if ia and ib then
+        return ia < ib
+    elseif ia then
+        return true
+    elseif ib then
+        return false
+    end
+
+    local pa, pb = suffixPriority(a), suffixPriority(b)
+    if pa ~= pb then
+        return pa < pb
+    end
+    return a < b
+end
+
+local function getSortedKeys(comps)
+    local keys = {}
+    for cat in pairs(comps) do
+        table.insert(keys, cat)
+    end
+    table.sort(keys, cmpCategories)
+    return keys
+end
+
+--[[ local function GetLabelTextByHash(hash)
+    -- 0xBD5DD5EAE2B6CE14 es el identificador de GET_STRING_FROM_HASH_KEY
+    return Citizen.InvokeNative(0xBD5DD5EAE2B6CE14, hash)
+end
+local function ensureWeaponMaterialDict()
+    local txd = "weapons_tint_maps"  -- el dict de tintas/materiales de armas
+    RequestStreamedTextureDict(txd, false)  -- citeturn0search1
+    local timeout = GetGameTimer() + 2000
+    while not HasStreamedTextureDictLoaded(txd) and GetGameTimer() < timeout do
+        Wait(10)
+    end
+end ]]
+
+local function applyPlayerWeaponComponent(ped, prevComp, nextComp, wHash)
+    local mdl = GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
+    if mdl and mdl ~= 0 then
+        RequestModel(mdl)
+        while not HasModelLoaded(mdl) do Wait(50) end
+    end
+    -- if prevComp then RemoveWeaponComponentFromPed(ped, prevComp, wHash) end
+    if IsEntityAPed(ped) then
+        GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
+        ApplyShopItemToPed(ped, wHash, true, true, true)
+    end
+end
+
+-----------------------
+-- load components in hand
+-----------------------
+RegisterNetEvent("rsg-weaponcomp:client:reloadWeapon")
+AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
+    local ped   = PlayerPedId()
+    local wHash = GetPedCurrentHeldWeapon(ped)
+    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
+    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
+
+    RSGCore.Functions.TriggerCallback(
+      'rsg-weaponcomp:server:getPlayerWeaponComponents',
+      function(data)
+        local comps = data.components or {}
+        local keys = getSortedKeys(comps)
+        for _, cat in ipairs(keys) do
+            local compName = comps[cat]
+            if compName and compName ~= "" then
+                -- print(compName)
+                local compHash = GetHashKey(compName)
+                applyPlayerWeaponComponent(ped, nil, compHash, wHash)
+            end
+        end
+      end,
+      serial
+    )
+end)
+
+----------------------------------------
+-- Menu
+----------------------------------------
 MenuData = {}
 TriggerEvent('rsg-menubase:getData', function(call)
     MenuData = call
@@ -387,7 +619,9 @@ function MainWeaponMenu(wname, wHash, serial, propid)
     end)
 end
 
+----------------------------------------
 -- START CUSTOM EVENT
+----------------------------------------
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, serial, weaponName)
     if isBusy then return end
     isBusy = true
@@ -405,127 +639,6 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
     isBusy = false
 end)
 
-local c_zoom = 1.5
-local c_offset = 0.20
-
-local function StartCamClean(zoom, offset)
-    DoScreenFadeOut(1000)
-    Wait(0)
-    DoScreenFadeIn(1000)
-
-    local zoomOffset = tonumber(zoom)
-    local coords = GetEntityCoords(cache.ped)
-    local playerHeading = GetEntityHeading(cache.ped)
-    local angle
-    if playerHeading == nil then
-        angle = playerHeading * math.pi / 180.0
-    else
-        angle = playerHeading * math.pi / 180.0
-    end
-
-    local pos = {
-        x = coords.x - tonumber(zoomOffset * math.sin(angle)),
-        y = coords.y + tonumber(zoomOffset * math.cos(angle)),
-        z = coords.z + offset
-    }
-
-    local camera_pos = GetObjectOffsetFromCoords(pos.x, pos.y, pos.z, 0.0, 1.0, 1.0, 1.0)
-
-    camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", pos.x, pos.y, pos.z + 0.5, 300.00, 0.00, 0.00, 50.00, false, 0)
-    local pCoords = GetEntityCoords(cache.ped)
-    PointCamAtCoord(camera, pCoords.x, pCoords.y, pCoords.z + offset)
-
-    SetCamActive(camera, true)
-    RenderScriptCams(true, true, 1000, true, true)
-end
-
-RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
-AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, serial)
-    SetCurrentPedWeapon(cache.ped, objecthash, true)
-    if camera then DestroyCam(camera,true) end
-    camera = nil
-
-    if wepObj ~= nil and DoesEntityExist(wepObj) then
-        SetEntityAsMissionEntity(wepObj, false)
-        FreezeEntityPosition(wepObj, false)
-        DeleteObject(wepObj)
-    end
-
-    local weapon_type = GetWeaponType(objecthash)
-    local boneIndex2 = GetEntityBoneIndexByName(cache.ped, "SKEL_L_Finger00")
-    local Cloth = CreateObject(GetHashKey('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
-    local animDict = nil
-    local animName = nil
-
-    if weapon_type == 'SHORTARM' then
-       animDict = "mech_inspection@weapons@shortarms@volcanic@base"
-       animName = "clean_loop"
-        c_zoom = 0.85
-        c_offset = 0.10
-    elseif weapon_type == 'LONGARM' then
-        animDict = "mech_inspection@weapons@longarms@sniper_carcano@base"
-        animName = "clean_loop"
-        c_zoom = 1.5
-        c_offset = 0.20
-    elseif weapon_type == 'SHOTGUN' then
-        animDict = "mech_inspection@weapons@longarms@shotgun_double_barrel@base"
-        animName = "clean_loop"
-        c_zoom = 1.2
-        c_offset = 0.15
-    elseif weapon_type == 'GROUP_BOW' then
-        c_zoom = 1.5
-        c_offset = 0.15
-    elseif weapon_type == 'MELEE_BLADE' then
-        c_zoom = 1.2
-        c_offset = 0.15
-    end
-
-    StartCamClean(c_zoom, c_offset)
-    Wait(100)
-
-    if animDict ~= nil and animName ~= nil then
-        AttachEntityToEntity(Cloth, cache.ped, boneIndex2, 0.02, -0.035, 0.00, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
-
-        lib.progressBar({
-            duration = tonumber(Config.animationSave),
-            useWhileDead = false,
-            canCancel = false,
-            disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
-            anim = { dict = animDict, clip = animName, flag = 15, },
-            label = locale('label_36'),
-        })
-
-        if Cloth ~= nil and DoesEntityExist(Cloth) then
-            SetEntityAsNoLongerNeeded(Cloth)
-            DeleteEntity(Cloth)
-        end
-    end
-
-    TriggerServerEvent("rsg-weaponcomp:server:check_comps")
-    TriggerEvent('rsg-weaponcomp:client:ExitCam')
-end)
-
-RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
-AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
-
-    RenderScriptCams(false, true, 2000, true, false)
-    if camera then DestroyCam(camera,true) end
-    camera = nil
-    DestroyAllCams(true)
-
-    if wepObj ~= nil and DoesEntityExist(wepObj) then
-        SetEntityAsMissionEntity(wepObj, false)
-        FreezeEntityPosition(wepObj, false)
-        DeleteObject(wepObj)
-    end
-    selectedCache  = {}
-    MenuData.CloseAll()
-    DoScreenFadeOut(1000)
-    Wait(0)
-    DoScreenFadeIn(1000)
-
-end)
-
 --------------------------
 -- Spawn & track existing props + zones + targets
 ----------------------------
@@ -540,7 +653,6 @@ Citizen.CreateThread(function()
             if #(pos - vector3(v.x,v.y,v.z)) < 50.0 then
                 inRange = true
                 if not SpawnedProps[v.propid] and not PackingUpProps[v.propid] then
-                    debug("Spawning prop "..v.propid)
                     -- Modelo y objeto
                     local m = joaat(v.propmodel)
                     RequestModel(m)
@@ -596,17 +708,13 @@ Citizen.CreateThread(function()
     end
 end)
 
----------------------------------------------
 -- update props
----------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:client:updatePropData')
 AddEventHandler('rsg-weaponcomp:client:updatePropData', function(data)
     Config.PlayerProps = data
 end)
 
----------------------------------------------
 -- setup new gunsite
----------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:client:setupgunzone')
 AddEventHandler('rsg-weaponcomp:client:setupgunzone', function(propmodel, item, coords, heading)
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:countprop', function(result)
@@ -646,9 +754,7 @@ AddEventHandler('rsg-weaponcomp:client:setupgunzone', function(propmodel, item, 
     end, item)
 end)
 
----------------------------------------------
 -- confirm gunsite packup
----------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
     local input = lib.inputDialog(locale('cl_lang_39'), {
         {
@@ -683,11 +789,9 @@ RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
     TriggerEvent('rsg-weaponcomp:client:packupgunsite', propid)
 end)
 
------------------------
 -- packup gunsite
------------------------
 RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
-    -- Deletes the object if it exists
+
     PackingUpProps[propid] = true
     local propData = SpawnedProps[propid]
     if propData and DoesEntityExist(propData.obj) then
@@ -697,54 +801,18 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
     end
     SpawnedProps[propid] = nil
 
-    -- Deletes the associated zone
     if gunZones[propid] then
         gunZones[propid]:remove()
         gunZones[propid] = nil
     end
 
-    -- Hides the UI if it's visible
     lib.hideTextUI()
     ingunZone = false
 
-    -- Notifies the server to clean up the database and inventory
     TriggerServerEvent('rsg-weaponcomp:server:removegunsiteprops', propid)
 
-    -- Returns the item to player 
     TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)
     PackingUpProps[propid] = nil
-end)
-
--- Evento para recargar el arma
-local function applyPlayerWeaponComponent(ped, prevComp, nextComp, wHash)
-    local mdl = GiveWeaponComponentToEntity(ped, GetHashKey(nextComp), wHash, true)
-    if mdl and mdl ~= 0 then
-        RequestModel(mdl)
-        while not HasModelLoaded(mdl) do Wait(50) end
-    end
-    if prevComp then RemoveWeaponComponentFromPed(ped, GetHashKey(prevComp), wHash) end
-    if IsEntityAPed(ped) then
-        GiveWeaponComponentToEntity(ped, GetHashKey(nextComp), -1, true)
-        ApplyShopItemToPed(ped, wHash, true, true, true)
-    end
-end
-
-RegisterNetEvent("rsg-weaponcomp:client:reloadWeapon")
-AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
-    local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
-    local wep = GetCurrentPedWeaponEntityIndex(PlayerPedId(), 0)
-    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
-    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
-    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
-        local dbComps = d or {}
-        print("apli use", dbComps, json.encode(dbComps.components))
-        for _, compName in pairs(dbComps.components) do
-            if compName and compName ~= "" then
-                applyPlayerWeaponComponent(PlayerPedId(), nil, compName, wHash)
-            end
-        end
-
-    end, serial)
 end)
 
 ---------------------------------------------

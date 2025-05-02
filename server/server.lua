@@ -9,6 +9,23 @@ RSGCore.Functions.CreateUseableItem(Config.Gunsmithitem, function(source)
   })
 end)
 
+--------------------------------------------
+-- COMMAND 
+--------------------------------------------
+RSGCore.Commands.Add(Config.Commandinspect, locale('label_40'), {}, false, function(source)
+    local src = source
+    TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
+end)
+
+RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_41'), {}, false, function(source)
+    local src = source
+    TriggerEvent('rsg-weaponcomp:server:check_comps', src)
+end)
+
+
+--------------------------------------------
+-- Callback
+--------------------------------------------
 -- Count how many sites player has
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(source, cb, proptype)
   local ply = RSGCore.Functions.GetPlayer(source)
@@ -110,8 +127,15 @@ AddEventHandler('rsg-weaponcomp:server:createnewprop', function(propmodel, item,
 end)
 
 ---------------------------------------------
--- update prop data
+-- update props
 ---------------------------------------------
+RegisterServerEvent('rsg-weaponcomp:server:updateProps')
+AddEventHandler('rsg-weaponcomp:server:updateProps', function()
+    local src = source
+    TriggerClientEvent('rsg-weaponcomp:client:updatePropData', src, Config.PlayerProps)
+end)
+
+-- update prop
 CreateThread(function()
     while true do
         Wait(5000)
@@ -121,29 +145,29 @@ CreateThread(function()
     end
 end)
 
----------------------------------------------
 -- get props
----------------------------------------------
 CreateThread(function()
     TriggerEvent('rsg-weaponcomp:server:getProps', source)
     PropsLoaded = true
 end)
 
----------------------------------------------
--- remove item
----------------------------------------------
-RegisterServerEvent('rsg-weaponcomp:server:removeitem')
-AddEventHandler('rsg-weaponcomp:server:removeitem', function(item, amount)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    Player.Functions.RemoveItem(item, amount)
-    TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[item], 'remove', amount)
+RegisterServerEvent('rsg-weaponcomp:server:getProps')
+AddEventHandler('rsg-weaponcomp:server:getProps', function()
+    local result = MySQL.query.await('SELECT * FROM hdrp_weapons_custom')
+    if not result[1] then return end
+    for i = 1, #result do
+        local propData = json.decode(result[i].propdata)
+        if Config.LoadNotification then
+            print(locale('sv_lang_1')..propData.item..locale('sv_lang_2')..propData.propid)
+        end
+        table.insert(Config.PlayerProps, propData)
+    end
 end)
 
 ---------------------------------------------
--- add item
+-- items
 ---------------------------------------------
+-- add item
 RegisterServerEvent('rsg-weaponcomp:server:additem')
 AddEventHandler('rsg-weaponcomp:server:additem', function(item, amount)
     local src = source
@@ -153,9 +177,17 @@ AddEventHandler('rsg-weaponcomp:server:additem', function(item, amount)
     TriggerClientEvent('rNotify:ShowAdvancedRightNotification', src, amount .." x "..RSGCore.Shared.Items[item].label, "generic_textures" , "tick" , "COLOR_PURE_WHITE", 4000)
 end)
 
----------------------------------------------
+-- remove
+RegisterServerEvent('rsg-weaponcomp:server:removeitem')
+AddEventHandler('rsg-weaponcomp:server:removeitem', function(item, amount)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player then return end
+    Player.Functions.RemoveItem(item, amount)
+    TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[item], 'remove', amount)
+end)
+
 -- remove gunsite props
----------------------------------------------
 RegisterServerEvent('rsg-weaponcomp:server:removegunsiteprops')
 AddEventHandler('rsg-weaponcomp:server:removegunsiteprops', function(propid)
     local src = source
@@ -186,73 +218,17 @@ AddEventHandler('rsg-weaponcomp:server:removegunsiteprops', function(propid)
     TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
 end)
 
----------------------------------------------
--- get props
----------------------------------------------
-RegisterServerEvent('rsg-weaponcomp:server:getProps')
-AddEventHandler('rsg-weaponcomp:server:getProps', function()
-    local result = MySQL.query.await('SELECT * FROM hdrp_weapons_custom')
-    if not result[1] then return end
-    for i = 1, #result do
-        local propData = json.decode(result[i].propdata)
-        if Config.LoadNotification then
-            print(locale('sv_lang_1')..propData.item..locale('sv_lang_2')..propData.propid)
-        end
-        table.insert(Config.PlayerProps, propData)
-    end
-end)
-
----------------------------------------------
--- update props
----------------------------------------------
-RegisterServerEvent('rsg-weaponcomp:server:updateProps')
-AddEventHandler('rsg-weaponcomp:server:updateProps', function()
-    local src = source
-    TriggerClientEvent('rsg-weaponcomp:client:updatePropData', src, Config.PlayerProps)
-end)
-
--- --------------------------------------------
--- -- COMMAND 
--- --------------------------------------------
-RSGCore.Commands.Add(Config.Commandinspect, locale('label_40'), {}, false, function(source)
-    local src = source
-    TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
-end)
-
-RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_41'), {}, false, function(source)
-    local src = source
-    TriggerEvent('rsg-weaponcomp:server:check_comps', src)
-end)
-
--- -------------------------------------------
--- -- Payment
--- -------------------------------------------
-local function sortComponentsTable(comps)
-    local keys = {}
-    for cat in pairs(comps) do
-        table.insert(keys, cat)
-    end
-
-    table.sort(keys)
-
-    local sorted = {}
-    for _, cat in ipairs(keys) do
-        sorted[cat] = comps[cat]
-    end
-
-    return sorted
-end
-
+-------------------------------------------
+-- Save / Payment
+-------------------------------------------
 local function saveWeaponComponents(serial, comps, Player)
-    local toSave = (type(comps) == "table" and next(comps)) and sortComponentsTable(comps) or nil
-
-    -- Inventario
     for _, item in ipairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info.serie == serial then
-            item.info.components = toSave -- (type(comps) == "table" and next(comps)) and comps or nil
+            item.info.components = (type(comps) == "table" and next(comps)) and comps or nil
             break
         end
     end
+
     Player.Functions.SetInventory(Player.PlayerData.items)
 
     -- Logging
@@ -286,9 +262,9 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, seria
     end
 end)
 
--- --------------------------------------------
--- -- CHECK COMPONENTS SQL
--- --------------------------------------------
+--------------------------------------------
+-- CHECK COMPONENTS SQL
+--------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:server:check_comps') -- EQUIPED
 AddEventHandler('rsg-weaponcomp:server:check_comps', function()
     local src = source
