@@ -548,6 +548,62 @@ local function OpenEngravingMenu(wname, wHash, serial, propid)
     end)
 end
 
+-- Menu TINTS
+local function OpenTintsMenu(wname, wHash, serial, propid)
+    local comps    = GetAvailableComponents(wname, wHash)
+    local elements = {}
+
+    -- Recolectamos solo categorías _TINT
+    for cat, items in pairs(comps) do
+        if cat:find('_TINT$') then
+            local hashes, labels = {}, {}
+            for i, comp in ipairs(items) do
+                hashes[i], labels[i] = GetHashKey(comp), comp
+            end
+            table.insert(elements, {
+                label  = cat,
+                type   = 'slider',
+                name   = cat,
+                min    = 1,
+                max    = #items,
+                value  = selectedCache[cat] and (function()
+                    for idx, v in ipairs(items) do
+                        if v == selectedCache[cat] then return idx end
+                    end
+                    return 1
+                end)() or 1,
+                hashes = hashes,
+                labels = labels,
+                id     = #elements + 1
+            })
+        end
+    end
+
+    if #elements == 0 then
+        lib.notify({ title = 'Sin tintes', description = 'No hay tintes disponibles.', type = 'error' })
+        return
+    end
+
+    -- Aquí cambio el ID a 'weapon_tint_menu'
+    MenuData.Open('default', GetCurrentResourceName(), 'weapon_tint_menu', {
+        title    = 'Tints: '..wname,
+        align    = 'top-left',
+        elements = elements,
+    }, function(data, menu)
+        local sel = data.current
+        if sel.hashes then
+            local prev = selectedCache[sel.name] and GetHashKey(selectedCache[sel.name]) or nil
+            local nxt  = sel.hashes[sel.value]
+
+            applyWeaponComponent(wepObj, prev, nxt, wHash)
+            selectedCache[sel.name] = sel.labels[sel.value]
+        end
+    end, function(_, menu)
+        menu.close()
+        MainWeaponMenu(wname, wHash, serial, propid)
+    end)
+end
+
 -- In MainWeaponMenu you call like this:
 function MainWeaponMenu(wname, wHash, serial, propid)
     MenuData.CloseAll()
@@ -561,6 +617,7 @@ function MainWeaponMenu(wname, wHash, serial, propid)
         { label='Customize Specific',   value='specific'  },
         { label='Customize Material',   value='material'  },
         { label='Customize Engraving',  value='engraving' },
+        { label='Customize Tints',  value='tints' },
         { label='Buy',                  value='buy'       },
         { label='Reset',                value='reset'     },
         { label='PackUp',                value='packup'     },
@@ -578,6 +635,9 @@ function MainWeaponMenu(wname, wHash, serial, propid)
 
         elseif data.current.value == 'engraving' then
             OpenEngravingMenu(wname, wHash, serial)
+
+        elseif data.current.value == 'tints' then
+            OpenTintsMenu(wname, wHash, serial)
 
         elseif data.current.value == 'buy' then
             local price = CalculatePrice(selectedCache)
