@@ -1,143 +1,48 @@
 Config = {}
 
 Config.Debug = true
+Config.PlayerProps      = {}
 
-Config.Notify            = 'ox_lib' -- 'ox_lib' or 'rnotify' notify selection
-Config.MenuData          = 'menu_base' -- 'menu_base' or 'rsg-menubase' menu selection
+-- Ajustes de colocación
+Config.PromptGroupName   = 'Place Gunsite'
+Config.PromptCancelName  = 'Cancel'
+Config.PromptPlaceName   = 'Set'
+Config.PromptRotateLeft  = 'Rotate Left'
+Config.PromptRotateRight = 'Rotate Right'
+Config.PlaceDistance     = 5.0
 
-Config.Keybinds          = 'J'
-Config.Payment           = 'money' --  'item' or  'money'
-Config.PaymentType       = 'cash' -- Payment = money you can select 'cash' or 'bloodmoney' / Payment = item you can select 'cash' or 'bloodmoney'
-Config.RemovePrice       = .3 -- (0 - 1) = 100 % cost remove component 120%
-Config.animationSave     = 10000 -- Waiting time for application or removal components
-
--- Job
-Config.Usejob            = true
-Config.JobType           = 'weaponsmith' -- 'gunsmith' or 'weaponsmith'
+-- Propiedades y límites
 Config.RepairItem        = 'weapon_repair_kit'
-Config.Jobs				 = {"Valentine Weaponsmith"}
-Config.StartCamObj       = true -- false / true Camera movements with category changes during selection
-Config.showStats         = true -- true / false can show stats inspect
+Config.Gunsmithrobbery  = 'lockpick'
+Config.Gunsmithitem     = 'gunsmith'
+Config.Gunsmithprop     = `p_gunsmithprops09x`
+Config.MaxGunsites      = 1
+Config.MaxWeapon        = 1
+Config.gunZoneSize      = 5.0
+Config.Payment          = 'money' --  'item' or  'money'
+Config.PaymentType      = 'cash' -- Payment = money you can select 'cash' or 'bloodmoney' / Payment = item you can select 'cash' or 'bloodmoney'
+Config.animationSave    = 10000 -- Waiting time for application or removal components
+-- Job
+-- Config.Jobs				       = {'valweaponsmith'}
 
-Config.Command = {
-  ['inspect']       = "w_inspect",
-  ['loadweapon']    = "loadweapon",
-}
+-- Camera settings
+Config.distBack = 0.7 -- Camera movements Back
+Config.distSide = 0.13 -- Camera movements Side
+Config.distUp   = 0.05 -- Camera movements Up
+Config.distFov = 75.0 -- Camera movements FOV
 
-Config.CustomLocations = {
-locations = {
-  Valentine = {
-    name = 'Valentine Customs',
-    prompt = 'val_custom',
-    gunsmithid = 'valweaponsmith',
-    coords = vector3(-281.3202, 778.9372, 119.5440),
-    custcoords = vector4(-281.3081, 779.7899, 119.6094, 40.0),
-    jobaccess = 'valweaponsmith',
-  },
-  Rhodes = {
-    name = 'Rhodes Customs',
-    prompt = 'rho_custom',
-    gunsmithid = 'rhoweaponsmith',
-    coords = vector3(1321.98, -1323.23, 77.89),
-    custcoords = vector4(1322.368, -1322.256, 77.937, 75.0),
-    jobaccess = 'rhoweaponsmith',
-  },
-  Tumbleweed = {
-    name = 'Customs',
-    prompt = 'tum_custom',
-    gunsmithid = 'tumgunsmith',
-    coords = vector3(-5508.35, -2964.26, -0.54),
-    custcoords = vector4(-5507.34, -2963.81, -0.59, 75.0),
-    jobaccess = 'tumgunsmith',
-  },
-  StDen = {
-    name = 'Customs',
-    prompt = 'std_custom',
-    gunsmithid = 'stdgunsmith',
-    coords = vector3(2716.06, -1287.55, 49.63),
-    custcoords = vector4(2715.55322265625, -1286.741455078125, 49.6799087524414, 75.0),
-    jobaccess = 'stdgunsmith',
-  },
-  Annsb = {
-    name = 'Customs',
-    prompt = 'Ann_custom',
-    gunsmithid = 'anngunsmith',
-    coords = vector3(2948.48, 1319.55, 44.82),
-    custcoords = vector4(2947.630, 1319.90, 44.86, 75.0),
-    jobaccess = 'anngunsmith',
-  },
-  --[[
-  -- EXTRA LOCATIONS
-  {
-    name = 'Customs',
-    prompt = 'str_custom',
-    gunsmithid = 'strgunsmith',
-    coords = vector3(-1752.0, -386.7, 156.52),
-    custcoords = vector4(-1752.85, -386.86, 156.48, 60.0),
-    jobaccess = 'strgunsmith',
-  },
-  {
-    name = 'Customs',
-    prompt = 'blk_custom',
-    gunsmithid = 'blkgunsmith',
-    coords = vector3(-859.30, -1277.90, 43.66),
-    custcoords = vector4(-859.31, -1278.66, 43.50, 6.0),
-    jobaccess = 'blkgunsmith',
-  },
-  {
-    name = 'Customs',
-    prompt = 'gua_custom',
-    gunsmithid = 'guagunsmith',
-    coords = vector3(1322.02, -6980.69, 61.97),
-    custcoords = vector4(1322.02, -6980.69, 61.97, 6.0),
-    jobaccess = 'guagunsmith',
-  }, 
-  ]]
-  }
-}
+Config.StartCamObj      = true -- false / true Camera movements with category changes during selection (WIP)
+Config.showStats        = true -- true / false can show stats inspect
 
--------------------------
--- DAMAGE
------------------------
-Config.WeaponDamageModifiers = {
---    HASHKEY       DMG VALUE      MODEL NAME
-    [0x1086D041]    = 1.5,           -- Jawbone Knife
-    [0x28950C71]    = 10.0,          -- Machete
-    [0xDB21AC8C]    = 10.0,          -- Regular Knife
+Config.Commandinspect       = "w_inspect"
+Config.Commandloadweapon    = "loadweapon"
 
---    HASHKEY       DMG VALUE      MODEL NAME 
-  --PISTOLS
-    [0x020D13FF]    = 2.2,        -- Volcanic Pistol
-    [0x5B78B8DD]    = 2.0,        -- M1899 Pistol
-    [0x657065D6]    = 2.0,        -- SEMI AUTO Pistol
-    [0x8580C63E]    = 2.0,        -- MAUSER Pistol
-  --REPEATERS
-    [0x95B24592]    = 2.2,        -- HENRY REPEATER
-    [0xA84762EC]    = 2.6,        -- WINCHESTER REPEATER
-    [0xF5175BA1]    = 2.3,        -- CARBINE REPEATER
-    [0x7194721E]    = 2.4,        -- EVANS REPEATER
-  --REVOLVERS
-    [0x0797FBF5]    = 3.8,        -- DOUBLEACTION REVOLVER
-    [0x16D655F7]    = 3.8,        -- CATTLEMAN MEXICAN REVOLVER
-    [0x169F59F7]    = 3.8,        -- CATTLEMAN REVOLVER
-    [0x7E945C8]     = 3.8,        -- NAVY REVOLVER
-    [0x1731B466]    = 3.8,        -- NAVY CROSSOVER REVOLVER
-    [0x5B2D26B5]    = 3.0,        -- LEMAT REVOLVER
-    [0x7BBD1FF6]    = 3.0,        -- SCHOFIELD REVOLVER
-    [0x83DD5617]    = 3.8,        -- DOUBLEACTION GAMBLER REVOLVER
-  --RIFLES
-    [0x63F46DE6]    = 5.0,        -- SPRINGFIELD RIFLE
-    [0x772C8DD6]    = 5.0,        -- BOLT ACTION RIFLE
-    [0xDDF7BC1E]    = 5.0,        -- VARMIT RIFLE
-  --SHOTGUNS
-    [0x1765A8F8]    = 1.5,        -- SAW OFF SHOTGUN
-    [0x2250E150]    = 1.5,        -- BARREL EXOTIC SHOTGUN
-    [0x31B7B9FE]    = 1.5,        -- PUMP SHOTGUN
-    [0x63CA782A]    = 1.5,        -- REPEATING SHOTGUN
-    [0x6DFA071B]    = 1.5,        -- DOUBLE BARREL SHOTGUN 
-  --BOWS
-    [0x88a8505c]    = 1.5,        -- BOW
-    [0x6E0F12B]     = 5.0,        -- IMPROVED BOW
+-- Blip
+Config.Blip = {
+  blipName   = 'Custom Weapon',
+  blipSprite = 'blip_camp_tent',
+  blipScale  = 0.2,
+  blipColour = 'BLIP_MODIFIER_MP_COLOR_6',
 }
 
 --------------------
@@ -167,11 +72,49 @@ Config.WeaponRestriction = {
   'WEAPON_REVOLVER_NAVY_CROSSOVER',
 
 }
--------------------------
--- EXTRA Webhooks / RANKING
------------------------
-Config.Webhooks = {
-    ['weaponCustom'] = '',
+
+--------------------
+-- PRICES AND DATA HASHES
+--------------------
+Config.RemovePrice       = 0.3 -- (0 - 1) = 100 % cost remove component 120%
+
+Config.price = {
+  ["BARREL"] = 1.00,
+  ["GRIP"] = 1.00,
+  ["SIGHT"] = 1.00,
+  ["FRAME_VERTDATA"] = 1.00,
+  ["CLIP"] = 1.00,
+  ["TUBE"] = 1.00,
+  ["WRAP"] = 1.00,
+  ["FRAME_ENGRAVING"] = 1.00,
+  ["MAG"] = 1.00,
+  ["STOCK"] = 1.00,
+  ["CYLINDER_TINT"] = 1.00,
+  ["BARREL_TINT"] = 1.00,
+  ["TRIGGER_TINT"] = 1.00,
+  ["TORCH_MATCHSTICK"] = 1.00,
+  ['TRIGGER_MATERIAL'] = 1.00,
+  ['SIGHT_MATERIAL'] = 1.00,
+  ['HAMMER_MATERIAL'] = 1.00,
+  ['FRAME_MATERIAL'] = 1.00,
+  ['FRAME_ENGRAVING_MATERIAL'] = 1.00,
+  ['BARREL_MATERIAL'] = 1.00,
+  ['BARREL_ENGRAVING'] = 1.00,
+  ['BARREL_ENGRAVING_MATERIAL'] = 1.00,
+  ['CYLINDER_MATERIAL'] = 1.00,
+  ['CYLINDER_ENGRAVING'] = 1.00,
+  ['CYLINDER_ENGRAVING_MATERIAL'] = 1.00,
+  ['GRIP_MATERIAL'] = 1.00,
+  ['GRIPSTOCK_ENGRAVING'] = 1.00,
+  ['BARREL_RIFLING'] = 1.00,
+  ['GRIPSTOCK_TINT'] = 1.00,
+  ['WRAP_MATERIAL'] = 1.00,
+  ['WRAP_TINT'] = 1.00,
+  ['SCOPE'] = 1.00,
+  ['MELEE_BLADE_MATERIAL'] = 1.00,
+  ['MELEE_BLADE_ENGRAVING'] = 1.00,
+  ['MELEE_BLADE_ENGRAVING_MATERIAL'] = 1.00,
+  ['GRIP_TINT'] = 1.00
 }
 
 Config.Shared =
@@ -1594,21 +1537,71 @@ Config.Specific = {
 
     },
 
-    ["WEAPON_THROWN_DYNAMITE"] = {
-        ["TORCH_MATCHSTICK"] = {
-          "COMPONENT_DYNAMITE_MOLOTOV_TORCH_MATCHSTICK",
-        },
-    },
-
     ["WEAPON_KIT_BINOCULARS"] = {
         ["TORCH_MATCHSTICK"] = {
           "COMPONENT_BINOCULARS_SCOPE01",
         },
     },
 
+    -- ["WEAPON_THROWN_DYNAMITE"] = {
+    --     ["TORCH_MATCHSTICK"] = {
+    --       "COMPONENT_DYNAMITE_MOLOTOV_TORCH_MATCHSTICK",
+    --     },
+    -- },
     -- ["WEAPON_FISHINGROD"] = {
     --     ["COMPONENT_FISHING_LINE"] = {
     --       "COMPONENT_FISHING_LINE",
     --     },
     -- },
 }
+
+-------------------------
+-- DAMAGE
+-----------------------
+Config.WeaponDamageModifiers = {
+--    HASHKEY       DMG VALUE      MODEL NAME
+    [0x1086D041]    = 1.5,           -- Jawbone Knife
+    [0x28950C71]    = 10.0,          -- Machete
+    [0xDB21AC8C]    = 10.0,          -- Regular Knife
+
+--    HASHKEY       DMG VALUE      MODEL NAME 
+  --PISTOLS
+    [0x020D13FF]    = 2.2,        -- Volcanic Pistol
+    [0x5B78B8DD]    = 2.0,        -- M1899 Pistol
+    [0x657065D6]    = 2.0,        -- SEMI AUTO Pistol
+    [0x8580C63E]    = 2.0,        -- MAUSER Pistol
+  --REPEATERS
+    [0x95B24592]    = 2.2,        -- HENRY REPEATER
+    [0xA84762EC]    = 2.6,        -- WINCHESTER REPEATER
+    [0xF5175BA1]    = 2.3,        -- CARBINE REPEATER
+    [0x7194721E]    = 2.4,        -- EVANS REPEATER
+  --REVOLVERS
+    [0x0797FBF5]    = 3.8,        -- DOUBLEACTION REVOLVER
+    [0x16D655F7]    = 3.8,        -- CATTLEMAN MEXICAN REVOLVER
+    [0x169F59F7]    = 3.8,        -- CATTLEMAN REVOLVER
+    [0x7E945C8]     = 3.8,        -- NAVY REVOLVER
+    [0x1731B466]    = 3.8,        -- NAVY CROSSOVER REVOLVER
+    [0x5B2D26B5]    = 3.0,        -- LEMAT REVOLVER
+    [0x7BBD1FF6]    = 3.0,        -- SCHOFIELD REVOLVER
+    [0x83DD5617]    = 3.8,        -- DOUBLEACTION GAMBLER REVOLVER
+  --RIFLES
+    [0x63F46DE6]    = 5.0,        -- SPRINGFIELD RIFLE
+    [0x772C8DD6]    = 5.0,        -- BOLT ACTION RIFLE
+    [0xDDF7BC1E]    = 5.0,        -- VARMIT RIFLE
+  --SHOTGUNS
+    [0x1765A8F8]    = 1.5,        -- SAW OFF SHOTGUN
+    [0x2250E150]    = 1.5,        -- BARREL EXOTIC SHOTGUN
+    [0x31B7B9FE]    = 1.5,        -- PUMP SHOTGUN
+    [0x63CA782A]    = 1.5,        -- REPEATING SHOTGUN
+    [0x6DFA071B]    = 1.5,        -- DOUBLE BARREL SHOTGUN 
+  --BOWS
+    [0x88a8505c]    = 1.5,        -- BOW
+    [0x6E0F12B]     = 5.0,        -- IMPROVED BOW
+}
+
+-------------------------
+-- EXTRA Webhooks / RANKING
+-----------------------
+Config.WebhookName = 'weapon_custom'
+Config.WebhookTitle = 'Weapon Craft for RSG Framework'
+Config.WebhookColour = 'default'

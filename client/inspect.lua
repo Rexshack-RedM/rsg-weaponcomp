@@ -1,13 +1,14 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
-
 lib.locale()
 -----------------------------------
 -- UTILITYS -- INSPECTION - NEW
 -----------------------------------
+--[[
 if not DataView then
     print("error: DataView required")
     return
 end
+
 
 local function InventoryGetGuidFromItemId(inventoryId, itemDataBuffer, category, slotId, outItemBuffer) return Citizen.InvokeNative(0x886DFD3E185C8A89, inventoryId, itemDataBuffer, category, slotId, outItemBuffer) end
 local function SetWeaponDegradation(weaponObject, float) Citizen.InvokeNative(0xA7A57E89E965D839, weaponObject, float, Citizen.ResultAsFloat()) end
@@ -44,14 +45,15 @@ local function getWeaponConditionText(weaponObject)
     local weaponPermanentDegradation = GetWeaponPermanentDegradation(weaponObject)
 
     if weaponDegradation == 0.0 then
-      return GetStringFromHashKey(1803343570 --[[ GXTEntry: "Weapon is clean" ]])
+      return GetStringFromHashKey(1803343570 ) -- GXTEntry: "Weapon is clean" 
     end
     if weaponPermanentDegradation > 0.0 and weaponDegradation == weaponPermanentDegradation then
-      return GetStringFromHashKey(-1933427003 --[[ GXTEntry: "Weapon cannot be cleaned further" ]])
+      return GetStringFromHashKey(-1933427003 ) -- GXTEntry: "Weapon cannot be cleaned further" 
     end
 
-    return GetStringFromHashKey(-54957657 --[[ GXTEntry: "Weapon needs cleaning" ]])
+    return GetStringFromHashKey(-54957657) -- GXTEntry: "Weapon needs cleaning" 
 end
+
 
 local function getWeaponStruct(weaponHash)
 
@@ -146,47 +148,21 @@ local function cleanWeaponObject(weaponObject)
 end
 
 local function createStateMachine(uiFlowBlock)
-    if not Citizen.InvokeNative(0x10A93C057B6BD944, uiFlowBlock) --[[ UIFLOWBLOCK_IS_LOADED ]] then
+    if not Citizen.InvokeNative(0x10A93C057B6BD944, uiFlowBlock)  then -- UIFLOWBLOCK_IS_LOADED 
       print("uiflowblock failed to load")
       return 0
     end
 
     Citizen.InvokeNative(0x3B7519720C9DCB45, uiFlowBlock, 0) -- UIFLOWBLOCK_ENTER
 
-    if not Citizen.InvokeNative(0x5D15569C0FEBF757, -813354801) --[[ UI_STATE_MACHINE_EXISTS ]] then
-      if not Citizen.InvokeNative(0x4C6F2C4B7A03A266, -813354801, uiFlowBlock) --[[ UI_STATE_MACHINE_CREATE ]] then
+    if not Citizen.InvokeNative(0x5D15569C0FEBF757, -813354801) then -- UI_STATE_MACHINE_EXISTS 
+      if not Citizen.InvokeNative(0x4C6F2C4B7A03A266, -813354801, uiFlowBlock)  then -- UI_STATE_MACHINE_CREATE
         print("uiflowblock wasn't created")
         return 0
       end
     end
 
     return 1
-end
-
-local GetWeaponType = function(objecthash)
-    local weapon_type = nil
-    if objecthash ~= nil then
-        if GetHashKey('GROUP_REPEATER') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_SHOTGUN') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "SHOTGUN"
-        elseif GetHashKey('GROUP_HEAVY') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_RIFLE') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_SNIPER') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "LONGARM"
-        elseif GetHashKey('GROUP_REVOLVER') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "SHORTARM"
-        elseif GetHashKey('GROUP_PISTOL') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "SHORTARM"
-        elseif GetHashKey('GROUP_BOW') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "GROUP_BOW"
-        elseif GetHashKey('GROUP_MELEE') == GetWeapontypeGroup(objecthash) then
-            weapon_type = "MELEE_BLADE"
-        end
-    end
-    return weapon_type
 end
 
 
@@ -261,14 +237,6 @@ local function startWeaponInspection(hasGunOil, takeGunOilCallback)
     end
 end
 
-AddEventHandler('onResourceStop', function(r)
-    if GetCurrentResourceName() ~= r then return end
-    Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801)
-    DatabindingRemoveDataEntry(uiContainer)
-    --ReleaseFlowBlock(uiFlowBlock) --Citizen.InvokeNative(0xF320A77DD5F781DF, uiFlowBlock)
-    Citizen.InvokeNative(0x8BC7C1F929D07BF3, GetHashKey("HUD_CTX_INSPECT_ITEM")) -- DisableHUDComponent
-
-end)
 
 exports("startWeaponInspection", function(hasGunOil, takeGunOilCallback)
     startWeaponInspection(hasGunOil, takeGunOilCallback)
@@ -319,12 +287,12 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeaponNew", function()
         startWeaponInspection(hasRepairItem, takeRepairItemCallback)
     end
 end)
+]]
 
 -----------------------------------
--- UTILITYS -- INSPECTION - OLD
+-- UTILITYS -- INSPECTION
 -----------------------------------
- 
-getWeaponStats = function(weaponHash)
+function getWeaponStats(weaponHash)
     local emptyStruct = DataView.ArrayBuffer(256)
     local charStruct = DataView.ArrayBuffer(256)
     Citizen.InvokeNative(0x886DFD3E185C8A89, 1, emptyStruct:Buffer(), GetHashKey("CHARACTER"), -1591664384, charStruct:Buffer()) -- InventoryGetGuidFromItemid(
@@ -337,7 +305,7 @@ getWeaponStats = function(weaponHash)
     return weaponStruct:Buffer()
 end
 
-showstats = function()
+function showstats()
     local _, weapon = GetCurrentPedWeapon(PlayerPedId(), true, 0, true)
     if weapon then
         local uiFlowBlock = RequestFlowBlock(GetHashKey("PM_FLOW_WEAPON_INSPECT"))
@@ -417,4 +385,12 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
         if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
     end
 end)
---[[]]
+
+AddEventHandler('onResourceStop', function(r)
+    if GetCurrentResourceName() ~= r then return end
+    Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801)
+    DatabindingRemoveDataEntry(uiContainer)
+    --ReleaseFlowBlock(uiFlowBlock) --Citizen.InvokeNative(0xF320A77DD5F781DF, uiFlowBlock)
+    Citizen.InvokeNative(0x8BC7C1F929D07BF3, GetHashKey("HUD_CTX_INSPECT_ITEM")) -- DisableHUDComponent
+
+end)

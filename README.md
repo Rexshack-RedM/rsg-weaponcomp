@@ -26,7 +26,22 @@ Basically it would be doing a debug, I think I am very organized and my programm
 - change prices and locales categorie for names in menu
 - all data for components, material and engraving
 - system price in data
-  
+
+```sql
+CREATE TABLE `hdrp_weapons_custom` (
+    `gunsiteid` VARCHAR(20) NOT NULL,
+    `propid` VARCHAR(20) NOT NULL,
+    `citizenid` VARCHAR(50) NOT NULL,
+    `item` VARCHAR(50) NOT NULL,
+    `propdata` LONGTEXT NOT NULL,
+    PRIMARY KEY (`gunsiteid`)
+);
+```
+
+```lua
+    gunsmith = { name = 'gunsmith', label = 'Gun craft', weight = 12000, type = 'item', image = 'guncraft.png', unique = false, useable = true,  shouldClose = true, description = 'Placeholder'},
+
+```
 # Admin
 
 ```

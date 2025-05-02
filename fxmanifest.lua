@@ -4,11 +4,10 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 description 'rsg-weaponcomp'
-version '2.0.0'
+version '2.5.5'
 
 shared_script {
     '@ox_lib/init.lua',
-    'data/weaponslist.lua',
     'config.lua',
 }
 
@@ -32,6 +31,3 @@ dependencies {
 }
 
 lua54 'yes'
-
-export 'startWeaponInspection'
-export 'InWeaponCustom'
