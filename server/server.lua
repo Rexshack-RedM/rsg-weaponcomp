@@ -26,8 +26,7 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
 
     for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info and item.info.serie == serial then
-            local comps = item.info.components or nil
-            cb({ components = comps })
+            cb({ components = item.info.components})
             return
         end
     end
@@ -228,11 +227,29 @@ end)
 -- -------------------------------------------
 -- -- Payment
 -- -------------------------------------------
+local function sortComponentsTable(comps)
+    local keys = {}
+    for cat in pairs(comps) do
+        table.insert(keys, cat)
+    end
+
+    table.sort(keys)
+
+    local sorted = {}
+    for _, cat in ipairs(keys) do
+        sorted[cat] = comps[cat]
+    end
+
+    return sorted
+end
+
 local function saveWeaponComponents(serial, comps, Player)
+    local toSave = (type(comps) == "table" and next(comps)) and sortComponentsTable(comps) or nil
+
     -- Inventario
     for _, item in ipairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info.serie == serial then
-            item.info.components = (type(comps) == "table" and next(comps)) and comps or nil
+            item.info.components = toSave -- (type(comps) == "table" and next(comps)) and comps or nil
             break
         end
     end
@@ -277,5 +294,5 @@ AddEventHandler('rsg-weaponcomp:server:check_comps', function()
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-    TriggerClientEvent('rsg-weapons:client:reloadWeapon', src)
+    TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', src)
 end)

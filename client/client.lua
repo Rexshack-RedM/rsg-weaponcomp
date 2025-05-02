@@ -143,6 +143,7 @@ local function applyWeaponComponent(obj, prevComp, nextComp, wHash)
     GiveWeaponComponentToEntity(obj, nextComp, wHash, true)
 end
 
+
 -- Initialize first set
 local function applyDefaults(obj, wHash)
     local name = Citizen.InvokeNative(0x89CF5FF3D363311E, wHash, Citizen.ResultAsString())
@@ -319,7 +320,6 @@ end
 function MainWeaponMenu(wname, wHash, serial, propid)
     MenuData.CloseAll()
 
-    applyDefaults(wepObj, wHash)
     for cat, compName in pairs(selectedCache) do
         local compHash = GetHashKey(compName)
         applyWeaponComponent(wepObj, nil, compHash, wHash)
@@ -362,12 +362,12 @@ function MainWeaponMenu(wname, wHash, serial, propid)
             end
         elseif data.current.value == 'reset' then
             RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
-                local dbComps = d.components or {}
+                local dbComps = d.components or nil
                 local price   = CalculatePrice(dbComps) * Config.RemovePrice
 
                 if price > 0 then
                     TriggerServerEvent('rsg-weaponcomp:server:price',
-                        price, wHash, serial, {}
+                        price, wHash, serial, nil
                     )
                     lib.notify({ title="Reset comprado", description="$"..price, type="success" })
                     selectedCache = {}
@@ -386,25 +386,6 @@ function MainWeaponMenu(wname, wHash, serial, propid)
         menu.close()
     end)
 end
---[[ 
-RegisterNetEvent('rsg-weaponcomp:client:requestReload')
-AddEventHandler('rsg-weaponcomp:client:requestReload', function()
-    local ped = PlayerPedId()
-    local _, wHash = GetCurrentPedWeapon(ped, true)
-    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then
-        lib.notify({ title = "No weapon in hand", type = "error" })
-        return
-    end
-
-    local serialMap = exports['rsg-weapons']:weaponInHands()
-    local serial = serialMap[wHash]
-    if not serial then
-        lib.notify({ title = "No serial found for this weapon", type = "error" })
-        return
-    end
-
-    -- TriggerEvent('rsg-weapons:client:reloadWeapon', serial)
-end) ]]
 
 -- START CUSTOM EVENT
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, serial, weaponName)
@@ -420,6 +401,7 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
     Wait(500)
     StartCamOnWeapon(wepObj, Config.distFov)
     MainWeaponMenu(weaponName, wHash, serial, propid)
+    applyDefaults(wepObj, wHash)
     isBusy = false
 end)
 
@@ -542,30 +524,6 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     Wait(0)
     DoScreenFadeIn(1000)
 
-end)
-
--- Evento para recargar el arma
-RegisterNetEvent("rsg-weapons:client:reloadWeapon")
-AddEventHandler("rsg-weapons:client:reloadWeapon", function()
-    local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
-    local wep = GetCurrentPedWeaponEntityIndex(cache.ped, 0)
-    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
-    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
-    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
-        local dbComps = d.components or {}
-        print("apli use", dbComps, json.encode(dbComps))
-        for _, cat in ipairs(dbComps) do
-            local options = dbComps[cat]
-            if options and #options > 0 then
-                local defaultComp = options[1]                     -- nombre del componente
-                local compHash    = GetHashKey(defaultComp)       -- su hash
-                applyWeaponComponent(wep, nil, compHash, wHash)   -- lo aplicas
-                GiveWeaponComponentToEntity(wep, compHash, wHash, true)
-                Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, compHash, true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
-                Wait(100)
-            end
-        end
-    end, serial)
 end)
 
 --------------------------
@@ -755,6 +713,38 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
     -- Returns the item to player 
     TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)
     PackingUpProps[propid] = nil
+end)
+
+-- Evento para recargar el arma
+local function applyPlayerWeaponComponent(ped, prevComp, nextComp, wHash)
+    local mdl = GiveWeaponComponentToEntity(ped, GetHashKey(nextComp), wHash, true)
+    if mdl and mdl ~= 0 then
+        RequestModel(mdl)
+        while not HasModelLoaded(mdl) do Wait(50) end
+    end
+    if prevComp then RemoveWeaponComponentFromPed(ped, GetHashKey(prevComp), wHash) end
+    if IsEntityAPed(ped) then
+        GiveWeaponComponentToEntity(ped, GetHashKey(nextComp), -1, true)
+        ApplyShopItemToPed(ped, wHash, true, true, true)
+    end
+end
+
+RegisterNetEvent("rsg-weaponcomp:client:reloadWeapon")
+AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
+    local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
+    local wep = GetCurrentPedWeaponEntityIndex(PlayerPedId(), 0)
+    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
+    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
+        local dbComps = d or {}
+        print("apli use", dbComps, json.encode(dbComps.components))
+        for _, compName in pairs(dbComps.components) do
+            if compName and compName ~= "" then
+                applyPlayerWeaponComponent(PlayerPedId(), nil, compName, wHash)
+            end
+        end
+
+    end, serial)
 end)
 
 ---------------------------------------------
