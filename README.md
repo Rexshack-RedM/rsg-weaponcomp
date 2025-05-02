@@ -16,8 +16,6 @@ Basically it would be doing a debug, I think I am very organized and my programm
 - Start, Stop resource
 
 # in config, 
-- 2 notify = 'rnotify' (for send the player, and all errors in ox_lib) or all in 'ox_lib'
-- 2 menus = 'menu_base' and 'rsg-basemenu'
 - Config.RemovePrice (0 - 1) = 100 % cost remove base price
 - can show stats in /w_inspect
 - Config permision command acces menu
@@ -27,6 +25,7 @@ Basically it would be doing a debug, I think I am very organized and my programm
 - all data for components, material and engraving
 - system price in data
 
+# add sql
 ```sql
 CREATE TABLE `hdrp_weapons_custom` (
     `gunsiteid` VARCHAR(20) NOT NULL,
@@ -37,11 +36,55 @@ CREATE TABLE `hdrp_weapons_custom` (
     PRIMARY KEY (`gunsiteid`)
 );
 ```
-
+# add item
 ```lua
     gunsmith = { name = 'gunsmith', label = 'Gun craft', weight = 12000, type = 'item', image = 'guncraft.png', unique = false, useable = true,  shouldClose = true, description = 'Placeholder'},
 
 ```
+
+# change inventory/html/app.js
+- https://github.com/Rexshack-RedM/rsg-inventory/blob/main/html/app.js#L992C1-L1016C11
+```js
+generateTooltipContent(item) {
+    if (!item) {
+        return "";
+    }
+
+    let content = `<div class="custom-tooltip"><div class="tooltip-header">${item.label}</div><hr class="tooltip-divider">`;
+
+    const description = item.info?.description?.replace(/\n/g, "<br>") 
+        || item.description?.replace(/\n/g, "<br>") 
+        || "No description available.";
+
+    const renderInfo = (obj, indent = 0) => {
+        let html = "";
+        for (const [key, value] of Object.entries(obj)) {
+            if (key === "description" || key === "lastUpdate") continue;
+
+            const padding = "&nbsp;".repeat(indent * 4);
+            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+                html += `<div class="tooltip-info"><span class="tooltip-info-key">${padding}${this.formatKey(key)}:</span></div>`;
+                html += renderInfo(value, indent + 1);
+            } else {
+                html += `<div class="tooltip-info"><span class="tooltip-info-key">${padding}${this.formatKey(key)}:</span> ${value}</div>`;
+            }
+        }
+        return html;
+    };
+
+    if (item.info && Object.keys(item.info).length > 0) {
+        content += renderInfo(item.info);
+    }
+
+    content += `<div class="tooltip-description">${description}</div>`;
+    content += `<div class="tooltip-weight"><i class="fas fa-weight-hanging"></i> ${item.weight != null ? (item.weight / 1000).toFixed(1) : "N/A"}kg</div>`;
+    content += `</div>`;
+
+    return content;
+}
+```
+
+
 # Admin
 
 ```
