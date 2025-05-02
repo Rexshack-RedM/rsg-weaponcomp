@@ -21,12 +21,20 @@ end)
 
 -- Provide saved components
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
-  local res = MySQL.query.await(
-    "SELECT components FROM player_weapons WHERE serial = ?",
-    { serial }
-  )
-  if res[1] then cb({ components = json.decode(res[1].components) }) else cb({}) end
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then cb({}); return end
+
+    for _, item in pairs(Player.PlayerData.items) do
+        if item.type == 'weapon' and item.info and item.info.serie == serial then
+            local comps = item.info.components or {}
+            cb({ components = comps })
+            return
+        end
+    end
+
+    cb({}) -- En caso de que no se encuentre el arma
 end)
+
 
 ---------------------------------------------
 -- create new gunsite in database
@@ -216,21 +224,15 @@ end)
 RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_41'), {}, false, function(source)
     TriggerClientEvent('rsg-weaponcomp:client:requestReload', source)
 end)
+
 -- -------------------------------------------
 -- -- Payment
 -- -------------------------------------------
 local function saveWeaponComponents(serial, comps, Player)
-    -- UPDATE / DEFAULT
-    if type(comps) == "table" then
-        MySQL.update.await("UPDATE player_weapons SET components = ? WHERE serial = ?", { json.encode(comps), serial })
-    else
-        MySQL.update.await("UPDATE player_weapons SET components = DEFAULT WHERE serial = ?", { serial })
-    end
-
     -- Inventario
     for _, item in ipairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info.serie == serial then
-            item.info.components = type(comps) == "table" and comps or {}
+            item.info.components = (type(comps) == "table" and next(comps)) and comps or nil
             break
         end
     end
@@ -271,7 +273,10 @@ end)
 -- -- CHECK COMPONENTS SQL
 -- --------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:server:check_comps') -- EQUIPED
-AddEventHandler('rsg-weaponcomp:server:check_comps', function()
-    local src=source
+AddEventHandler('rsg-weaponcomp:server:check_comps', function(source)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player then return end
+
     TriggerClientEvent('rsg-weaponcomp:client:requestReload', src)
 end)

@@ -609,7 +609,8 @@ AddEventHandler("rsg-weapons:client:reloadWeapon", function(serial)
     print(components, json.encode(components))
     -- 3) Aplicar cada component
     for _, compHash in ipairs(components) do
-        GiveWeaponComponentToPed(ped, wHash, compHash)
+        Citizen.InvokeNative(0x74C9090FDD1BB48E, cache.ped, wHash, compHash, -1, true)
+        Citizen.InvokeNative(0xD3A7B003ED343FD9, cache.ped, GetHashKey(compHash), true, true, true) -- ApplyShopItemToPed( -- RELOADING THE LIVE MODEL
     end
 end)
 
