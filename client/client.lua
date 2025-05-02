@@ -289,65 +289,56 @@ local function applyDefaults(obj, wHash)
         end
     end
 end
-
+local PrimaryOrder = {
+"BARREL","GRIP","SIGHT","CLIP","MAG","STOCK",
+"TUBE","TORCH_MATCHSTICK","GRIPSTOCK"
+}
 -- Initialize player set comp
 local primaryIndex = {}
-for idx, cat in ipairs(Config.Specific) do
-    primaryIndex[cat] = idx
+for i, cat in ipairs(PrimaryOrder) do
+    primaryIndex[cat] = i
 end
 
 local function suffixPriority(cat)
-    if cat:find("_TINT$") then
-        return 5
-    elseif cat:find("_ENGRAVING_MATERIAL$") then
-        return 4
-    elseif cat:find("_ENGRAVING$") then
-        return 3
-    elseif cat:find("_MATERIAL$") then
-        return 2
-    else
-        return 1
-    end
+    if cat:find("_TINT$") then return 5 end
+    if cat:find("_ENGRAVING_MATERIAL$") then return 4 end
+    if cat:find("_ENGRAVING$") then return 3 end
+    if cat:find("_MATERIAL$") then return 2 end
+    return 1
 end
 
-local function cmpCategories(a, b)
-    local ia, ib = primaryIndex[a], primaryIndex[b]
-    if ia and ib then
-        return ia < ib
-    elseif ia then
-        return true
-    elseif ib then
-        return false
-    end
-
-    local pa, pb = suffixPriority(a), suffixPriority(b)
-    if pa ~= pb then
-        return pa < pb
-    end
+local function cmpCategories(a,b)
+    local ia,ib = primaryIndex[a], primaryIndex[b]
+    if ia and ib then          return ia < ib end
+    if ia then                 return true end
+    if ib then                 return false end
+    local pa,pb = suffixPriority(a), suffixPriority(b)
+    if pa~=pb then             return pa<pb end
     return a < b
 end
 
-local function getSortedKeys(comps)
-    local keys = {}
-    for cat in pairs(comps) do
-        table.insert(keys, cat)
-    end
-    table.sort(keys, cmpCategories)
-    return keys
+local function getSortedKeys(t)
+    local ks = {}
+    for k in pairs(t) do ks[#ks+1]=k end
+    table.sort(ks, cmpCategories)
+    return ks
 end
 
---[[ local function GetLabelTextByHash(hash)
-    -- 0xBD5DD5EAE2B6CE14 es el identificador de GET_STRING_FROM_HASH_KEY
-    return Citizen.InvokeNative(0xBD5DD5EAE2B6CE14, hash)
-end
+--[[
 local function ensureWeaponMaterialDict()
-    local txd = "weapons_tint_maps"  -- el dict de tintas/materiales de armas
-    RequestStreamedTextureDict(txd, false)  -- citeturn0search1
-    local timeout = GetGameTimer() + 2000
-    while not HasStreamedTextureDictLoaded(txd) and GetGameTimer() < timeout do
-        Wait(10)
-    end
-end ]]
+    local txd = "weapons_tint_maps"
+    RequestStreamedTextureDict(txd, false)
+    local timeout = GetGameTimer()+2000
+    while not HasStreamedTextureDictLoaded(txd) and GetGameTimer()<timeout do
+      Wait(10)
+    end  
+end
+
+local function applyWeaponTint(ped, wHash, tintIndex)
+    -- tintIndex: 0..7
+    Citizen.InvokeNative(0x50969B9B89ED5738, ped, wHash, tintIndex)
+end
+]]
 
 local function applyPlayerWeaponComponent(ped, prevComp, nextComp, wHash)
     local mdl = GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
@@ -355,7 +346,7 @@ local function applyPlayerWeaponComponent(ped, prevComp, nextComp, wHash)
         RequestModel(mdl)
         while not HasModelLoaded(mdl) do Wait(50) end
     end
-    -- if prevComp then RemoveWeaponComponentFromPed(ped, prevComp, wHash) end
+    if prevComp then RemoveWeaponComponentFromPed(ped, prevComp, wHash) end
     if IsEntityAPed(ped) then
         GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
         ApplyShopItemToPed(ped, wHash, true, true, true)
@@ -594,7 +585,8 @@ local function OpenTintsMenu(wname, wHash, serial, propid)
         if sel.hashes then
             local prev = selectedCache[sel.name] and GetHashKey(selectedCache[sel.name]) or nil
             local nxt  = sel.hashes[sel.value]
-
+            -- local tintIndex = sel.value - 1  -- native usa 0-7
+            -- applyWeaponTint(cache.ped, wHash, tintIndex)
             applyWeaponComponent(wepObj, prev, nxt, wHash)
             selectedCache[sel.name] = sel.labels[sel.value]
         end
