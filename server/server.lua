@@ -208,26 +208,49 @@ end)
 -- --------------------------------------------
 -- -- COMMAND 
 -- --------------------------------------------
-
 RSGCore.Commands.Add(Config.Commandinspect, locale('label_40'), {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
 end)
 
--- RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_41'), {}, false, function(source)
---     local src = source
---     TriggerClientEvent('rsg-weaponcomp:client:LoadComponents', src)
--- end)
-
+RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_41'), {}, false, function(source)
+    TriggerClientEvent('rsg-weaponcomp:client:requestReload', source)
+end)
 -- -------------------------------------------
 -- -- Payment
 -- -------------------------------------------
+local function saveWeaponComponents(serial, comps, Player)
+    -- UPDATE / DEFAULT
+    if type(comps) == "table" then
+        MySQL.update.await("UPDATE player_weapons SET components = ? WHERE serial = ?", { json.encode(comps), serial })
+    else
+        MySQL.update.await("UPDATE player_weapons SET components = DEFAULT WHERE serial = ?", { serial })
+    end
+
+    -- Inventario
+    for _, item in ipairs(Player.PlayerData.items) do
+        if item.type == 'weapon' and item.info.serie == serial then
+            item.info.components = type(comps) == "table" and comps or {}
+            break
+        end
+    end
+    Player.Functions.SetInventory(Player.PlayerData.items)
+
+    -- Logging
+    local msg = table.concat({
+        'Citizenid:** '..Player.PlayerData.citizenid..'**',
+        'Ingame ID:** '..Player.PlayerData.cid..'**',
+        'Serial:** '..serial..'**',
+        'Components:** '..json.encode(comps)
+    }, '\n')
+    TriggerEvent('rsg-log:server:CreateLog', Config.WebhookName, Config.WebhookTitle, Config.WebhookColour, msg)
+end
+
 RegisterServerEvent('rsg-weaponcomp:server:price')
 AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, serial, selectedCache)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-
     if Config.Payment == 'money' then
         local currentCash = Player.Functions.GetMoney(Config.PaymentType)
         if currentCash < price then
@@ -235,60 +258,10 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, seria
             return
         end
 
-        -- Cobrar y guardar
         Player.Functions.RemoveMoney(Config.PaymentType, price)
-        print(objecthash, serial, selectedCache, json.encode(selectedCache))
-        TriggerEvent('rsg-weaponcomp:server:saveWeaponComponents', serial, selectedCache)
-        if selectedCache then
-            MySQL.update.await(
-                "UPDATE player_weapons SET components = ? WHERE serial = ?",
-                { json.encode(selectedCache), serial }
-            )
+        -- print(objecthash, serial, selectedCache, json.encode(selectedCache))
 
-            for _, item in pairs(Player.PlayerData.items) do
-                if item.type == 'weapon' and item.info.serie == serial then
-                    item.info.components = selectedCache
-                    -- item.info.components = json.encode(components)
-                    print("item.info", serial, selectedCache, json.encode(selectedCache))
-                    break
-                end
-            end
-            Player.Functions.SetInventory(Player.PlayerData.items)
-        else
-            MySQL.update.await(
-                "UPDATE player_weapons SET components = DEFAULT WHERE serial = ?",
-                { serial }
-            )
-
-            for _, item in pairs(Player.PlayerData.items) do
-                if item.type == 'weapon' and item.info.serie == serial then
-                    item.info.components = {}
-                    break
-                end
-            end
-            Player.Functions.SetInventory(Player.PlayerData.items)
-        end
-
-        TriggerEvent('rsg-weaponcomp:server:updateProps', src)
-
-        local citizenid = Player.PlayerData.citizenid
-        local ingameId = Player.PlayerData.cid
-        local firstname = Player.PlayerData.charinfo.firstname
-        local lastname = Player.PlayerData.charinfo.lastname
-        local job = Player.PlayerData.job.name
-        local msg = 'Citizenid:** ' .. citizenid .. '**' ..
-          '\nIngame ID:** ' .. ingameId .. '**' ..
-          '\nName:** ' .. firstname .. ' ' .. lastname .. '**' ..
-          '\nJob:** ' .. job .. '**' ..
-          '\nSerial:** ' .. serial .. '**' ..
-          '\nComponents Specific:** ' .. json.encode(selectedCache) .. '**'
-
-        TriggerEvent('rsg-log:server:CreateLog',
-            Config.WebhookName,
-            Config.WebhookTitle,
-            Config.WebhookColour,
-            msg
-        )
+        saveWeaponComponents(serial, selectedCache, Player)
         TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
         TriggerClientEvent('ox_lib:notify', src, { title = locale('notify_48', price), description = locale('notify_49'), type = 'inform' })
     end
@@ -298,7 +271,7 @@ end)
 -- -- CHECK COMPONENTS SQL
 -- --------------------------------------------
 RegisterNetEvent('rsg-weaponcomp:server:check_comps') -- EQUIPED
-AddEventHandler('rsg-weaponcomp:server:check_comps', function(serial)
-    local src = source
-    TriggerClientEvent('rsg-weapons:client:reloadWeapon', src, serial)
+AddEventHandler('rsg-weaponcomp:server:check_comps', function()
+    local src=source
+    TriggerClientEvent('rsg-weaponcomp:client:requestReload', src)
 end)

@@ -397,6 +397,29 @@ function MainWeaponMenu(wname, wHash, serial, propid)
     end)
 end
 
+RegisterNetEvent('rsg-weaponcomp:client:requestReload')
+AddEventHandler('rsg-weaponcomp:client:requestReload', function()
+    local ped = PlayerPedId()
+
+    -- 1) Averiguamos qué arma lleva en la mano
+    local _, wHash = GetCurrentPedWeapon(ped, true)
+    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then
+        lib.notify({ title = "No weapon in hand", type = "error" })
+        return
+    end
+
+    -- 2) Con nuestro export sacamos el serial usando ese hash
+    local serialMap = exports['rsg-weapons']:weaponInHands()
+    local serial = serialMap[wHash]
+    if not serial then
+        lib.notify({ title = "No serial found for this weapon", type = "error" })
+        return
+    end
+
+    -- 3) Disparamos tu evento de recarga, pasándole ya el serial
+    TriggerEvent('rsg-weapons:client:reloadWeapon', serial)
+end)
+
 -- START CUSTOM EVENT
 RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, serial, weaponName)
     if isBusy then return end
@@ -511,7 +534,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, ser
         end
     end
 
-    TriggerServerEvent("rsg-weaponcomp:server:check_comps", serial)
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     TriggerEvent('rsg-weaponcomp:client:ExitCam')
 end)
 
@@ -537,7 +560,7 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
 end)
 
 -- interaction with SQL Load
-local function loadPlayerComponents(serial, cb)
+--[[ local function loadPlayerComponents(serial, cb)
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(data)
         cb(data.components or {})
     end, serial)
@@ -555,6 +578,39 @@ AddEventHandler("rsg-weapons:client:reloadWeapon", function(serial)
             GiveWeaponComponentToPed(ped, wHash, compHash)
         end
     end)
+end) ]]
+
+local function loadPlayerComponentsFromInventory(serial)
+    local components = {}
+    -- RSGCore en el cliente también tiene tu inventario cacheado
+    local PlayerData = RSGCore.Functions.GetPlayerData()
+    for _, item in ipairs(PlayerData.items) do
+        if item.type == 'weapon' and item.info.serie == serial then
+            print(item.type, item, item.info.serie, json.encode(item.info.components))
+            components = item.info.components or {}
+            break
+        end
+    end
+    return components
+end
+
+-- Evento para recargar el arma
+RegisterNetEvent("rsg-weapons:client:reloadWeapon")
+AddEventHandler("rsg-weapons:client:reloadWeapon", function(serial)
+    local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
+    if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
+
+    -- 1) Carga components desde el inventario local
+    local components = loadPlayerComponentsFromInventory(serial)
+
+    -- 2) (Opcional) quitar todos los actuales
+    -- RemoveAllPedWeaponComponents(ped, wHash)
+
+    print(components, json.encode(components))
+    -- 3) Aplicar cada component
+    for _, compHash in ipairs(components) do
+        GiveWeaponComponentToPed(ped, wHash, compHash)
+    end
 end)
 
 --------------------------
