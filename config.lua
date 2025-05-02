@@ -876,9 +876,9 @@ Config.Specific = {
           "COMPONENT_REVOLVER_CATTLEMAN_SIGHT_NARROW",
           "COMPONENT_REVOLVER_CATTLEMAN_SIGHT_WIDE",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_SHORTARM_ROLE_ENGRAVING_CATTLEMAN_LEGENDARY",
-        },
+        }, ]]
     },
 
     ["WEAPON_REVOLVER_DOUBLEACTION"] = {
@@ -925,9 +925,9 @@ Config.Specific = {
           "COMPONENT_REVOLVER_SCHOFIELD_SIGHT_WIDE",
           "COMPONENT_REVOLVER_SCHOFIELD_SIGHT_BOUNTY",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_SHORTARM_FRAME_ENGRAVING_SCHOFIELD_BOUNTY",
-        },
+        }, ]]
     },
 
     ["WEAPON_PISTOL_MAUSER"] = {
@@ -997,9 +997,9 @@ Config.Specific = {
           "COMPONENT_PISTOL_VOLCANIC_SIGHT_WIDE",
           "COMPONENT_PISTOL_VOLCANIC_SIGHT_COLLECTOR",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_SHORTARM_FRAME_ENGRAVING_VOLCANIC_COLLECTOR",
-        },
+        }, ]]
 
     },
 
@@ -1159,9 +1159,9 @@ Config.Specific = {
           "COMPONENT_REPEATER_WINCHESTER_WRAP6",
           "COMPONENT_REPEATER_WINCHESTER_WRAP_COLLECTOR",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_FRAME_ENGRAVING_WINCHESTER_COLLECTOR",
-        },
+        }, ]]
     },
 
     ["WEAPON_RIFLE_VARMINT"] = {
@@ -1193,9 +1193,9 @@ Config.Specific = {
           "COMPONENT_RIFLE_VARMINT_WRAP5",
           "COMPONENT_RIFLE_VARMINT_WRAP6",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_ROLE_ENGRAVING_VARMINT_NATURALIST",
-        },
+        }, ]]
     },
 
     ["WEAPON_RIFLE_BOLTACTION"] = {
@@ -1218,9 +1218,9 @@ Config.Specific = {
           "COMPONENT_RIFLE_BOLTACTION_WRAP5",
           "COMPONENT_RIFLE_BOLTACTION_WRAP6",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_FRAME_ENGRAVING_BOLTACTION_BOUNTY",
-        },
+        }, ]]
     },
 
     ["WEAPON_RIFLE_ELEPHANT"] = {
@@ -1317,9 +1317,9 @@ Config.Specific = {
           "COMPONENT_RIFLE_ROLLINGBLOCK_WRAP5",
           "COMPONENT_RIFLE_ROLLINGBLOCK_WRAP6",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_ROLE_ENGRAVING_ROLLINGBLOCK_REAPER",
-        },
+        }, ]]
     },
 
     ["WEAPON_SHOTGUN_REPEATING"] = {
@@ -1381,10 +1381,10 @@ Config.Specific = {
           "COMPONENT_SHOTGUN_PUMP_WRAP5",
           "COMPONENT_SHOTGUN_PUMP_WRAP6",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_SHOTGUN_FRAME_ENGRAVING_PUMP_TRADER",
           "COMPONENT_LONGARM_ROLE_ENGRAVING_PUMP_HALLOWEEN",
-        },
+        }, ]]
     },
 
     ["WEAPON_SHOTGUN_DOUBLEBARREL"] = {
@@ -1421,9 +1421,9 @@ Config.Specific = {
           "COMPONENT_SHOTGUN_DOUBLEBARREL_MAG_KRAMPUS",
           "COMPONENT_SHOTGUN_DOUBLEBARREL_MAG_BURLED",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_ROLE_ENGRAVING_DOUBLEBARREL_KRAMPUS",
-        },
+        }, ]]
     },
 
     ["WEAPON_SHOTGUN_SAWEDOFF"] = {
@@ -1453,9 +1453,9 @@ Config.Specific = {
           "COMPONENT_SHOTGUN_SAWEDOFF_STOCK_MOONSHINER",
           "COMPONENT_SHOTGUN_SAWEDOFF_STOCK_BURLED",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_ROLE_ENGRAVING_SAWEDOFF_MOONSHINER",
-        },
+        }, ]]
     },
 
     ["WEAPON_SHOTGUN_SEMIAUTO"] = {
@@ -1521,12 +1521,12 @@ Config.Specific = {
           "COMPONENT_BOW_TRIGGER_TINT_A_7",
           "COMPONENT_BOW_TRIGGER_TINT_A_8",
         },
-        ["FRAME_VERTDATA"] = {
+        --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_ALLIGATOR",
           "COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_HORNED",
           "COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_JAGUAR",
           "COMPONENT_BOW_ROLE_ENGRAVING_IMPROVED_WOODEN_INLAY",
-        },
+        }, ]]
     },
 
     ["WEAPON_MELEE_KNIFE"] = {
