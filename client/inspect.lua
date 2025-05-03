@@ -311,7 +311,7 @@ function showstats()
         local uiFlowBlock = RequestFlowBlock(GetHashKey("PM_FLOW_WEAPON_INSPECT"))
         local uiContainer = DatabindingAddDataContainerFromPath("" , "ItemInspection")
         Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, "stats", getWeaponStats(weapon), PlayerPedId())
-        DatabindingAddDataString(uiContainer, "tipText", locale('title_54'))
+        DatabindingAddDataString(uiContainer, "tipText", locale('cl_lang_29'))
         DatabindingAddDataHash(uiContainer, "itemLabel", weapon)
         DatabindingAddDataBool(uiContainer, "Visible", true)
 
@@ -381,7 +381,6 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
 
         end
 
-
         if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
     end
 end)
@@ -392,5 +391,4 @@ AddEventHandler('onResourceStop', function(r)
     DatabindingRemoveDataEntry(uiContainer)
     --ReleaseFlowBlock(uiFlowBlock) --Citizen.InvokeNative(0xF320A77DD5F781DF, uiFlowBlock)
     Citizen.InvokeNative(0x8BC7C1F929D07BF3, GetHashKey("HUD_CTX_INSPECT_ITEM")) -- DisableHUDComponent
-
 end)

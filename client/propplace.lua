@@ -13,7 +13,7 @@ end)
 
 function Del()
     CreateThread(function()
-        local str = Config.PromptCancelName
+        local str = locale('cl_promp_1')
         CancelPrompt = PromptRegisterBegin()
         PromptSetControlAction(CancelPrompt, 0xF84FA74F)
         str = CreateVarString(10, 'LITERAL_STRING', str)
@@ -28,7 +28,7 @@ end
 
 function Set()
     CreateThread(function()
-        local str = Config.PromptPlaceName
+        local str = locale('cl_promp_2')
         SetPrompt = PromptRegisterBegin()
         PromptSetControlAction(SetPrompt, 0xC7B5340A)
         str = CreateVarString(10, 'LITERAL_STRING', str)
@@ -43,7 +43,7 @@ end
 
 function RotateLeft()
     CreateThread(function()
-        local str = Config.PromptRotateLeft
+        local str = locale('cl_promp_3')
         RotateLeftPrompt = PromptRegisterBegin()
         PromptSetControlAction(RotateLeftPrompt, 0xA65EBAB4)
         str = CreateVarString(10, 'LITERAL_STRING', str)
@@ -58,7 +58,7 @@ end
 
 function RotateRight()
     CreateThread(function()
-        local str = Config.PromptRotateRight
+        local str = locale('cl_promp_4')
         RotateRightPrompt = PromptRegisterBegin()
         PromptSetControlAction(RotateRightPrompt, 0xDEB34313)
         str = CreateVarString(10, 'LITERAL_STRING', str)
@@ -143,7 +143,7 @@ local function placeProp(propmodel, item, gunsitename, gunsiteid)
             DrawPropAxes(prop)
             Wait(0)
 
-            local PropPlacerGroupName  = CreateVarString(10, 'LITERAL_STRING', Config.PromptGroupName)
+            local PropPlacerGroupName  = CreateVarString(10, 'LITERAL_STRING', locale('cl_promp_5'))
             PromptSetActiveGroupThisFrame(PromptPlacerGroup, PropPlacerGroupName)
 
             if IsControlPressed(1, 0xA65EBAB4) then -- Left arrow key

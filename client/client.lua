@@ -117,10 +117,6 @@ local c_zoom = 1.5
 local c_offset = 0.20
 
 local function StartCamClean(zoom, offset)
-    DoScreenFadeOut(1000)
-    Wait(0)
-    DoScreenFadeIn(1000)
-
     local zoomOffset = tonumber(zoom)
     local coords = GetEntityCoords(cache.ped)
     local playerHeading = GetEntityHeading(cache.ped)
@@ -200,7 +196,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, ser
             canCancel = false,
             disable = { move = true, car = true, combat= true, mouse= false, sprint = true, },
             anim = { dict = animDict, clip = animName, flag = 15, },
-            label = locale('label_36'),
+            label = locale('cl_lang_1'),
         })
 
         if Cloth ~= nil and DoesEntityExist(Cloth) then
@@ -215,7 +211,6 @@ end)
 
 RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
 AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
-
     RenderScriptCams(false, true, 2000, true, false)
     if camera then DestroyCam(camera,true) end
     camera = nil
@@ -228,10 +223,6 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     end
     selectedCache  = {}
     MenuData.CloseAll()
-    DoScreenFadeOut(1000)
-    Wait(0)
-    DoScreenFadeIn(1000)
-
 end)
 
 ----------------------------------------
@@ -324,7 +315,7 @@ local function OpenComponentMenu(wname, wHash, serial, propid)
     end
 
     MenuData.Open("default", GetCurrentResourceName(), "weapon_specific_menu", {
-        title    = "Specific: "..wname,
+        title    = locale('cl_lang_2') ..  ":",
         align    = "top-left",
         elements = elements,
     }, function(data, menu)
@@ -371,12 +362,12 @@ local function OpenMaterialMenu(wname, wHash, serial, propid)
     end
 
     if #elements == 0 then
-        lib.notify({ title='Sin materiales', description='No hay materiales disponibles.', type='error' })
+        lib.notify({ title = locale('cl_notify_1'), description = locale('cl_notify_2'), type='error' })
         return
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'weapon_mat_menu', {
-      title    = 'Materials: '..wname,
+      title    = locale('cl_lang_3') .. ':',
       align    = 'top-left',
       elements = elements,
     }, function(data, menu)
@@ -424,12 +415,12 @@ local function OpenEngravingMenu(wname, wHash, serial, propid)
     end
 
     if #elements == 0 then
-        lib.notify({ title='Sin gravados', description='No hay grabados disponibles.', type='error' })
+        lib.notify({ title=locale('cl_notify_3'), description=locale('cl_notify_4'), type='error' })
         return
     end
 
     MenuData.Open('default', GetCurrentResourceName(), 'weapon_eng_menu', {
-      title    = 'Engravings: '..wname,
+      title    = locale('cl_lang_4') ..':',
       align    = 'top-left',
       elements = elements,
     }, function(data, menu)
@@ -478,13 +469,13 @@ local function OpenTintsMenu(wname, wHash, serial, propid)
     end
 
     if #elements == 0 then
-        lib.notify({ title = 'Sin tintes', description = 'No hay tintes disponibles.', type = 'error' })
+        lib.notify({ title = locale('cl_notify_7'), description = locale('cl_notify_8'), type = 'error' })
         return
     end
 
     -- Aquí cambio el ID a 'weapon_tint_menu'
     MenuData.Open('default', GetCurrentResourceName(), 'weapon_tint_menu', {
-        title    = 'Tints: '..wname,
+        title    = locale('cl_lang_5') .. ':',
         align    = 'top-left',
         elements = elements,
     }, function(data, menu)
@@ -513,16 +504,16 @@ function MainWeaponMenu(wname, wHash, serial, propid)
     end
 
     local el = {
-        { label='Customize Specific',   value='specific'  },
-        { label='Customize Material',   value='material'  },
-        { label='Customize Engraving',  value='engraving' },
-        { label='Customize Tints',  value='tints' },
-        { label='Buy',                  value='buy'       },
-        { label='Reset',                value='reset'     },
-        { label='PackUp',                value='packup'     },
+        { label=locale('cl_lang_6'),  value='specific' },
+        { label=locale('cl_lang_7'),  value='material' },
+        { label=locale('cl_lang_8'),  value='engraving' },
+        { label=locale('cl_lang_9'),  value='tints' },
+        { label=locale('cl_lang_10'), value='buy' },
+        { label=locale('cl_lang_11'), value='reset' },
+        { label=locale('cl_lang_12'), value='packup' },
     }
     MenuData.Open('default', GetCurrentResourceName(), 'main_weapon_menu', {
-        title    = 'Weapon Customization',
+        title    = locale('cl_lang_13'),
         align    = 'top-left',
         elements = el,
     }, function(data, menu)
@@ -544,12 +535,12 @@ function MainWeaponMenu(wname, wHash, serial, propid)
                 TriggerServerEvent('rsg-weaponcomp:server:price',
                     price, wHash, serial, selectedCache
                 )
-                lib.notify({ title="Compra OK", description="$"..price, type="success" })
+                lib.notify({ title=locale('cl_notify_9'), description="$"..price, type="success" })
                 menu.close()
                 -- Ojo: si quieres que la próxima vez empiece limpio,
                 selectedCache = {}
             else
-                lib.notify({ title="Nada que comprar", type="error" })
+                lib.notify({ title=locale('cl_notify_10'), type="error" })
             end
         elseif data.current.value == 'reset' then
             RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
@@ -560,11 +551,11 @@ function MainWeaponMenu(wname, wHash, serial, propid)
                     TriggerServerEvent('rsg-weaponcomp:server:price',
                         price, wHash, serial, nil
                     )
-                    lib.notify({ title="Reset comprado", description="$"..price, type="success" })
+                    lib.notify({ title=locale('cl_notify_11'), description="$"..price, type="success" })
                     selectedCache = {}
                     menu.close()
                 else
-                    lib.notify({ title="Nada que resetear", type="error" })
+                    lib.notify({ title=locale('cl_notify_12'), type="error" })
                 end
             end, serial)
 
@@ -644,13 +635,13 @@ Citizen.CreateThread(function()
                         {
                             name     = 'gunsite_prop',
                             icon     = 'far fa-eye',
-                            label    = 'Custom',
+                            label    = locale('cl_lang_14'),
                             onSelect = function()
                                 local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
                                 local serial = exports['rsg-weapons']:weaponInHands()[wHash]
                                 local weaponName = Citizen.InvokeNative(0x89CF5FF3D363311E, wHash, Citizen.ResultAsString())
                                 if not serial or wHash == -1569615261 then
-                                    return lib.notify({ title = locale('notify_1'), description=locale('notify_2'), type='error' })
+                                    return lib.notify({ title = locale('cl_notify_13'), description=locale('cl_notify_14'), type='error' })
                                 end
                                 TriggerEvent('rsg-weaponcomp:client:startcustom', v.propid, wHash, serial, weaponName)
                             end,
@@ -680,22 +671,22 @@ AddEventHandler('rsg-weaponcomp:client:setupgunzone', function(propmodel, item, 
         -- distance check
         local playercoords = GetEntityCoords(cache.ped)
         if #(playercoords - coords) > Config.PlaceDistance then
-            lib.notify({ title = locale('cl_lang_20'), description = locale('cl_lang_21'), type = 'error', duration = 5000 })
+            lib.notify({ title = locale('cl_lang_15'), description = locale('cl_lang_16'), type = 'error', duration = 5000 })
             return
         end
         -- check gunsites
         if result >= Config.MaxGunsites then
-            lib.notify({ title = locale('cl_lang_22'), description = locale('cl_lang_23'), type = 'error', duration = 7000 })
+            lib.notify({ title = locale('cl_lang_17'), description = locale('cl_lang_18'), type = 'error', duration = 7000 })
             return
         end
         -- check guning zone
         if ingunZone then
-            lib.notify({ title = locale('cl_lang_24'), description = locale('cl_lang_25'), type = 'error', duration = 7000 })
+            lib.notify({ title = locale('cl_lang_19'), description = locale('cl_lang_20'), type = 'error', duration = 7000 })
             return
         end
         -- check not in town and other props
         if not CanPlacePropHere(coords) then
-            lib.notify({ title = locale('cl_lang_26'), description = locale('cl_lang_27'), type = 'error', duration = 7000 })
+            lib.notify({ title = locale('cl_lang_21'), description = locale('cl_lang_22'), type = 'error', duration = 7000 })
             return
         end
         if not IsPedInAnyVehicle(cache.ped, false) and not isBusy then
@@ -715,14 +706,14 @@ end)
 
 -- confirm gunsite packup
 RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
-    local input = lib.inputDialog(locale('cl_lang_39'), {
+    local input = lib.inputDialog(locale('cl_lang_23'), {
         {
-            label = locale('cl_lang_40'),
-            description = locale('cl_lang_41'),
+            label = locale('cl_lang_24'),
+            description = locale('cl_lang_25'),
             type = 'select',
             options = {
-                { value = 'yes', label = locale('cl_lang_42') },
-                { value = 'no',  label = locale('cl_lang_43') }
+                { value = 'yes', label = locale('cl_lang_26') },
+                { value = 'no',  label = locale('cl_lang_27') }
             },
             required = true
         },
@@ -741,7 +732,7 @@ RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
             move = true,
             mouse = false,
         },
-        label = locale('cl_lang_44'),
+        label = locale('cl_lang_28'),
     })
 
     LocalPlayer.state:set('inv_busy', false, true)

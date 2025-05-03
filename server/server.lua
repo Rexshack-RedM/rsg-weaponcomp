@@ -5,23 +5,22 @@ lib.locale()
 RSGCore.Functions.CreateUseableItem(Config.Gunsmithitem, function(source)
   TriggerClientEvent('rsg-weaponcomp:client:createprop', source, {
     propmodel = Config.Gunsmithprop,
-    item      = Config.Gunsmithitem,
+    item      = Config.Gunsmithitem
   })
 end)
 
 --------------------------------------------
 -- COMMAND 
 --------------------------------------------
-RSGCore.Commands.Add(Config.Commandinspect, locale('label_40'), {}, false, function(source)
+RSGCore.Commands.Add(Config.Commandinspect, locale('label_30'), {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
 end)
 
-RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_41'), {}, false, function(source)
+RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_31'), {}, false, function(source)
     local src = source
     TriggerEvent('rsg-weaponcomp:server:check_comps', src)
 end)
-
 
 --------------------------------------------
 -- Callback
@@ -29,8 +28,7 @@ end)
 -- Count how many sites player has
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(source, cb, proptype)
   local ply = RSGCore.Functions.GetPlayer(source)
-  local res = MySQL.prepare.await(
-    "SELECT COUNT(*) as count FROM hdrp_weapons_custom WHERE citizenid = ? AND item = ?",
+  local res = MySQL.prepare.await( "SELECT COUNT(*) as count FROM hdrp_weapons_custom WHERE citizenid = ? AND item = ?",
     { ply.PlayerData.citizenid, proptype }
   )
   cb(res or 0)
@@ -95,7 +93,7 @@ AddEventHandler('rsg-weaponcomp:server:createnewprop', function(propmodel, item,
 
     local PropData =
     {
-        gunsitename = 'Player gunsite',
+        gunsitename = locale('cl_lang_32'),
         gunsiteid = gunsiteid,
         propid = propid,
         item = item,
@@ -111,7 +109,7 @@ AddEventHandler('rsg-weaponcomp:server:createnewprop', function(propmodel, item,
     local newpropdata = json.encode(PropData)
 
     -- add gunsite to database
-    MySQL.Async.execute('INSERT INTO hdrp_weapons_custom (gunsiteid, propid, citizenid, item, propdata) VALUES (@gunsiteid, @propid, @citizenid, @item, @propdata)', { 
+    MySQL.Async.execute('INSERT INTO hdrp_weapons_custom (gunsiteid, propid, citizenid, item, propdata) VALUES (@gunsiteid, @propid, @citizenid, @item, @propdata)', {
         ['@gunsiteid'] = gunsiteid,
         ['@propid'] = propid,
         ['@citizenid'] = citizenid,
@@ -198,10 +196,7 @@ AddEventHandler('rsg-weaponcomp:server:removegunsiteprops', function(propid)
     if not result or not result[1] then return end
     local propData = json.decode(result[1].propdata)
 
-    if propData.citizenid ~= citizenid then
-        print('[rsg-weaponcomp] Intento no autorizado de eliminar un prop de otro jugador.')
-        return
-    end
+    if propData.citizenid ~= citizenid then print(locale('sv_lang_3')) return end
 
     MySQL.Async.execute('DELETE FROM hdrp_weapons_custom WHERE propid = @propid', { ['@propid'] = propid })
 
@@ -212,7 +207,7 @@ AddEventHandler('rsg-weaponcomp:server:removegunsiteprops', function(propid)
         end
     end
 
-    print(('[rsg-weaponcomp] %s intentó recoger %s'):format(citizenid, propid))
+    print((locale('sv_lang_4').. " %s ".. locale('sv_lang_5') .." %s"):format(citizenid, propid))
 
     TriggerClientEvent('rsg-weaponcomp:client:updatePropData', -1, Config.PlayerProps)
     TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
@@ -233,10 +228,10 @@ local function saveWeaponComponents(serial, comps, Player)
 
     -- Logging
     local msg = table.concat({
-        'Citizenid:** '..Player.PlayerData.citizenid..'**',
-        'Ingame ID:** '..Player.PlayerData.cid..'**',
-        'Serial:** '..serial..'**',
-        'Components:** '..json.encode(comps)
+        locale('sv_lang_6') .. ':** '..Player.PlayerData.citizenid..'**',
+        locale('sv_lang_7') .. ':** '..Player.PlayerData.cid..'**',
+        locale('sv_lang_8') .. ':** '..serial..'**',
+        locale('sv_lang_9') .. ':** '..json.encode(comps)
     }, '\n')
     TriggerEvent('rsg-log:server:CreateLog', Config.WebhookName, Config.WebhookTitle, Config.WebhookColour, msg)
 end
@@ -246,20 +241,18 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, seria
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-    if Config.Payment == 'money' then
-        local currentCash = Player.Functions.GetMoney(Config.PaymentType)
-        if currentCash < price then
-            TriggerClientEvent('ox_lib:notify', src, { title = locale('notify_46', price), description = locale('notify_47'), type = 'error' })
-            return
-        end
-
-        Player.Functions.RemoveMoney(Config.PaymentType, price)
-        -- print(objecthash, serial, selectedCache, json.encode(selectedCache))
-
-        saveWeaponComponents(serial, selectedCache, Player)
-        TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
-        TriggerClientEvent('ox_lib:notify', src, { title = locale('notify_48', price), description = locale('notify_49'), type = 'inform' })
+    local currentCash = Player.Functions.GetMoney(Config.PaymentType)
+    if currentCash < price then
+        TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_10', price), description = locale('sv_lang_11'), type = 'error' })
+        return
     end
+
+    Player.Functions.RemoveMoney(Config.PaymentType, price)
+    -- print(objecthash, serial, selectedCache, json.encode(selectedCache))
+
+    saveWeaponComponents(serial, selectedCache, Player)
+    TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
+    TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_12', price), description = locale('sv_lang_13'), type = 'inform' })
 end)
 
 --------------------------------------------

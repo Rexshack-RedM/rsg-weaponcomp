@@ -4,11 +4,6 @@ Config.Debug = true
 Config.PlayerProps      = {}
 
 -- Ajustes de colocación
-Config.PromptGroupName   = 'Place Gunsite'
-Config.PromptCancelName  = 'Cancel'
-Config.PromptPlaceName   = 'Set'
-Config.PromptRotateLeft  = 'Rotate Left'
-Config.PromptRotateRight = 'Rotate Right'
 Config.PlaceDistance     = 5.0
 
 -- Propiedades y límites
@@ -19,7 +14,6 @@ Config.Gunsmithprop     = `p_gunsmithprops09x`
 Config.MaxGunsites      = 1
 Config.MaxWeapon        = 1
 Config.gunZoneSize      = 3.0
-Config.Payment          = 'money' --  'item' or  'money'
 Config.PaymentType      = 'cash' -- Payment = money you can select 'cash' or 'bloodmoney' / Payment = item you can select 'cash' or 'bloodmoney'
 Config.animationSave    = 10000 -- Waiting time for application or removal components
 -- Job
