@@ -645,7 +645,7 @@ Citizen.CreateThread(function()
                                 end
                                 TriggerEvent('rsg-weaponcomp:client:startcustom', v.propid, wHash, serial, weaponName)
                             end,
-                            distance = 1.5
+                            distance = 2.0
                         },
                     })
 
@@ -759,6 +759,7 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
     lib.hideTextUI()
     ingunZone = false
 
+    TriggerEvent('rsg-weaponcomp:client:ExitCam')
     TriggerServerEvent('rsg-weaponcomp:server:removegunsiteprops', propid)
 
     TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)
