@@ -67,9 +67,7 @@ local function CanPlacePropHere(pos)
     return true
 end
 
-----------------------------------------
 -- Spawn weapon on the prop
-----------------------------------------
 local function spawnWeaponOnProp(propObj, spawnPos, wHash)
     if wepObj ~= nil and DoesEntityExist(wepObj) then
         DeleteObject(wepObj)
@@ -289,82 +287,6 @@ local function applyDefaults(obj, wHash)
         end
     end
 end
-
-local PrimaryOrder = { "BARREL","GRIP","SIGHT","CLIP","MAG","STOCK","TUBE","TORCH_MATCHSTICK","GRIPSTOCK"}
-
--- Initialize player set comp
-local primaryIndex = {}
-for i, cat in ipairs(PrimaryOrder) do
-    primaryIndex[cat] = i
-end
-
-local function suffixPriority(cat)
-    if cat:find("_TINT$") then return 5 end
-    if cat:find("_ENGRAVING_MATERIAL$") then return 4 end
-    if cat:find("_ENGRAVING$") then return 3 end
-    if cat:find("_MATERIAL$") then return 2 end
-    return 1
-end
-
-local function cmpCategories(a,b)
-    local ia,ib = primaryIndex[a], primaryIndex[b]
-    if ia and ib then          return ia < ib end
-    if ia then                 return true end
-    if ib then                 return false end
-    local pa,pb = suffixPriority(a), suffixPriority(b)
-    if pa~=pb then             return pa<pb end
-    return a < b
-end
-
-local function getSortedKeys(t)
-    local ks = {}
-    for k in pairs(t) do ks[#ks+1]=k end
-    table.sort(ks, cmpCategories)
-    return ks
-end
-
-local function applyPlayerWeaponComponent(ped, nextComp, wHash)
-    -- local wep = GetCurrentPedWeaponEntityIndex(ped, 0)
-    local mdl = GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
-    if mdl and mdl ~= 0 then
-        RequestModel(mdl)
-        while not HasModelLoaded(mdl) do
-            Wait(100)
-        end
-    end
-    -- if prevComp then RemoveWeaponComponentFromPed(ped, prevComp, wHash) end
-    if IsEntityAPed(ped) then
-        GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
-        ApplyShopItemToPed(ped, wHash, true, true, true)
-    --else
-    --    GiveWeaponComponentToEntity(ped, nextComp, wHash, true)
-    end
-end
-
------------------------
--- load components in hand
------------------------
-RegisterNetEvent("rsg-weaponcomp:client:reloadWeapon")
-AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
-    local ped   = PlayerPedId()
-    local wHash = GetPedCurrentHeldWeapon(ped)
-    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
-    -- if not wHash or wHash == GetHashKey("WEAPON_UNARMED") then return end
-
-    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(data)
-        local comps = data.components or {}
-        local keys = getSortedKeys(comps)
-        for _, cat in ipairs(keys) do
-            local compName = comps[cat]
-            if compName and compName ~= "" then
-                print(compName)
-                local compHash = GetHashKey(compName)
-                applyPlayerWeaponComponent(ped, compHash, wHash)
-                Wait(100)
-            end
-        end
-      end, serial)
-end)
 
 ----------------------------------------
 -- Menu
