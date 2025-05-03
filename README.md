@@ -63,8 +63,10 @@ generateTooltipContent(item) {
 
             const padding = "&nbsp;".repeat(indent * 4);
             if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-                html += `<div class="tooltip-info"><span class="tooltip-info-key">${padding}${this.formatKey(key)}:</span></div>`;
-                html += renderInfo(value, indent + 1);
+                /* html += `<div class="tooltip-info"><span class="tooltip-info-key">${padding}${this.formatKey(key)}:</span></div>`;
+                html += renderInfo(value, indent + 1); */
+                html += `<div class="tooltip-info"><span class="tooltip-info-key">${padding}${this.formatKey(locale(key))}:</span></div>`;
+                html += renderInfo(locale(value), indent + 1);
             } else {
                 html += `<div class="tooltip-info"><span class="tooltip-info-key">${padding}${this.formatKey(key)}:</span> ${value}</div>`;
             }

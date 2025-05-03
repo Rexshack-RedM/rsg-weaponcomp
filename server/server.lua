@@ -217,6 +217,7 @@ end)
 -- Save / Payment
 -------------------------------------------
 local function saveWeaponComponents(serial, comps, Player)
+
     for _, item in ipairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info.serie == serial then
             item.info.components = (type(comps) == "table" and next(comps)) and comps or nil

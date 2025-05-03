@@ -295,11 +295,10 @@ local function OpenComponentMenu(wname, wHash, serial, propid)
     for cat, list in pairs(comps) do
         local hashes, labels = {}, {}
         for i, comp in ipairs(list) do
-            hashes[i] = GetHashKey(comp)
-            labels[i] = comp
+            hashes[i], labels[i] = GetHashKey(comp), locale(comp)            -- labels[i] = comp
         end
         elements[#elements+1] = {
-            label  = cat,
+            label  = locale(cat),
             type   = "slider",
             name   = cat,
             min    = 1,
@@ -342,10 +341,10 @@ local function OpenMaterialMenu(wname, wHash, serial, propid)
       if cat:find('_MATERIAL$') and not cat:find('_ENGRAVING_MATERIAL$') then
         local hashes, labels = {}, {}
         for i, comp in ipairs(items) do
-          hashes[i], labels[i] = GetHashKey(comp), comp
+          hashes[i], labels[i] = GetHashKey(comp), locale(comp)
         end
         table.insert(elements, {
-          label  = cat,
+          label  = locale(cat),
           type   = 'slider',
           name   = cat,
           min    = 1,
@@ -395,10 +394,10 @@ local function OpenEngravingMenu(wname, wHash, serial, propid)
       if cat:find('_ENGRAVING') then
         local hashes, labels = {}, {}
         for i, comp in ipairs(items) do
-          hashes[i], labels[i] = GetHashKey(comp), comp
+          hashes[i], labels[i] = GetHashKey(comp), locale(comp)
         end
         table.insert(elements, {
-          label  = cat,
+          label  = locale(cat),
           type   = 'slider',
           name   = cat,
           min    = 1,
@@ -447,10 +446,10 @@ local function OpenTintsMenu(wname, wHash, serial, propid)
         if cat:find('_TINT$') then
             local hashes, labels = {}, {}
             for i, comp in ipairs(items) do
-                hashes[i], labels[i] = GetHashKey(comp), comp
+                hashes[i], labels[i] = GetHashKey(comp), locale(comp)
             end
             table.insert(elements, {
-                label  = cat,
+                label  = locale(cat),
                 type   = 'slider',
                 name   = cat,
                 min    = 1,
@@ -721,6 +720,8 @@ RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
 
     if not input or input[1] == 'no' then return end
 
+    TriggerEvent('rsg-weaponcomp:client:ExitCam')
+
     LocalPlayer.state:set('inv_busy', true, true)
     lib.progressBar({
         duration = 10000,
@@ -759,7 +760,6 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
     lib.hideTextUI()
     ingunZone = false
 
-    TriggerEvent('rsg-weaponcomp:client:ExitCam')
     TriggerServerEvent('rsg-weaponcomp:server:removegunsiteprops', propid)
 
     TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)

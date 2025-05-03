@@ -90,9 +90,9 @@ end
 function DrawPropAxes(prop)
     local propForward, propRight, propUp, propCoords = GetEntityMatrix(prop)
 
-    local propXAxisEnd = propCoords + propRight * 1.0
-    local propYAxisEnd = propCoords + propForward * 1.0
-    local propZAxisEnd = propCoords + propUp * 1.0
+    local propXAxisEnd = propCoords + propRight * 0.20
+    local propYAxisEnd = propCoords + propForward * 0.20
+    local propZAxisEnd = propCoords + propUp * 0.20
 
     DrawLine(propCoords.x, propCoords.y, propCoords.z + 0.1, propXAxisEnd.x, propXAxisEnd.y, propXAxisEnd.z, 255, 0, 0, 255)
     DrawLine(propCoords.x, propCoords.y, propCoords.z + 0.1, propYAxisEnd.x, propYAxisEnd.y, propYAxisEnd.z, 0, 255, 0, 255)
