@@ -1,5 +1,3 @@
-# WIP DO NOT USE ON A PRODUCTION SERVER
-
 # ADD OPTION IN YOUR MENU FOR MODIFY COMP WEAPON
 
 Basically it would be doing a debug, I think I am very organized and my programming is easy to read
