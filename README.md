@@ -101,11 +101,9 @@ generateTooltipContent(item) {
 - [marcuzz](https://github.com/realmarcuzz/),
 - [rms_dnb](https://github.com/RMS-dnb/),
 - [rexshack](https://github.com/Rexshack-RedM/),
-- [salahkham](https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg),
-- [ttv_artmines_playz](https://github.com/Artmines/),
 - [philmcraken](https://github.com/mrskunky69/),
-- [jackp_](https://github.com/Jewsie/),
 - [Sadicius](https://github.com/Sadicius),
+- [jackp_](https://github.com/Jewsie/), [ttv_artmines_playz](https://github.com/Artmines/), [salahkham](https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg),
 - and there are many others...
 
 # For RSG
