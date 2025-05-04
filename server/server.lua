@@ -41,7 +41,7 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
 
     for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info and item.info.serie == serial then
-            cb({ components = item.info.components})
+            cb({ components = item.info.componentshash})
             return
         end
     end
@@ -220,8 +220,8 @@ local function saveWeaponComponents(serial, comps, compslabel, Player)
 
     for _, item in ipairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info.serie == serial then
-            item.info.components = (type(comps) == "table" and next(comps)) and comps or nil
-            item.info.componentslabels = (type(compslabel) == "table" and next(compslabel)) and compslabel or nil
+            item.info.componentshash = (type(comps) == "table" and next(comps)) and comps or nil
+            item.info.components = (type(compslabel) == "table" and next(compslabel)) and compslabel or nil
             break
         end
     end

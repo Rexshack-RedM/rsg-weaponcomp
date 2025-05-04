@@ -59,7 +59,7 @@ generateTooltipContent(item) {
     const renderInfo = (obj, indent = 0) => {
         let html = "";
         for (const [key, value] of Object.entries(obj)) {
-            if (key === "description" || key === "lastUpdate" || key === "components") continue;
+            if (key === "description" || key === "lastUpdate" || key === "componentshash") continue;
 
             const padding = "&nbsp;".repeat(indent * 4);
             if (typeof value === "object" && value !== null && !Array.isArray(value)) {

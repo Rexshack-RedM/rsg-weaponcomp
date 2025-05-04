@@ -76,7 +76,7 @@ AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
     if not serial then return end
 
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(result)
-        local comps = result and result.components or {}
+        local comps = result and result.componentshash or {}
         if not next(comps) then return end
         print(json.encode(comps))
         clearAllComponents(ped, wHash)
