@@ -98,11 +98,7 @@ generateTooltipContent(item) {
 - [qc_weapModifier](https://github.com/Artmines/qc_weapModifier) -- QUANTUM CORE
 
 # Also thank everyone who collaborated during the development, has tested it or participated:
-- [marcuzz](https://github.com/realmarcuzz/),
-- [rms_dnb](https://github.com/RMS-dnb/),
-- [rexshack](https://github.com/Rexshack-RedM/),
-- [philmcraken](https://github.com/mrskunky69/),
-- [Sadicius](https://github.com/Sadicius),
+- [marcuzz](https://github.com/realmarcuzz/), [rms_dnb](https://github.com/RMS-dnb/), [rexshack](https://github.com/Rexshack-RedM/), [philmcraken](https://github.com/mrskunky69/), [Sadicius](https://github.com/Sadicius),
 - [jackp_](https://github.com/Jewsie/), [ttv_artmines_playz](https://github.com/Artmines/), [salahkham](https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg),
 - and there are many others...
 
