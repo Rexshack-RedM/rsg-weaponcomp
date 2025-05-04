@@ -1,7 +1,7 @@
 # ADD OPTION IN YOUR MENU FOR MODIFY COMP WEAPON
 
 Basically it would be doing a debug, I think I am very organized and my programming is easy to read
-- open event
+- open event with item
 - basic functions
 - functions apply
 - Load for inv or command /loadweapon and load selection in menu
@@ -101,6 +101,7 @@ generateTooltipContent(item) {
 - [qc_weapModifier](https://github.com/Artmines/qc_weapModifier) -- QUANTUM CORE
 
 # Also thank everyone who collaborated during the development, has tested it or participated:
+- [marcuzz](https://github.com/realmarcuzz/),
 - [rms_dnb](https://github.com/RMS-dnb/),
 - [rexshack](https://github.com/Rexshack-RedM/),
 - [salahkham](https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg),
