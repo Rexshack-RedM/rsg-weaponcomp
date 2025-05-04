@@ -11,17 +11,22 @@ Basically it would be doing a debug, I think I am very organized and my programm
 - Event cam
 - Inspection extras
 - Extras others off for command
+- Reapir quality
 - Start, Stop resource
 
 # in config, 
 - Config.RemovePrice (0 - 1) = 100 % cost remove base price
 - can show stats in /w_inspect
 - Config permision command acces menu
-
-# in Data/weaponlist
-- change prices and locales categorie for names in menu
+- change prices
 - all data for components, material and engraving
-- system price in data
+
+# Commands
+
+```
+/loadweapon -- refresh skin weapon
+/w_inspect -- inspect weapon need item weapon_repair_kit
+```
 
 # add sql
 ```sql
@@ -80,14 +85,6 @@ generateTooltipContent(item) {
 
     return content;
 }
-```
-
-
-# Admin
-
-```
-/loadweapon -- refresh skin weapon
-/w_inspect -- inspect weapon need item weapon_repair_kit
 ```
 
 # Version oficial or learning thanks
