@@ -9,6 +9,7 @@ local isBusy         = false
 local wepObj         = nil
 local camera         = nil
 local selectedCache  = {}
+local selectedLabels  = {}
 
 ----------------------------------------
 -- Basics
@@ -293,9 +294,9 @@ local function OpenComponentMenu(wname, wHash, serial, propid)
     local a = 1
 
     for cat, list in pairs(comps) do
-        local hashes, labels = {}, {}
+        local hashes, labels, labelsSends = {}, {}, {}
         for i, comp in ipairs(list) do
-            hashes[i], labels[i] = GetHashKey(comp), locale(comp)            -- labels[i] = comp
+            hashes[i], labels[i], labelsSends[i] = GetHashKey(comp), comp, locale(comp)            -- labels[i] = comp
         end
         elements[#elements+1] = {
             label  = locale(cat),
@@ -309,6 +310,7 @@ local function OpenComponentMenu(wname, wHash, serial, propid)
             end)() or 1,
             hashes = hashes,
             labels = labels,
+            labelsSends = labelsSends,
             id = a
         }
     end
@@ -324,6 +326,7 @@ local function OpenComponentMenu(wname, wHash, serial, propid)
             local nxt  = sel.hashes[sel.value]
             applyWeaponComponent(wepObj, prev, nxt, wHash)
             selectedCache[sel.name] = sel.labels[sel.value]
+            selectedLabels[sel.name] = sel.labelsSends[sel.value]  -- Almacena el label
             -- FocusCam(wepObj)
         end
     end, function(_, menu)
@@ -339,9 +342,9 @@ local function OpenMaterialMenu(wname, wHash, serial, propid)
     local a = 1
     for cat, items in pairs(comps) do
       if cat:find('_MATERIAL$') and not cat:find('_ENGRAVING_MATERIAL$') then
-        local hashes, labels = {}, {}
+        local hashes, labels, labelsSends = {}, {}, {}
         for i, comp in ipairs(items) do
-          hashes[i], labels[i] = GetHashKey(comp), locale(comp)
+            hashes[i], labels[i], labelsSends[i] = GetHashKey(comp), comp, locale(comp)
         end
         table.insert(elements, {
           label  = locale(cat),
@@ -355,6 +358,7 @@ local function OpenMaterialMenu(wname, wHash, serial, propid)
           end)() or 1,
           hashes = hashes,
           labels = labels,
+          labelsSends = labelsSends,
           id = a
         })
       end
@@ -376,6 +380,7 @@ local function OpenMaterialMenu(wname, wHash, serial, propid)
             local nxt  = sel.hashes[sel.value]
             applyWeaponComponent(wepObj, prev, nxt, wHash)
             selectedCache[sel.name] = sel.labels[sel.value]
+            selectedLabels[sel.name] = sel.labelsSends[sel.value]  -- Almacena el label
             -- FocusCam(wepObj)
         end
     end, function(_, menu)
@@ -392,9 +397,9 @@ local function OpenEngravingMenu(wname, wHash, serial, propid)
 
     for cat, items in pairs(comps) do
       if cat:find('_ENGRAVING') then
-        local hashes, labels = {}, {}
+        local hashes, labels, labelsSends = {}, {}, {}
         for i, comp in ipairs(items) do
-          hashes[i], labels[i] = GetHashKey(comp), locale(comp)
+            hashes[i], labels[i], labelsSends[i] = GetHashKey(comp), comp, locale(comp)
         end
         table.insert(elements, {
           label  = locale(cat),
@@ -408,6 +413,7 @@ local function OpenEngravingMenu(wname, wHash, serial, propid)
           end)() or 1,
           hashes = hashes,
           labels = labels,
+          labelsSends = labelsSends,
           id = a
         })
       end
@@ -429,6 +435,7 @@ local function OpenEngravingMenu(wname, wHash, serial, propid)
             local nxt  = sel.hashes[sel.value]
             applyWeaponComponent(wepObj, prev, nxt, wHash)
             selectedCache[sel.name] = sel.labels[sel.value]
+            selectedLabels[sel.name] = sel.labelsSends[sel.value]  -- Almacena el label
         end
     end, function(_, menu)
         menu.close()
@@ -444,9 +451,9 @@ local function OpenTintsMenu(wname, wHash, serial, propid)
     -- Recolectamos solo categorías _TINT
     for cat, items in pairs(comps) do
         if cat:find('_TINT$') then
-            local hashes, labels = {}, {}
+            local hashes, labels, labelsSends = {}, {}, {}
             for i, comp in ipairs(items) do
-                hashes[i], labels[i] = GetHashKey(comp), locale(comp)
+                hashes[i], labels[i], labelsSends[i] = GetHashKey(comp), comp, locale(comp)
             end
             table.insert(elements, {
                 label  = locale(cat),
@@ -462,6 +469,7 @@ local function OpenTintsMenu(wname, wHash, serial, propid)
                 end)() or 1,
                 hashes = hashes,
                 labels = labels,
+                labelsSends = labelsSends,
                 id     = #elements + 1
             })
         end
@@ -486,6 +494,7 @@ local function OpenTintsMenu(wname, wHash, serial, propid)
             -- applyWeaponTint(cache.ped, wHash, tintIndex)
             applyWeaponComponent(wepObj, prev, nxt, wHash)
             selectedCache[sel.name] = sel.labels[sel.value]
+            selectedLabels[sel.name] = sel.labelsSends[sel.value]  -- Almacena el label
         end
     end, function(_, menu)
         menu.close()
@@ -532,7 +541,7 @@ function MainWeaponMenu(wname, wHash, serial, propid)
             local price = CalculatePrice(selectedCache)
             if price > 0 then
                 TriggerServerEvent('rsg-weaponcomp:server:price',
-                    price, wHash, serial, selectedCache
+                    price, wHash, serial, selectedCache, selectedLabels
                 )
                 lib.notify({ title=locale('cl_notify_9'), description="$"..price, type="success" })
                 menu.close()
@@ -548,10 +557,11 @@ function MainWeaponMenu(wname, wHash, serial, propid)
 
                 if price > 0 then
                     TriggerServerEvent('rsg-weaponcomp:server:price',
-                        price, wHash, serial, nil
+                        price, wHash, serial, nil, nil
                     )
                     lib.notify({ title=locale('cl_notify_11'), description="$"..price, type="success" })
                     selectedCache = {}
+                    selectedLabels = {}
                     menu.close()
                 else
                     lib.notify({ title=locale('cl_notify_12'), type="error" })
@@ -639,7 +649,8 @@ Citizen.CreateThread(function()
                                 local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
                                 local serial = exports['rsg-weapons']:weaponInHands()[wHash]
                                 local weaponName = Citizen.InvokeNative(0x89CF5FF3D363311E, wHash, Citizen.ResultAsString())
-                                if not serial or wHash == -1569615261 then
+                                print(weaponName)
+                                if not serial then -- or wHash == -1569615261 or not isWeaponOneHanded
                                     return lib.notify({ title = locale('cl_notify_13'), description=locale('cl_notify_14'), type='error' })
                                 end
                                 TriggerEvent('rsg-weaponcomp:client:startcustom', v.propid, wHash, serial, weaponName)
@@ -743,12 +754,14 @@ end)
 -- packup gunsite
 RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
 
+    TriggerServerEvent('rsg-weaponcomp:server:removegunsiteprops', propid)
+
     PackingUpProps[propid] = true
     local propData = SpawnedProps[propid]
     if propData and DoesEntityExist(propData.obj) then
         SetEntityAsMissionEntity(propData.obj, true, true)
         DeleteObject(propData.obj)
-        Wait(0)
+        Wait(100)
     end
     SpawnedProps[propid] = nil
 
@@ -759,11 +772,8 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
 
     lib.hideTextUI()
     ingunZone = false
-
-    TriggerServerEvent('rsg-weaponcomp:server:removegunsiteprops', propid)
-
+    PackingUpProps[propid] = false
     TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)
-    PackingUpProps[propid] = nil
 end)
 
 ---------------------------------------------
@@ -790,13 +800,14 @@ AddEventHandler('onResourceStop', function(resource)
     end
 
     SpawnedProps   = {}        -- [propid] = { obj }
-
+    PackingUpProps = {}
     ingunZone      = false
     lib.hideTextUI()
     gunZones       = {}
 
     isBusy         = false
     camera         = nil
-    selectedCache  = {}
 
+    selectedCache  = {}
+    selectedLabels = {}
 end)

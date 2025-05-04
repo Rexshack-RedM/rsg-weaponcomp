@@ -216,11 +216,12 @@ end)
 -------------------------------------------
 -- Save / Payment
 -------------------------------------------
-local function saveWeaponComponents(serial, comps, Player)
+local function saveWeaponComponents(serial, comps, compslabel, Player)
 
     for _, item in ipairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info.serie == serial then
             item.info.components = (type(comps) == "table" and next(comps)) and comps or nil
+            item.info.componentslabels = (type(compslabel) == "table" and next(compslabel)) and compslabel or nil
             break
         end
     end
@@ -238,7 +239,7 @@ local function saveWeaponComponents(serial, comps, Player)
 end
 
 RegisterServerEvent('rsg-weaponcomp:server:price')
-AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, serial, selectedCache)
+AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, serial, selectedCache, selectedLabels)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
@@ -251,7 +252,7 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, seria
     Player.Functions.RemoveMoney(Config.PaymentType, price)
     -- print(objecthash, serial, selectedCache, json.encode(selectedCache))
 
-    saveWeaponComponents(serial, selectedCache, Player)
+    saveWeaponComponents(serial, selectedCache, selectedLabels, Player)
     TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
     TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_12', price), description = locale('sv_lang_13'), type = 'inform' })
 end)
