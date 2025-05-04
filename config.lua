@@ -1190,6 +1190,11 @@ Config.Specific = {
         --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_ROLE_ENGRAVING_VARMINT_NATURALIST",
         }, ]]
+      ['SCOPE'] =
+      {
+        'COMPONENT_RIFLE_SCOPE02',
+        'COMPONENT_RIFLE_SCOPE03'
+      }
     },
 
     ["WEAPON_RIFLE_BOLTACTION"] = {
@@ -1215,6 +1220,11 @@ Config.Specific = {
         --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_FRAME_ENGRAVING_BOLTACTION_BOUNTY",
         }, ]]
+      ['SCOPE'] =
+      {
+        'COMPONENT_RIFLE_SCOPE02',
+        'COMPONENT_RIFLE_SCOPE03'
+      }
     },
 
     ["WEAPON_RIFLE_ELEPHANT"] = {
@@ -1242,6 +1252,11 @@ Config.Specific = {
           "COMPONENT_RIFLE_ELEPHANT_WRAP1",
           "COMPONENT_RIFLE_ELEPHANT_WRAP2",
         },
+        ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02',
+          'COMPONENT_RIFLE_SCOPE03'
+        }
     },
 
     ["WEAPON_RIFLE_SPRINGFIELD"] = {
@@ -1263,6 +1278,11 @@ Config.Specific = {
           "COMPONENT_RIFLE_SPRINGFIELD_WRAP5",
           "COMPONENT_RIFLE_SPRINGFIELD_WRAP6",
         },
+        ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02',
+          'COMPONENT_RIFLE_SCOPE03'
+        }
     },
 
     ["WEAPON_SNIPERRIFLE_CARCANO"] = {
@@ -1288,6 +1308,11 @@ Config.Specific = {
           "COMPONENT_RIFLE_CARCANO_WRAP5",
           "COMPONENT_RIFLE_CARCANO_WRAP6",
         },
+        ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02',
+          'COMPONENT_RIFLE_SCOPE03'
+        }
     },
 
     ["WEAPON_SNIPERRIFLE_ROLLINGBLOCK"] = {
@@ -1314,6 +1339,11 @@ Config.Specific = {
         --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_ROLE_ENGRAVING_ROLLINGBLOCK_REAPER",
         }, ]]
+        --[[ ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02',
+          'COMPONENT_RIFLE_SCOPE03'
+        } ]]
     },
 
     ["WEAPON_SHOTGUN_REPEATING"] = {
