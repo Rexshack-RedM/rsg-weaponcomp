@@ -54,7 +54,7 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
     elseif IsWeaponOneHanded(wHash) and weaponType == 'GROUP_BOW' then
     elseif IsWeaponOneHanded(wHash) and weaponType == 'MELEE_BLADE' then
     end
-
+    if weaponType == 'GROUP_BOW' then return lib.notify({ title = locale('cl_notify_13'), description=locale('cl_notify_14'), type='error' }) end
     if wHash ~= -1569615261 and hasGunOil then
         if interaction then
             StartTaskItemInteraction(cache.ped, wHash, GetHashKey(interaction), 0,0,0)
