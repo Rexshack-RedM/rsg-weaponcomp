@@ -28,7 +28,7 @@ end
 
 local function attachComponent(ped, compHash, weaponHash)
     local mdl = GetWeaponComponentTypeModel(compHash)
-    print(mdl, compHash, weaponHash )
+    -- print(mdl, compHash, weaponHash )
     if mdl and mdl ~= 0 then
         lib.requestModel(mdl)
         while not HasModelLoaded(mdl) do Wait(100) end
@@ -78,7 +78,7 @@ AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(result)
         local comps = result and result.componentshash or {}
         if not next(comps) then return end
-        print(json.encode(comps))
+        -- print(json.encode(comps))
         clearAllComponents(ped, wHash)
 
         for _, cat in ipairs(getSortedKeys(comps)) do

@@ -155,9 +155,7 @@ AddEventHandler('rsg-weaponcomp:server:getProps', function()
     if not result[1] then return end
     for i = 1, #result do
         local propData = json.decode(result[i].propdata)
-        if Config.LoadNotification then
-            print(locale('sv_lang_1')..propData.item..locale('sv_lang_2')..propData.propid)
-        end
+        if Config.LoadNotification then print(locale('sv_lang_1')..propData.item..locale('sv_lang_2')..propData.propid) end
         table.insert(Config.PlayerProps, propData)
     end
 end)
@@ -207,7 +205,7 @@ AddEventHandler('rsg-weaponcomp:server:removegunsiteprops', function(propid)
         end
     end
 
-    print((locale('sv_lang_4').. " %s ".. locale('sv_lang_5') .." %s"):format(citizenid, propid))
+    -- print((locale('sv_lang_4').. " %s ".. locale('sv_lang_5') .." %s"):format(citizenid, propid))
 
     TriggerClientEvent('rsg-weaponcomp:client:updatePropData', -1, Config.PlayerProps)
     TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
