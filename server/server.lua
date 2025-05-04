@@ -12,14 +12,67 @@ end)
 --------------------------------------------
 -- COMMAND 
 --------------------------------------------
-RSGCore.Commands.Add(Config.Commandinspect, locale('label_30'), {}, false, function(source)
+RSGCore.Commands.Add(Config.Commandinspect, locale('cl_lang_30'), {}, false, function(source)
     local src = source
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', src)
 end)
 
-RSGCore.Commands.Add(Config.Commandloadweapon, locale('label_31'), {}, false, function(source)
+RSGCore.Commands.Add(Config.Commandloadweapon, locale('cl_lang_31'), {}, false, function(source)
     local src = source
     TriggerEvent('rsg-weaponcomp:server:check_comps', src)
+end)
+
+-- Helper para buscar el item de arma por serie
+local function GetWeaponItemEntry(Player, serial)
+    for _, item in ipairs(Player.PlayerData.items) do
+        if item.type == 'weapon'
+        and item.info
+        and item.info.serie == serial
+        then
+            return item
+        end
+    end
+    return nil
+end
+
+-- EQUIPAR SCOPE
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:equipScope', function(source, cb, serial)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then return cb(false) end
+
+    local weaponItem = GetWeaponItemEntry(Player, serial)
+    if not weaponItem then
+        return cb(false)
+    end
+
+    if weaponItem.info.equippedScope then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = locale('cl_scope_already_on') })
+        return cb(false)
+    end
+
+    weaponItem.info.equippedScope = true
+    Player.Functions.SetInventory(Player.PlayerData.items)
+    cb(true)
+end)
+
+-- REMOVER SCOPE
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:unequipScope', function(source, cb, serial)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then return cb(false) end
+
+    local weaponItem = GetWeaponItemEntry(Player, serial)
+    if not weaponItem then
+        return cb(false)
+    end
+
+    if not weaponItem.info.equippedScope then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = locale('cl_scope_already_off') })
+        return cb(false)
+    end
+
+    weaponItem.info.equippedScope = false
+    Player.Functions.SetInventory(Player.PlayerData.items)
+    cb(true)
 end)
 
 --------------------------------------------
@@ -34,20 +87,48 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(sou
   cb(res or 0)
 end)
 
--- Provide saved components
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
     local Player = RSGCore.Functions.GetPlayer(source)
     if not Player then cb(nil); return end
 
-    for _, item in pairs(Player.PlayerData.items) do
-        if item.type == 'weapon' and item.info and item.info.serie == serial then
-            cb({ components = item.info.componentshash})
-            return
+    for _, item in ipairs(Player.PlayerData.items) do
+        if item.type == 'weapon'
+        and item.info
+        and item.info.serie == serial
+        then
+            local comps = item.info.componentshash or {}
+            -- Si el scope NO está aplicado, lo removemos de la copia que enviamos
+            if not item.info.equippedScope then
+                local filtered = {}
+                for cat, name in pairs(comps) do
+                    if cat ~= "SCOPE" then
+                        filtered[cat] = name
+                    end
+                end
+                comps = filtered
+            end
+            -- Devolvemos components (sin modificar el original)
+            return cb({ components = comps })
         end
     end
 
     cb(nil)
 end)
+
+-- Provide saved components
+--[[ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then cb(nil); return end
+
+    for _, item in pairs(Player.PlayerData.items) do
+        if item.type == 'weapon' and item.info and item.info.serie == serial then
+                cb({ components = item.info.componentshash})
+            return
+        end
+    end
+
+    cb(nil)
+end) ]]
 
 ---------------------------------------------
 -- create new gunsite in database

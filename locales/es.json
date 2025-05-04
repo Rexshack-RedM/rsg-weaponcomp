@@ -64,6 +64,12 @@
     "sv_lang_11": "¡Necesitas más dinero para hacer eso!",
     "sv_lang_12": "$ personalizado: ",
     "sv_lang_13": "Tu arma ahora está",
+    "cl_no_weapon": "No tienes ningún arma.",
+    "cl_no_serial": "No se pudo determinar el número de serie del arma.",
+    "cl_no_scope_equipped": "No tienes ninguna mira equipada en esta arma.",
+    "cl_scope_equipped_ok": "Mira equipada correctamente.",
+    "cl_no_scope_to_remove": "No hay ninguna mira que retirar en esta arma.",
+    "cl_scope_removed_ok": "Mira retirada correctamente.",
 
     "BARREL": "Barrel",
   "GRIP": "Grip",
