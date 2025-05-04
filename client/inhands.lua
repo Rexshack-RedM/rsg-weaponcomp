@@ -95,3 +95,105 @@ AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
         Citizen.InvokeNative(0x76A18844E743BF91, ped)
     end, serial)
 end)
+
+RegisterCommand(Config.Commandequipscope, function()
+    local ped     = PlayerPedId()
+    local wHash   = GetPedCurrentHeldWeapon(ped)
+    if wHash == GetHashKey("WEAPON_UNARMED") then return end
+
+    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
+    if not serial then return end
+
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:equipScope', function(success)
+        if success then
+            local Player = RSGCore.Functions.GetPlayerData()
+            for _, item in pairs(Player.items or {}) do
+                if item.info and item.info.serie == serial then
+                    local scopeName = item.info.componentshash and item.info.componentshash["SCOPE"]
+                    if scopeName then
+                        TriggerEvent('rsg-weaponcomp:client:equipScope', scopeName)
+                        lib.notify({ type = 'success', description = locale('cl_scope_equipped_ok') })
+                    end
+                    break
+                end
+            end
+        end
+    end, serial)
+end, false)
+
+RegisterCommand(Config.Commanddesequipscope, function()
+    local ped     = PlayerPedId()
+    local wHash   = GetPedCurrentHeldWeapon(ped)
+    if wHash == GetHashKey("WEAPON_UNARMED") then return end
+
+    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
+    if not serial then return end
+
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:unequipScope', function(success)
+        if success then
+            local Player = RSGCore.Functions.GetPlayerData()
+            for _, item in pairs(Player.items or {}) do
+                if item.info and item.info.serie == serial then
+                    local scopeName = item.info.componentshash and item.info.componentshash["SCOPE"]
+                    if scopeName then
+                        TriggerEvent('rsg-weaponcomp:client:unequipScope', scopeName)
+                        lib.notify({ type = 'success', description = locale('cl_scope_removed_ok') })
+                    end
+                    break
+                end
+            end
+        end
+    end, serial)
+end, false)
+
+local anim = {
+    Animation = true,
+    AnimDict     = "mech_inspection@weapons@longarms@rifle_bolt_action@base",
+    AnimName     = "aim_enter",
+    AnimDuration = 2000
+  }
+
+local function playScopeAnim(ped)
+    -- Carga el dict
+    lib.requestAnimDict(anim.AnimDict)
+    -- Reproduce la animación
+    TaskPlayAnim(ped,
+        anim.AnimDict, anim.AnimName,
+        8.0,  -8.0,
+        anim.AnimDuration or 1500,
+        0, 0, false, false, false
+    )
+    -- Limpia el dict
+    RemoveAnimDict(anim.AnimDict)
+
+end
+
+RegisterNetEvent('rsg-weaponcomp:client:equipScope', function(scopeName)
+    local ped     = PlayerPedId()
+    local wHash   = GetPedCurrentHeldWeapon(ped)
+    if wHash == GetHashKey("WEAPON_UNARMED") then return end
+    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
+    if not serial then return end
+
+    playScopeAnim(ped)
+
+    local compHash = GetHashKey(scopeName)
+    if compHash ~= 0 then
+        attachComponent(ped, compHash, wHash)
+    end
+end)
+
+RegisterNetEvent('rsg-weaponcomp:client:unequipScope', function(scopeName)
+    local ped     = PlayerPedId()
+    local wHash   = GetPedCurrentHeldWeapon(ped)
+    if wHash == GetHashKey("WEAPON_UNARMED") then return end
+    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
+    if not serial then return end
+
+    playScopeAnim(ped)
+
+    local compHash = GetHashKey(scopeName)
+    if compHash ~= 0 then
+        RemoveWeaponComponentFromPed(ped, compHash, wHash)
+    end
+end)

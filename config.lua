@@ -30,6 +30,8 @@ Config.showStats        = true -- true / false can show stats inspect
 
 Config.Commandinspect       = "w_inspect"
 Config.Commandloadweapon    = "loadweapon"
+Config.Commandequipscope    = "scope"
+Config.Commanddesequipscope = "unscope"
 
 -- Blip
 Config.Blip = {
@@ -1080,6 +1082,10 @@ Config.Specific = {
           "COMPONENT_REPEATER_CARBINE_WRAP5",
           "COMPONENT_REPEATER_CARBINE_WRAP6",
         },
+        ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02'
+        }
     },
 
     ["WEAPON_REPEATER_HENRY"] = {
@@ -1102,6 +1108,10 @@ Config.Specific = {
           "COMPONENT_REPEATER_HENRY_WRAP5",
           "COMPONENT_REPEATER_HENRY_WRAP6",
         },
+        ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02'
+        }
     },
 
     ["WEAPON_REPEATER_EVANS"] = {
@@ -1129,6 +1139,10 @@ Config.Specific = {
         ["FRAME_ENGRAVING"] = {
         	"COMPONENT_LONGARM_ROLE_ENGRAVING_EVANS_WINTER",
         },
+        ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02'
+        }
     },
 
     ["WEAPON_REPEATER_WINCHESTER"] = {
@@ -1156,6 +1170,10 @@ Config.Specific = {
         --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_FRAME_ENGRAVING_WINCHESTER_COLLECTOR",
         }, ]]
+        ['SCOPE'] =
+        {
+          'COMPONENT_RIFLE_SCOPE02'
+        }
     },
 
     ["WEAPON_RIFLE_VARMINT"] = {
@@ -1339,11 +1357,11 @@ Config.Specific = {
         --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_ROLE_ENGRAVING_ROLLINGBLOCK_REAPER",
         }, ]]
-        --[[ ['SCOPE'] =
+        ['SCOPE'] =
         {
           'COMPONENT_RIFLE_SCOPE02',
           'COMPONENT_RIFLE_SCOPE03'
-        } ]]
+        }
     },
 
     ["WEAPON_SHOTGUN_REPEATING"] = {
