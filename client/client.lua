@@ -545,24 +545,25 @@ function MainWeaponMenu(wname, wHash, serial, propid)
                 )
                 lib.notify({ title=locale('cl_notify_9'), description="$"..price, type="success" })
                 menu.close()
-                -- Ojo: si quieres que la próxima vez empiece limpio,
                 selectedCache = {}
+                selectedLabels = {}
             else
                 lib.notify({ title=locale('cl_notify_10'), type="error" })
             end
         elseif data.current.value == 'reset' then
-            RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
-                local dbComps = d.components or nil
-                local price   = CalculatePrice(dbComps) * Config.RemovePrice
+            RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getItemBySerial', function(comp)
+                local totalComps = comp.components or {}
+
+                local price = (CalculatePrice(totalComps) * Config.RemovePrice)
 
                 if price > 0 then
                     TriggerServerEvent('rsg-weaponcomp:server:price',
                         price, wHash, serial, nil, nil
                     )
+
                     lib.notify({ title=locale('cl_notify_11'), description="$"..price, type="success" })
-                    selectedCache = {}
-                    selectedLabels = {}
                     menu.close()
+                    selectedCache = {}
                 else
                     lib.notify({ title=locale('cl_notify_12'), type="error" })
                 end
@@ -575,6 +576,8 @@ function MainWeaponMenu(wname, wHash, serial, propid)
     end, function(_, menu)
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
         menu.close()
+        selectedCache = {}
+        selectedLabels = {}
     end)
 end
 

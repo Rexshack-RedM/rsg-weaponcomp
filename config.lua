@@ -1081,10 +1081,6 @@ Config.Specific = {
           "COMPONENT_REPEATER_CARBINE_WRAP4",
           "COMPONENT_REPEATER_CARBINE_WRAP5",
           "COMPONENT_REPEATER_CARBINE_WRAP6",
-        },
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
         }
     },
 
@@ -1107,10 +1103,6 @@ Config.Specific = {
           "COMPONENT_REPEATER_HENRY_WRAP4",
           "COMPONENT_REPEATER_HENRY_WRAP5",
           "COMPONENT_REPEATER_HENRY_WRAP6",
-        },
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
         }
     },
 
@@ -1138,10 +1130,6 @@ Config.Specific = {
         },
         ["FRAME_ENGRAVING"] = {
         	"COMPONENT_LONGARM_ROLE_ENGRAVING_EVANS_WINTER",
-        },
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
         }
     },
 
@@ -1170,10 +1158,6 @@ Config.Specific = {
         --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_FRAME_ENGRAVING_WINCHESTER_COLLECTOR",
         }, ]]
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
-        }
     },
 
     ["WEAPON_RIFLE_VARMINT"] = {
