@@ -324,6 +324,7 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, seria
     local currentCash = Player.Functions.GetMoney(Config.PaymentType)
     if currentCash < price then
         TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_10', price), description = locale('sv_lang_11'), type = 'error' })
+        TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
         return
     end
 
