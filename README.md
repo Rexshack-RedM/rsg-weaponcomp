@@ -29,7 +29,7 @@ Basically it would be doing a debug, I think I am very organized and my programm
 
 # add sql
 ```sql
-CREATE TABLE `hdrp_weapons_custom` (
+CREATE TABLE `player_weapons_custom` (
     `gunsiteid` VARCHAR(20) NOT NULL,
     `propid` VARCHAR(20) NOT NULL,
     `citizenid` VARCHAR(50) NOT NULL,
