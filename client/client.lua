@@ -138,8 +138,6 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
         FreezeEntityPosition(wepObj, false)
         DeleteObject(wepObj)
     end
-    selectedCache = {}
-    selectedLabels = {}
     ClearCameraPrompts()
     promptThreadActive = false
     MenuData.CloseAll()
@@ -230,7 +228,6 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, ser
             label = locale('cl_lang_1'),
         })
 
-        TriggerServerEvent("rsg-weaponcomp:server:check_comps")
 
         if Cloth ~= nil and DoesEntityExist(Cloth) then
             SetEntityAsNoLongerNeeded(Cloth)
@@ -238,6 +235,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, ser
         end
     end
 
+    TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     TriggerEvent('rsg-weaponcomp:client:ExitCam')
 end)
 
@@ -656,6 +654,8 @@ function MainWeaponMenu(wname, wHash, serial, propid)
                 TriggerServerEvent('rsg-weaponcomp:server:price',
                     price, wHash, serial, selectedCache, selectedLabels
                 )
+                selectedCache  = {}
+                selectedLabels = {}
                 lib.notify({ title=locale('cl_notify_9'), description="$"..price, type="success" })
                 menu.close()
             else
@@ -672,7 +672,8 @@ function MainWeaponMenu(wname, wHash, serial, propid)
                     TriggerServerEvent('rsg-weaponcomp:server:price',
                         price, wHash, serial, nil, nil
                     )
-
+                    selectedCache  = {}
+                    selectedLabels = {}
                     lib.notify({ title=locale('cl_notify_11'), description="$"..price, type="success" })
                     menu.close()
                 else
@@ -683,10 +684,14 @@ function MainWeaponMenu(wname, wHash, serial, propid)
         elseif data.current.value == 'packup' then
             TriggerEvent('rsg-weaponcomp:client:confirmpackup', propid)
             TriggerEvent('rsg-weaponcomp:client:ExitCam')
+            selectedCache  = {}
+            selectedLabels = {}
             menu.close()
         end
     end, function(_, menu)
         TriggerEvent('rsg-weaponcomp:client:ExitCam')
+        selectedCache  = {}
+        selectedLabels = {}
         menu.close()
     end)
 end

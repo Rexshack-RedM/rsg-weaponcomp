@@ -45,9 +45,9 @@ Config.prompts = {
   zoIn    = 0x62800C92, -- ScrollUp
   zoOut   = 0x8BDE7443, -- ScrollDown
   rotL   = 0x8CC9CD42, -- x
-  rotR   = 0x9959A6F0, -- c
+  rotR   = 0x4CC0E2FE, -- b
   ranPos = 0x7F8D09B8,  -- v
-  re     = 0x4CC0E2FE, -- b
+  re     = 0x9959A6F0, -- c
 }
 --------------------
 -- LIMIT WEAPONS RESTRICTION
