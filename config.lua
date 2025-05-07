@@ -41,6 +41,14 @@ Config.Blip = {
   blipColour = 'BLIP_MODIFIER_MP_COLOR_6',
 }
 
+Config.prompts = {
+  zoIn    = 0x62800C92, -- ScrollUp
+  zoOut   = 0x8BDE7443, -- ScrollDown
+  rotL   = 0x8CC9CD42, -- x
+  rotR   = 0x9959A6F0, -- c
+  ranPos = 0x7F8D09B8,  -- v
+  re     = 0x4CC0E2FE, -- b
+}
 --------------------
 -- LIMIT WEAPONS RESTRICTION
 --------------------
@@ -1081,10 +1089,6 @@ Config.Specific = {
           "COMPONENT_REPEATER_CARBINE_WRAP4",
           "COMPONENT_REPEATER_CARBINE_WRAP5",
           "COMPONENT_REPEATER_CARBINE_WRAP6",
-        },
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
         }
     },
 
@@ -1107,10 +1111,6 @@ Config.Specific = {
           "COMPONENT_REPEATER_HENRY_WRAP4",
           "COMPONENT_REPEATER_HENRY_WRAP5",
           "COMPONENT_REPEATER_HENRY_WRAP6",
-        },
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
         }
     },
 
@@ -1138,10 +1138,6 @@ Config.Specific = {
         },
         ["FRAME_ENGRAVING"] = {
         	"COMPONENT_LONGARM_ROLE_ENGRAVING_EVANS_WINTER",
-        },
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
         }
     },
 
@@ -1170,10 +1166,6 @@ Config.Specific = {
         --[[ ["FRAME_VERTDATA"] = {
           "COMPONENT_LONGARM_FRAME_ENGRAVING_WINCHESTER_COLLECTOR",
         }, ]]
-        ['SCOPE'] =
-        {
-          'COMPONENT_RIFLE_SCOPE02'
-        }
     },
 
     ["WEAPON_RIFLE_VARMINT"] = {

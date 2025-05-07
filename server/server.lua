@@ -87,6 +87,20 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(sou
   cb(res or 0)
 end)
 
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getItemBySerial', function(source, cb, serial)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then cb(nil); return end
+
+    for _, item in ipairs(Player.PlayerData.items) do
+        if item.type == 'weapon' and item.info and item.info.serie == serial then
+            cb({ components = item.info.componentshash})
+            return
+        end
+    end
+
+    cb(nil)
+end)
+
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
     local Player = RSGCore.Functions.GetPlayer(source)
     if not Player then cb(nil); return end
@@ -97,7 +111,7 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
         and item.info.serie == serial
         then
             local comps = item.info.componentshash or {}
-            -- Si el scope NO está aplicado, lo removemos de la copia que enviamos
+
             if not item.info.equippedScope then
                 local filtered = {}
                 for cat, name in pairs(comps) do
@@ -107,28 +121,13 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
                 end
                 comps = filtered
             end
-            -- Devolvemos components (sin modificar el original)
+
             return cb({ components = comps })
         end
     end
 
     cb(nil)
 end)
-
--- Provide saved components
---[[ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
-    local Player = RSGCore.Functions.GetPlayer(source)
-    if not Player then cb(nil); return end
-
-    for _, item in pairs(Player.PlayerData.items) do
-        if item.type == 'weapon' and item.info and item.info.serie == serial then
-                cb({ components = item.info.componentshash})
-            return
-        end
-    end
-
-    cb(nil)
-end) ]]
 
 ---------------------------------------------
 -- create new gunsite in database
@@ -325,6 +324,7 @@ AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, seria
     local currentCash = Player.Functions.GetMoney(Config.PaymentType)
     if currentCash < price then
         TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_10', price), description = locale('sv_lang_11'), type = 'error' })
+        TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
         return
     end
 

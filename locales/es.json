@@ -12,7 +12,11 @@
     "cl_lang_5": "Tintes", 
     "cl_notify_7": "Sin tintes", 
     "cl_notify_8": "No hay tintes disponibles.", 
-    
+    "weapon_cam_rotate": "Girar cámara",
+    "weapon_cam_rand": "Posición aleatoria",
+    "zoom": "Zoom",
+    "weapon_cam_reset": "Restablecer cámara",
+
     "cl_lang_6": "Personalizar específico", 
     "cl_lang_7": "Personalizar material", 
     "cl_langl_8": "Personalizar grabado",

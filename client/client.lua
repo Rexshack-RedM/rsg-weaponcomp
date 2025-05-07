@@ -11,6 +11,17 @@ local camera         = nil
 local selectedCache  = {}
 local selectedLabels  = {}
 
+local rotateL = nil
+local rotateR = nil
+local randomPos = nil
+local zoomIn = nil
+local zoomOut = nil
+local reset = nil
+local promptGroup = GetRandomIntInRange(0, 0xffffff)local promptThreadActive = false
+local c_zoom = 1.5
+local c_offset = 0.20
+
+MenuData = {}
 ----------------------------------------
 -- Basics
 ----------------------------------------
@@ -86,6 +97,7 @@ end
 ----------------------------------------
 -- cameras
 ----------------------------------------
+-- start camera menu
 local function StartCamOnWeapon(obj, fov)
     if not (obj and DoesEntityExist(obj)) then return end
     local forward, right, up, origin = table.unpack({ GetEntityMatrix(obj) })
@@ -114,9 +126,27 @@ local function StartCamOnWeapon(obj, fov)
     PointCamAtCoord(camera, origin.x, origin.y, origin.z + 0.1)
 end
 
-local c_zoom = 1.5
-local c_offset = 0.20
+RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
+AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
+    RenderScriptCams(false, true, 2000, true, false)
+    if camera then DestroyCam(camera,true) end
+    camera = nil
+    DestroyAllCams(true)
 
+    if wepObj ~= nil and DoesEntityExist(wepObj) then
+        SetEntityAsMissionEntity(wepObj, false)
+        FreezeEntityPosition(wepObj, false)
+        DeleteObject(wepObj)
+    end
+    selectedCache = {}
+    selectedLabels = {}
+    ClearCameraPrompts()
+    promptThreadActive = false
+    MenuData.CloseAll()
+    TriggerEvent('HideAllUI')
+end)
+
+-- save
 local function StartCamClean(zoom, offset)
     local zoomOffset = tonumber(zoom)
     local coords = GetEntityCoords(cache.ped)
@@ -200,55 +230,137 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, ser
             label = locale('cl_lang_1'),
         })
 
+        TriggerServerEvent("rsg-weaponcomp:server:check_comps")
+
         if Cloth ~= nil and DoesEntityExist(Cloth) then
             SetEntityAsNoLongerNeeded(Cloth)
             DeleteEntity(Cloth)
         end
     end
 
-    TriggerServerEvent("rsg-weaponcomp:server:check_comps")
     TriggerEvent('rsg-weaponcomp:client:ExitCam')
 end)
 
-RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
-AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
-    RenderScriptCams(false, true, 2000, true, false)
-    if camera then DestroyCam(camera,true) end
-    camera = nil
-    DestroyAllCams(true)
+local currentAngle = 0.0 -- grados
+local function RotateCameraAroundWeapon(clockwise)
+    if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
 
-    if wepObj ~= nil and DoesEntityExist(wepObj) then
-        SetEntityAsMissionEntity(wepObj, false)
-        FreezeEntityPosition(wepObj, false)
-        DeleteObject(wepObj)
-    end
-    selectedCache  = {}
-    MenuData.CloseAll()
-end)
+    local step = 10.0 -- grados por llamada
+    if not clockwise then step = -step end
+
+    currentAngle = (currentAngle + step) % 360 -- mantener entre 0-360
+
+    local wepCoords = GetEntityCoords(wepObj)
+    local radius = 1.0
+    local radians = math.rad(currentAngle)
+
+-- Calculate new position around the object
+    local camX = wepCoords.x + radius * math.cos(radians)
+    local camY = wepCoords.y + radius * math.sin(radians)
+    local camZ = wepCoords.z -- h
+
+    SetCamCoord(camera, camX, camY, camZ)
+    PointCamAtCoord(wepObj, wepCoords.x, wepCoords.y, wepCoords.z)
+end
+
+local function SetRandomCameraAroundWeapon()
+    if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
+
+    local wepCoords = GetEntityCoords(wepObj)
+    local radius = 1.0
+
+    local angleDeg = math.random(0, 360)
+    local pitchDeg = math.random(-30, 30)
+
+    local angleRad = math.rad(angleDeg)
+    local pitchRad = math.rad(pitchDeg)
+
+    local xOffset = radius * math.cos(angleRad) * math.cos(pitchRad)
+    local yOffset = radius * math.sin(angleRad) * math.cos(pitchRad)
+    local zOffset = radius * math.sin(pitchRad)
+
+    local camX = wepCoords.x + xOffset
+    local camY = wepCoords.y + yOffset
+    local camZ = wepCoords.z
+
+    SetCamCoord(camera, camX, camY, camZ)
+    PointCamAtCoord(wepObj, wepCoords.x, wepCoords.y, wepCoords.z)
+end
+
+-- Zoom in/out
+local function AdjustZoom(increase)
+    if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
+    local fov = GetCamFov(camera)
+    local newFov = increase and (fov - 2.0) or (fov + 2.0)
+    SetCamFov(camera, math.clamp(newFov, 30.0, 90.0))
+end
+
+-- Reset a posición inicial del client:startcustom
+local function ResetCameraToDefault()
+    if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
+    StartCamOnWeapon(wepObj, Config.distFov)
+end
 
 ----------------------------------------
--- for change camera WIP
+-- prompts
 ----------------------------------------
---[[ 
+function ClearCameraPrompts()
+    rotateL = nil
+    rotateR = nil
+    randomPos = nil
+    zoomIn = nil
+    zoomOut = nil
+    reset = nil
+end
 
-local targetCoords   = nil
-local function Lerp(a,b,t) return a + (b-a)*t end
-local function FocusCam(obj)
-    if not(obj and camera and DoesEntityExist(obj)) then return end
-    local pos = GetEntityCoords(obj)
-    local rot = GetEntityRotation(obj,2)
-    if not targetCoords or vector3(pos.x,pos.y,pos.z) ~= targetCoords then
-        targetCoords = vector3(pos.x,pos.y,pos.z)
-        local cx,cy,cz = table.unpack(GetCamCoord(camera))
-        for t=0,1,0.05 do
-            StartCam(Lerp(cx,pos.x,t), Lerp(cy,pos.y,t), Lerp(cz,pos.z+0.5,t), 75.0)
-            Wait(30)
+-- Function to create and register a prompt
+local function RegisterPrompt(control, textKey, group, hold)
+    local txt = locale(textKey)
+    local p = PromptRegisterBegin()
+    PromptSetControlAction(p, control)
+    PromptSetText(p, CreateVarString(10, 'LITERAL_STRING', txt))
+    PromptSetEnabled(p, true)
+    PromptSetVisible(p, true)
+    if hold then PromptSetHoldMode(p, true) else PromptSetStandardMode(p, true) end
+    PromptSetGroup(p, group)
+    Citizen.InvokeNative(0xC5F428EE08FA7F2C, p, true)
+    PromptRegisterEnd(p)
+    return p
+end
+
+-- Prompt log (without activation prompt)
+local function RegisterCameraPrompts()
+    rotateL   = RegisterPrompt(Config.prompts.rotL, 'weapon_cam_rotate', promptGroup, false) -- x
+    rotateR   = RegisterPrompt(Config.prompts.rotR, 'weapon_cam_rotate', promptGroup, false) -- b
+    randomPos = RegisterPrompt(Config.prompts.ranPos, 'weapon_cam_rand',   promptGroup, false) -- c
+    zoomIn    = RegisterPrompt(Config.prompts.zoIn, 'zoom',           promptGroup, false) -- ScrollUp
+    zoomOut   = RegisterPrompt(Config.prompts.zoOut, 'zoom',          promptGroup, false) -- ScrollDown
+    reset     = RegisterPrompt(Config.prompts.re, 'weapon_cam_reset',  promptGroup, true)  -- v
+end
+
+local function StartPromptThread()
+    if promptThreadActive then return end
+    promptThreadActive = true
+    CreateThread(function()
+        local sleep = 1000
+        while promptThreadActive do
+            if camera then
+                local promptText = CreateVarString(10, 'LITERAL_STRING', 'Camera Controls')
+                PromptSetActiveGroupThisFrame(promptGroup, promptText)
+
+                sleep = 0
+                if IsControlJustPressed(2, Config.prompts.zoIn) then AdjustZoom(true)
+                elseif IsControlJustPressed(2, Config.prompts.zoOut) then AdjustZoom(false)
+                elseif IsControlJustPressed(2, Config.prompts.re) then ResetCameraToDefault()
+                elseif IsControlJustPressed(2, Config.prompts.ranPos) then SetRandomCameraAroundWeapon()
+                elseif IsControlJustPressed(2, Config.prompts.rotL) then RotateCameraAroundWeapon(true)
+                elseif IsControlJustPressed(2, Config.prompts.rotR) then RotateCameraAroundWeapon(false)
+                end
+            end
+            Wait(sleep)
         end
-    else
-        StartCam(pos.x,pos.y,pos.z+0.5,75.0)
-    end
-    SetCamRot(camera, rot.x,rot.y,rot.z,2)
-end ]]
+    end)
+end
 
 ----------------------------------------
 -- aply menu
@@ -283,7 +395,6 @@ end
 ----------------------------------------
 -- Menu
 ----------------------------------------
-MenuData = {}
 TriggerEvent('rsg-menubase:getData', function(call)
     MenuData = call
 end)
@@ -505,6 +616,7 @@ end
 -- In MainWeaponMenu you call like this:
 function MainWeaponMenu(wname, wHash, serial, propid)
     MenuData.CloseAll()
+    TriggerEvent('HideAllUI')
 
     for cat, compName in pairs(selectedCache) do
         local compHash = GetHashKey(compName)
@@ -545,23 +657,22 @@ function MainWeaponMenu(wname, wHash, serial, propid)
                 )
                 lib.notify({ title=locale('cl_notify_9'), description="$"..price, type="success" })
                 menu.close()
-                -- Ojo: si quieres que la próxima vez empiece limpio,
-                selectedCache = {}
             else
                 lib.notify({ title=locale('cl_notify_10'), type="error" })
             end
         elseif data.current.value == 'reset' then
-            RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(d)
-                local dbComps = d.components or nil
-                local price   = CalculatePrice(dbComps) * Config.RemovePrice
+            RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getItemBySerial', function(comp)
+                if not comp then return TriggerEvent('rsg-weaponcomp:client:ExitCam') end
+                local totalComps = comp.components or {}
+
+                local price = (CalculatePrice(totalComps) * Config.RemovePrice)
 
                 if price > 0 then
                     TriggerServerEvent('rsg-weaponcomp:server:price',
                         price, wHash, serial, nil, nil
                     )
+
                     lib.notify({ title=locale('cl_notify_11'), description="$"..price, type="success" })
-                    selectedCache = {}
-                    selectedLabels = {}
                     menu.close()
                 else
                     lib.notify({ title=locale('cl_notify_12'), type="error" })
@@ -570,6 +681,7 @@ function MainWeaponMenu(wname, wHash, serial, propid)
 
         elseif data.current.value == 'packup' then
             TriggerEvent('rsg-weaponcomp:client:confirmpackup', propid)
+            TriggerEvent('rsg-weaponcomp:client:ExitCam')
             menu.close()
         end
     end, function(_, menu)
@@ -593,6 +705,9 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
 
     Wait(500)
     StartCamOnWeapon(wepObj, Config.distFov)
+
+    RegisterCameraPrompts()
+    StartPromptThread()
     MainWeaponMenu(weaponName, wHash, serial, propid)
     applyDefaults(wepObj, wHash)
     isBusy = false
@@ -727,10 +842,9 @@ RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
             required = true
         },
     })
-
     if not input or input[1] == 'no' then return end
 
-    TriggerEvent('rsg-weaponcomp:client:ExitCam')
+    
 
     LocalPlayer.state:set('inv_busy', true, true)
     lib.progressBar({
@@ -804,6 +918,8 @@ AddEventHandler('onResourceStop', function(resource)
     lib.hideTextUI()
     gunZones       = {}
 
+    promptThreadActive = false
+    ClearCameraPrompts()
     isBusy         = false
     camera         = nil
 
