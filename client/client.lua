@@ -241,6 +241,7 @@ AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, ser
     TriggerEvent('rsg-weaponcomp:client:ExitCam')
 end)
 
+--[[
 local currentAngle = 0.0 -- grados
 local function RotateCameraAroundWeapon(clockwise)
     if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
@@ -262,6 +263,7 @@ local function RotateCameraAroundWeapon(clockwise)
     SetCamCoord(camera, camX, camY, camZ)
     PointCamAtCoord(wepObj, wepCoords.x, wepCoords.y, wepCoords.z)
 end
+]]
 
 local function SetRandomCameraAroundWeapon()
     if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
@@ -291,8 +293,8 @@ end
 local function AdjustZoom(increase)
     if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
     local fov = GetCamFov(camera)
-    local newFov = increase and (fov - 2.0) or (fov + 2.0)
-    SetCamFov(camera, math.clamp(newFov, 30.0, 90.0))
+    local newFov = increase and (fov - 1.5) or (fov + 1.5)
+    SetCamFov(camera, math.clamp(newFov, 15.0, 90.0))
 end
 
 -- Reset a posición inicial del client:startcustom
@@ -330,8 +332,8 @@ end
 
 -- Prompt log (without activation prompt)
 local function RegisterCameraPrompts()
-    rotateL   = RegisterPrompt(Config.prompts.rotL, 'weapon_cam_rotate', promptGroup, false) -- x
-    rotateR   = RegisterPrompt(Config.prompts.rotR, 'weapon_cam_rotate', promptGroup, false) -- b
+    -- rotateL   = RegisterPrompt(Config.prompts.rotL, 'weapon_cam_rotate', promptGroup, false) -- x
+    -- rotateR   = RegisterPrompt(Config.prompts.rotR, 'weapon_cam_rotate', promptGroup, false) -- b
     randomPos = RegisterPrompt(Config.prompts.ranPos, 'weapon_cam_rand',   promptGroup, false) -- c
     zoomIn    = RegisterPrompt(Config.prompts.zoIn, 'zoom',           promptGroup, false) -- ScrollUp
     zoomOut   = RegisterPrompt(Config.prompts.zoOut, 'zoom',          promptGroup, false) -- ScrollDown
@@ -349,13 +351,12 @@ local function StartPromptThread()
                 PromptSetActiveGroupThisFrame(promptGroup, promptText)
 
                 sleep = 0
-                if IsControlJustPressed(2, Config.prompts.zoIn) then AdjustZoom(true)
-                elseif IsControlJustPressed(2, Config.prompts.zoOut) then AdjustZoom(false)
-                elseif IsControlJustPressed(2, Config.prompts.re) then ResetCameraToDefault()
-                elseif IsControlJustPressed(2, Config.prompts.ranPos) then SetRandomCameraAroundWeapon()
-                elseif IsControlJustPressed(2, Config.prompts.rotL) then RotateCameraAroundWeapon(true)
-                elseif IsControlJustPressed(2, Config.prompts.rotR) then RotateCameraAroundWeapon(false)
-                end
+                if IsControlJustPressed(2, Config.prompts.zoIn) then AdjustZoom(true) end
+                if IsControlJustPressed(2, Config.prompts.zoOut) then AdjustZoom(false) end
+                if IsControlJustPressed(2, Config.prompts.re) then ResetCameraToDefault()end
+                if IsControlJustPressed(2, Config.prompts.ranPos) then SetRandomCameraAroundWeapon() end
+                -- elseif IsControlJustPressed(2, Config.prompts.rotL) then RotateCameraAroundWeapon(true)
+                -- elseif IsControlJustPressed(2, Config.prompts.rotR) then RotateCameraAroundWeapon(false)
             end
             Wait(sleep)
         end
