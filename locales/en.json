@@ -12,7 +12,11 @@
     "cl_lang_5": "Tints",
     "cl_notify_7": "No Tints",
     "cl_notify_8": "No Tints available.",
-    
+    "weapon_cam_rotate" : "Rotate Camera",
+    "weapon_cam_rand"   : "Random Position",
+    "zoom"           : "Zoom",
+    "weapon_cam_reset"  : "Reset Camera",
+
     "cl_lang_6": "Customize Specific",
     "cl_lang_7": "Customize Material",
     "cl_lang_8": "Customize Engraving",

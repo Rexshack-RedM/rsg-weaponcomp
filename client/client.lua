@@ -1,27 +1,3 @@
-----------------------------------------
--- for change camera WIP
-----------------------------------------
---[[ 
-
-local targetCoords   = nil
-local function Lerp(a,b,t) return a + (b-a)*t end
-local function FocusCam(obj)
-    if not(obj and camera and DoesEntityExist(obj)) then return end
-    local pos = GetEntityCoords(obj)
-    local rot = GetEntityRotation(obj,2)
-    if not targetCoords or vector3(pos.x,pos.y,pos.z) ~= targetCoords then
-        targetCoords = vector3(pos.x,pos.y,pos.z)
-        local cx,cy,cz = table.unpack(GetCamCoord(camera))
-        for t=0,1,0.05 do
-            StartCam(Lerp(cx,pos.x,t), Lerp(cy,pos.y,t), Lerp(cz,pos.z+0.5,t), 75.0)
-            Wait(30)
-        end
-    else
-        StartCam(pos.x,pos.y,pos.z+0.5,75.0)
-    end
-    SetCamRot(camera, rot.x,rot.y,rot.z,2)
-end ]]
-
 local RSGCore = exports['rsg-core']:GetCoreObject()
 lib.locale()
 
@@ -278,13 +254,13 @@ local function RotateCameraAroundWeapon(clockwise)
     local radius = 1.0
     local radians = math.rad(currentAngle)
 
-    -- Calcular nueva posición alrededor del objeto
+-- Calculate new position around the object
     local camX = wepCoords.x + radius * math.cos(radians)
     local camY = wepCoords.y + radius * math.sin(radians)
-    local camZ = wepCoords.z -- altura ajustable
+    local camZ = wepCoords.z -- h
 
     SetCamCoord(camera, camX, camY, camZ)
-    PointCamAtCoord(camera, wepCoords.x, wepCoords.y, wepCoords.z)
+    PointCamAtCoord(wepObj, wepCoords.x, wepCoords.y, wepCoords.z)
 end
 
 local function SetRandomCameraAroundWeapon()
@@ -293,15 +269,12 @@ local function SetRandomCameraAroundWeapon()
     local wepCoords = GetEntityCoords(wepObj)
     local radius = 1.0
 
-    -- Ángulos aleatorios en grados
     local angleDeg = math.random(0, 360)
-    local pitchDeg = math.random(-20, 20) -- vertical entre -20° y +20°
+    local pitchDeg = math.random(-30, 30)
 
-    -- Convertir a radianes
     local angleRad = math.rad(angleDeg)
     local pitchRad = math.rad(pitchDeg)
 
-    -- Calcular offset 3D
     local xOffset = radius * math.cos(angleRad) * math.cos(pitchRad)
     local yOffset = radius * math.sin(angleRad) * math.cos(pitchRad)
     local zOffset = radius * math.sin(pitchRad)
@@ -339,6 +312,7 @@ function ClearCameraPrompts()
     zoomOut = nil
     reset = nil
 end
+
 -- Function to create and register a prompt
 local function RegisterPrompt(control, textKey, group, hold)
     local txt = locale(textKey)
@@ -359,8 +333,8 @@ local function RegisterCameraPrompts()
     rotateL   = RegisterPrompt(Config.prompts.rotL, 'weapon_cam_rotate', promptGroup, false) -- x
     rotateR   = RegisterPrompt(Config.prompts.rotR, 'weapon_cam_rotate', promptGroup, false) -- b
     randomPos = RegisterPrompt(Config.prompts.ranPos, 'weapon_cam_rand',   promptGroup, false) -- c
-    zoomIn    = RegisterPrompt(Config.prompts.zoIn, 'zoom_in',           promptGroup, false) -- ScrollUp
-    zoomOut   = RegisterPrompt(Config.prompts.zoOut, 'zoom_out',          promptGroup, false) -- ScrollDown
+    zoomIn    = RegisterPrompt(Config.prompts.zoIn, 'zoom',           promptGroup, false) -- ScrollUp
+    zoomOut   = RegisterPrompt(Config.prompts.zoOut, 'zoom',          promptGroup, false) -- ScrollDown
     reset     = RegisterPrompt(Config.prompts.re, 'weapon_cam_reset',  promptGroup, true)  -- v
 end
 
@@ -731,7 +705,7 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
 
     Wait(500)
     StartCamOnWeapon(wepObj, Config.distFov)
-    
+
     RegisterCameraPrompts()
     StartPromptThread()
     MainWeaponMenu(weaponName, wHash, serial, propid)
