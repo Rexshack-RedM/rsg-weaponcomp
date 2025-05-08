@@ -264,13 +264,13 @@ end
 ]]
 
 local function SetRandomCameraAroundWeapon()
-    if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
+    if not camera or not wepObj then return end
 
     local wepCoords = GetEntityCoords(wepObj)
-    local radius = 1.0
+    local radius = 0.50
 
-    local angleDeg = math.random(0, 360)
-    local pitchDeg = math.random(-30, 30)
+    local angleDeg = math.random(1, 360)
+    local pitchDeg = math.random(-10, 50)
 
     local angleRad = math.rad(angleDeg)
     local pitchRad = math.rad(pitchDeg)
@@ -281,23 +281,43 @@ local function SetRandomCameraAroundWeapon()
 
     local camX = wepCoords.x + xOffset
     local camY = wepCoords.y + yOffset
-    local camZ = wepCoords.z
+    local camZ = wepCoords.z + zOffset
 
     SetCamCoord(camera, camX, camY, camZ)
-    PointCamAtCoord(wepObj, wepCoords.x, wepCoords.y, wepCoords.z)
+    PointCamAtCoord(wepObj, camX, camY, camZ)
 end
 
--- Zoom in/out
+local function smoothZoom(cam, fromFov, toFov, duration)
+    local startTime = GetGameTimer()
+    while true do
+        local now = GetGameTimer()
+        local elapsed = now - startTime
+        if elapsed >= duration then break end
+
+        local progress = elapsed / duration
+        local currentFov = fromFov + (toFov - fromFov) * progress
+        SetCamFov(cam, currentFov)
+        Wait(0)
+    end
+    SetCamFov(cam, toFov)
+end
+
+-- Zoom in/out con transición suave
 local function AdjustZoom(increase)
-    if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
-    local fov = GetCamFov(camera)
-    local newFov = increase and (fov - 1.5) or (fov + 1.5)
-    SetCamFov(camera, math.clamp(newFov, 15.0, 90.0))
+    if not camera or not wepObj then return end
+    local currentFov = GetCamFov(camera)
+    local targetFov = increase and (currentFov - 5.0) or (currentFov + 5.0)
+    targetFov = math.clamp(targetFov, 15.0, 90.0)
+
+    -- Zoom suave en 150ms (ajustable)
+    CreateThread(function()
+        smoothZoom(camera, currentFov, targetFov, 150)
+    end)
 end
 
 -- Reset a posición inicial del client:startcustom
 local function ResetCameraToDefault()
-    if not camera or not wepObj or not DoesEntityExist(wepObj) then return end
+    if not camera or not wepObj then return end
     StartCamOnWeapon(wepObj, Config.distFov)
 end
 
@@ -342,6 +362,8 @@ local function StartPromptThread()
     if promptThreadActive then return end
     promptThreadActive = true
     CreateThread(function()
+
+        RegisterCameraPrompts()
         local sleep = 1000
         while promptThreadActive do
             if camera then
@@ -711,9 +733,8 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
 
     Wait(500)
     StartCamOnWeapon(wepObj, Config.distFov)
-
-    RegisterCameraPrompts()
     StartPromptThread()
+
     MainWeaponMenu(weaponName, wHash, serial, propid)
     applyDefaults(wepObj, wHash)
     isBusy = false
