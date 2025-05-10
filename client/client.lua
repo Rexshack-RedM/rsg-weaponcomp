@@ -285,7 +285,7 @@ local function SetRandomCameraAroundWeapon()
     local camZ = wepCoords.z + zOffset
 
     SetCamCoord(camera, camX, camY, camZ)
-    PointCamAtCoord(wepObj, camX, camY, camZ)
+    PointCamAtCoord(camera, wepCoords.x, wepCoords.y, wepCoords.z)
 end
 
 local function smoothZoom(cam, fromFov, toFov, duration)
