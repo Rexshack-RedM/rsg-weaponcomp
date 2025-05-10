@@ -122,13 +122,13 @@ local function StartCamOnWeapon(obj, fov)
     )
 
     SetCamActive(camera, true)
-    RenderScriptCams(true, true, 2000, true, true)
+    RenderScriptCams(true, true, 1000, true, true)
     PointCamAtCoord(camera, origin.x, origin.y, origin.z + 0.1)
 end
 
 RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
 AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
-    RenderScriptCams(false, true, 2000, true, false)
+    RenderScriptCams(false, true, 1000, true, true)
     if camera then DestroyCam(camera,true) end
     camera = nil
     DestroyAllCams(true)
@@ -175,6 +175,7 @@ end
 RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
 AddEventHandler("rsg-weaponcomp:client:animationSaved", function(objecthash, serial)
     SetCurrentPedWeapon(cache.ped, objecthash, true)
+
     if camera then DestroyCam(camera,true) end
     camera = nil
 
@@ -673,6 +674,7 @@ function MainWeaponMenu(wname, wHash, serial, propid)
         elseif data.current.value == 'buy' then
             local price = CalculatePrice(selectedCache)
             if price > 0 then
+                TriggerEvent('rsg-weaponcomp:client:ExitCam')
                 TriggerServerEvent('rsg-weaponcomp:server:price',
                     price, wHash, serial, selectedCache, selectedLabels
                 )
@@ -691,6 +693,7 @@ function MainWeaponMenu(wname, wHash, serial, propid)
                 local price = (CalculatePrice(totalComps) * Config.RemovePrice)
 
                 if price > 0 then
+                    TriggerEvent('rsg-weaponcomp:client:ExitCam')
                     TriggerServerEvent('rsg-weaponcomp:server:price',
                         price, wHash, serial, nil, nil
                     )
@@ -764,23 +767,29 @@ Citizen.CreateThread(function()
 
                     -- Zona de interacción
                     local propConfig = Config.PlayerProps[k]
-                    gunZones[v.propid] = lib.zones.sphere({
-                        coords = vec3(propConfig.x, propConfig.y, propConfig.z),
-                        radius = Config.gunZoneSize,
-                        debug = false,
-                        onEnter = function()
-                            ingunZone = true
-                            if propConfig.item == Config.Gunsmithitem then
-                                gunsitename = tostring(propConfig.gunsitename)
-                                lib.showTextUI(gunsitename)
-                            end
-                        end,
-                        onExit = function()
-                            ingunZone = false
-                            lib.hideTextUI()
-                        end
-                    })
 
+                    if Config.gunZoneActive then
+                        gunZones[v.propid] = lib.zones.sphere({
+                            coords = vec3(propConfig.x, propConfig.y, propConfig.z),
+                            radius = Config.gunZoneSize,
+                            debug = false,
+                            onEnter = function()
+                                ingunZone = true
+                                if propConfig.item == Config.Gunsmithitem then
+                                    gunsitename = tostring(propConfig.gunsitename)
+                                    if Config.showTextZone then
+                                        lib.showTextUI(gunsitename)
+                                    end
+                                end
+                            end,
+                            onExit = function()
+                                ingunZone = false
+                                if Config.showTextZone then
+                                    lib.hideTextUI()
+                                end
+                            end
+                        })
+                    end
                     -- Target para menú
                     exports.ox_target:addLocalEntity(obj, {
                         {
@@ -904,14 +913,17 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
         Wait(100)
     end
     SpawnedProps[propid] = nil
+    if Config.gunZoneActive then
+        if gunZones[propid] then
+            gunZones[propid]:remove()
+            gunZones[propid] = nil
+        end
 
-    if gunZones[propid] then
-        gunZones[propid]:remove()
-        gunZones[propid] = nil
+        if Config.showTextZone then
+            lib.hideTextUI()
+        end
+        ingunZone = false
     end
-
-    lib.hideTextUI()
-    ingunZone = false
     PackingUpProps[propid] = false
     TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)
 end)
@@ -941,9 +953,12 @@ AddEventHandler('onResourceStop', function(resource)
 
     SpawnedProps   = {}        -- [propid] = { obj }
     PackingUpProps = {}
-    ingunZone      = false
-    lib.hideTextUI()
-    gunZones       = {}
+
+    if Config.gunZoneActive then
+        ingunZone      = false
+        gunZones       = {}
+        if Config.showTextZone then lib.hideTextUI() end
+    end
 
     promptThreadActive = false
     ClearCameraPrompts()

@@ -81,7 +81,7 @@ end)
 -- Count how many sites player has
 RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(source, cb, proptype)
   local ply = RSGCore.Functions.GetPlayer(source)
-  local res = MySQL.prepare.await( "SELECT COUNT(*) as count FROM player_weapons_custom WHERE citizenid = ? AND item = ?",
+  local res = MySQL.prepare.await( "SELECT COUNT(*) as count FROM hdrp_weapons_custom WHERE citizenid = ? AND item = ?",
     { ply.PlayerData.citizenid, proptype }
   )
   cb(res or 0)
@@ -139,7 +139,7 @@ local function CreategunsiteId()
     while not UniqueFound do
         gunsiteId = 'CSID' .. math.random(11111111, 99999999)
         local query = "%" .. gunsiteId .. "%"
-        local result = MySQL.prepare.await("SELECT COUNT(*) as count FROM player_weapons_custom WHERE gunsiteid LIKE ?", { query })
+        local result = MySQL.prepare.await("SELECT COUNT(*) as count FROM hdrp_weapons_custom WHERE gunsiteid LIKE ?", { query })
         if result == 0 then
             UniqueFound = true
         end
@@ -154,7 +154,7 @@ local function CreatePropId()
     while not UniqueFound do
         PropId = 'PID' .. math.random(11111111, 99999999)
         local query = "%" .. PropId .. "%"
-        local result = MySQL.prepare.await("SELECT COUNT(*) as count FROM player_weapons_custom WHERE propid LIKE ?", { query })
+        local result = MySQL.prepare.await("SELECT COUNT(*) as count FROM hdrp_weapons_custom WHERE propid LIKE ?", { query })
         if result == 0 then
             UniqueFound = true
         end
@@ -189,7 +189,7 @@ AddEventHandler('rsg-weaponcomp:server:createnewprop', function(propmodel, item,
     local newpropdata = json.encode(PropData)
 
     -- add gunsite to database
-    MySQL.Async.execute('INSERT INTO player_weapons_custom (gunsiteid, propid, citizenid, item, propdata) VALUES (@gunsiteid, @propid, @citizenid, @item, @propdata)', {
+    MySQL.Async.execute('INSERT INTO hdrp_weapons_custom (gunsiteid, propid, citizenid, item, propdata) VALUES (@gunsiteid, @propid, @citizenid, @item, @propdata)', {
         ['@gunsiteid'] = gunsiteid,
         ['@propid'] = propid,
         ['@citizenid'] = citizenid,
@@ -231,7 +231,7 @@ end)
 
 RegisterServerEvent('rsg-weaponcomp:server:getProps')
 AddEventHandler('rsg-weaponcomp:server:getProps', function()
-    local result = MySQL.query.await('SELECT * FROM player_weapons_custom')
+    local result = MySQL.query.await('SELECT * FROM hdrp_weapons_custom')
     if not result[1] then return end
     for i = 1, #result do
         local propData = json.decode(result[i].propdata)
@@ -270,13 +270,13 @@ AddEventHandler('rsg-weaponcomp:server:removegunsiteprops', function(propid)
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
     local citizenid = Player.PlayerData.citizenid
-    local result = MySQL.query.await('SELECT * FROM player_weapons_custom WHERE propid = ?', { propid })
+    local result = MySQL.query.await('SELECT * FROM hdrp_weapons_custom WHERE propid = ?', { propid })
     if not result or not result[1] then return end
     local propData = json.decode(result[1].propdata)
 
     if propData.citizenid ~= citizenid then print(locale('sv_lang_3')) return end
 
-    MySQL.Async.execute('DELETE FROM player_weapons_custom WHERE propid = @propid', { ['@propid'] = propid })
+    MySQL.Async.execute('DELETE FROM hdrp_weapons_custom WHERE propid = @propid', { ['@propid'] = propid })
 
     for k, v in pairs(Config.PlayerProps) do
         if v.propid == propid then

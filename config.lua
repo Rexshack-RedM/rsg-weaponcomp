@@ -4,7 +4,7 @@ Config.Debug = true
 Config.PlayerProps      = {}
 
 -- Ajustes de colocación
-Config.PlaceDistance     = 5.0
+Config.PlaceDistance     = 5.0 -- Max dist to place -> prop acces menu 
 
 -- Propiedades y límites
 Config.RepairItem        = 'weapon_repair_kit'
@@ -13,11 +13,15 @@ Config.Gunsmithitem     = 'gunsmith'
 Config.Gunsmithprop     = `p_gunsmithprops09x`
 Config.MaxGunsites      = 1
 Config.MaxWeapon        = 1
-Config.gunZoneSize      = 3.0
 Config.PaymentType      = 'cash' -- Payment = money you can select 'cash' or 'bloodmoney' / Payment = item you can select 'cash' or 'bloodmoney'
 Config.animationSave    = 10000 -- Waiting time for application or removal components
 -- Job
 -- Config.Jobs				       = {'valweaponsmith'}
+
+-- zones sfere
+Config.gunZoneActive    = false -- true / false can zone
+Config.gunZoneSize      = 3.0 -- radio zone sfere
+Config.showTextZone     = false -- true / false can show text zone
 
 -- Camera settings
 Config.distBack = 0.7 -- Camera movements Back
@@ -27,7 +31,6 @@ Config.distFov = 60.0 -- Camera movements FOV
 
 Config.StartCamObj      = true -- false / true Camera movements with category changes during selection (WIP)
 Config.showStats        = true -- true / false can show stats inspect
-
 Config.Commandinspect       = "w_inspect"
 Config.Commandloadweapon    = "loadweapon"
 Config.Commandequipscope    = "scope"
