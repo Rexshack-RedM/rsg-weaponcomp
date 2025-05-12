@@ -1,7 +1,7 @@
 # ADD OPTION IN YOUR MENU FOR MODIFY COMP WEAPON
 
 Basically it would be doing a debug, I think I am very organized and my programming is easy to read
-- open event with item
+- open event
 - basic functions
 - functions apply
 - Load for inv or command /loadweapon and load selection in menu
@@ -17,19 +17,15 @@ Basically it would be doing a debug, I think I am very organized and my programm
 - Config.RemovePrice (0 - 1) = 100 % cost remove base price
 - can show stats in /w_inspect
 - Config permision command acces menu
-- change prices 
+
+# in Data/weaponlist
+- change prices and locales categorie for names in menu
 - all data for components, material and engraving
-
-# Commands
-
-```
-/loadweapon -- refresh skin weapon
-/w_inspect -- inspect weapon need item weapon_repair_kit
-```
+- system price in data
 
 # add sql
 ```sql
-CREATE TABLE `player_weapons_custom` (
+CREATE TABLE `hdrp_weapons_custom` (
     `gunsiteid` VARCHAR(20) NOT NULL,
     `propid` VARCHAR(20) NOT NULL,
     `citizenid` VARCHAR(50) NOT NULL,
@@ -87,6 +83,13 @@ generateTooltipContent(item) {
 ```
 
 
+# Admin
+
+```
+/loadweapon -- refresh skin weapon
+/w_inspect -- inspect weapon need item weapon_repair_kit
+```
+
 # Version oficial or learning thanks
 - [gum_weapons](https://github.com/Gum-Core/gum_weapons) -- Gum-Core
 - [rsg-weapons](https://github.com/BM-Studio/rsg-weapons) -- BM-Studio
@@ -98,8 +101,13 @@ generateTooltipContent(item) {
 - [qc_weapModifier](https://github.com/Artmines/qc_weapModifier) -- QUANTUM CORE
 
 # Also thank everyone who collaborated during the development, has tested it or participated:
-- [marcuzz](https://github.com/realmarcuzz/), [rms_dnb](https://github.com/RMS-dnb/), [rexshack](https://github.com/Rexshack-RedM/), [philmcraken](https://github.com/mrskunky69/), [Sadicius](https://github.com/Sadicius),
-- [jackp_](https://github.com/Jewsie/), [ttv_artmines_playz](https://github.com/Artmines/), [salahkham](https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg),
+- [rms_dnb](https://github.com/RMS-dnb/),
+- [rexshack](https://github.com/Rexshack-RedM/),
+- [salahkham](https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg),
+- [ttv_artmines_playz](https://github.com/Artmines/),
+- [philmcraken](https://github.com/mrskunky69/),
+- [jackp_](https://github.com/Jewsie/),
+- [Sadicius](https://github.com/Sadicius),
 - and there are many others...
 
 # For RSG
