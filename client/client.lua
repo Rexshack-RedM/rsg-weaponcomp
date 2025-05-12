@@ -170,7 +170,7 @@ local function StartCamClean(zoom, offset)
         coords.z + offset
     )
 
-    -- ✅ Raycast para asegurar visibilidad desde el jugador hacia la cámara
+    -- Raycast
     local rayHandle = StartShapeTestRay(
         coords.x, coords.y, coords.z + 0.05,
         unsafeCamPos.x, unsafeCamPos.y, unsafeCamPos.z,
