@@ -100,6 +100,7 @@ end
 -- start camera menu
 local function StartCamOnWeapon(obj, fov)
     if not (obj and DoesEntityExist(obj)) then return end
+    ClearFocus()
     local forward, right, up, origin = table.unpack({ GetEntityMatrix(obj) })
 
     local distBack = Config.distBack
@@ -112,23 +113,34 @@ local function StartCamOnWeapon(obj, fov)
         origin.z - forward.z * distBack + right.z * distSide + up.z * distUp
     )
 
+    -- ✅ Raycast desde el arma hacia el punto de cámara propuesto
+    local rayHandle = StartShapeTestRay(
+        origin.x, origin.y, origin.z + 0.05,
+        camPos.x, camPos.y, camPos.z,
+        17, obj, 7
+    )
+    local _, hit, hitPos = GetShapeTestResult(rayHandle)
+    if hit then camPos = hitPos end
+
     if camera then DestroyCam(camera, true) end
     camera = CreateCamWithParams(
         "DEFAULT_SCRIPTED_CAMERA",
         camPos.x, camPos.y, camPos.z,
-        0, 0, 0,    -- rotación; la fijamos con PointCamAtCoord
+        0, 0, 0,
         fov or 75.0,
         false, 0
     )
 
     SetCamActive(camera, true)
-    RenderScriptCams(true, true, 1000, true, true)
+    RenderScriptCams(true, true, 1000, true, false)
     PointCamAtCoord(camera, origin.x, origin.y, origin.z + 0.1)
 end
 
+
 RegisterNetEvent('rsg-weaponcomp:client:ExitCam')
 AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
-    RenderScriptCams(false, true, 1000, true, true)
+    ClearFocus()
+    RenderScriptCams(false, false, 0, true, false)
     if camera then DestroyCam(camera,true) end
     camera = nil
     DestroyAllCams(true)
@@ -146,30 +158,36 @@ end)
 
 -- save
 local function StartCamClean(zoom, offset)
+    ClearFocus()
     local zoomOffset = tonumber(zoom)
     local coords = GetEntityCoords(cache.ped)
     local playerHeading = GetEntityHeading(cache.ped)
-    local angle
-    if playerHeading == nil then
-        angle = playerHeading * math.pi / 180.0
-    else
-        angle = playerHeading * math.pi / 180.0
-    end
+    local angle = playerHeading * math.pi / 180.0
 
-    local pos = {
-        x = coords.x - tonumber(zoomOffset * math.sin(angle)),
-        y = coords.y + tonumber(zoomOffset * math.cos(angle)),
-        z = coords.z + offset
-    }
+    local unsafeCamPos = vector3(
+        coords.x - zoomOffset * math.sin(angle),
+        coords.y + zoomOffset * math.cos(angle),
+        coords.z + offset
+    )
 
-    local camera_pos = GetObjectOffsetFromCoords(pos.x, pos.y, pos.z, 0.0, 1.0, 1.0, 1.0)
+    -- ✅ Raycast para asegurar visibilidad desde el jugador hacia la cámara
+    local rayHandle = StartShapeTestRay(
+        coords.x, coords.y, coords.z + 0.05,
+        unsafeCamPos.x, unsafeCamPos.y, unsafeCamPos.z,
+        17, cache.ped, 7
+    )
+    local _, hit, hitPos = GetShapeTestResult(rayHandle)
+    local finalPos = hit and hitPos or unsafeCamPos
 
-    camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", pos.x, pos.y, pos.z + 0.5, 300.00, 0.00, 0.00, 50.00, false, 0)
-    local pCoords = GetEntityCoords(cache.ped)
-    PointCamAtCoord(camera, pCoords.x, pCoords.y, pCoords.z + offset)
-
+    camera = CreateCamWithParams(
+        "DEFAULT_SCRIPTED_CAMERA",
+        finalPos.x, finalPos.y, finalPos.z + 0.5,
+        300.00, 0.00, 0.00,
+        50.00, false, 0
+    )
+    PointCamAtCoord(camera, coords.x, coords.y, coords.z + offset)
     SetCamActive(camera, true)
-    RenderScriptCams(true, true, 1000, true, true)
+    RenderScriptCams(true, true, 1000, true, false)
 end
 
 RegisterNetEvent("rsg-weaponcomp:client:animationSaved")
@@ -280,11 +298,26 @@ local function SetRandomCameraAroundWeapon()
     local yOffset = radius * math.sin(angleRad) * math.cos(pitchRad)
     local zOffset = radius * math.sin(pitchRad)
 
-    local camX = wepCoords.x + xOffset
-    local camY = wepCoords.y + yOffset
-    local camZ = wepCoords.z + zOffset
+    local unsafeTo = vector3(
+            wepCoords.x + xOffset,
+            wepCoords.y + yOffset,
+            wepCoords.z + zOffset
+        )
 
-    SetCamCoord(camera, camX, camY, camZ)
+    -- Realizar raycast para asegurar visibilidad desde el arma hacia la posición de cámara
+    local rayHandle = StartShapeTestRay(
+        wepCoords.x, wepCoords.y, wepCoords.z + 0.05,  -- desde ligeramente por encima del arma
+        unsafeTo.x, unsafeTo.y, unsafeTo.z,
+        17, wepObj, 7
+    )
+    local _, hit, hitPos = GetShapeTestResult(rayHandle)
+
+    local finalCamPos = unsafeTo
+    if hit then
+        finalCamPos = hitPos
+    end
+
+    SetCamCoord(camera, finalCamPos.x, finalCamPos.y, finalCamPos.z)
     PointCamAtCoord(camera, wepCoords.x, wepCoords.y, wepCoords.z)
 end
 
