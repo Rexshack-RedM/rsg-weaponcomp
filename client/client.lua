@@ -113,7 +113,7 @@ local function StartCamOnWeapon(obj, fov)
         origin.z - forward.z * distBack + right.z * distSide + up.z * distUp
     )
 
-    -- ✅ Raycast desde el arma hacia el punto de cámara propuesto
+    -- Raycast
     local rayHandle = StartShapeTestRay(
         origin.x, origin.y, origin.z + 0.05,
         camPos.x, camPos.y, camPos.z,
