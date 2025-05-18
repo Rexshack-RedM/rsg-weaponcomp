@@ -21,6 +21,20 @@ local promptGroup = GetRandomIntInRange(0, 0xffffff)local promptThreadActive = f
 local c_zoom = 1.5
 local c_offset = 0.20
 
+local function FreezePlayer()
+    FreezeEntityPosition(cache.ped, true)
+    SetEntityInvincible(cache.ped, true)
+    SetBlockingOfNonTemporaryEvents(cache.ped, true)
+    SetPedCanRagdoll(cache.ped, false)
+end
+
+local function UnfreezePlayer()
+    FreezeEntityPosition(cache.ped, false)
+    SetEntityInvincible(cache.ped, false)
+    SetBlockingOfNonTemporaryEvents(cache.ped, false)
+    SetPedCanRagdoll(cache.ped, true)
+end
+
 MenuData = {}
 ----------------------------------------
 -- Basics
@@ -144,6 +158,7 @@ AddEventHandler('rsg-weaponcomp:client:ExitCam', function()
     promptThreadActive = false
     MenuData.CloseAll()
     TriggerEvent('HideAllUI')
+    UnfreezePlayer()
 end)
 
 -- save
@@ -736,7 +751,7 @@ RegisterNetEvent('rsg-weaponcomp:client:startcustom', function(propid, wHash, se
     local propObj = propData.obj
     local coords = GetEntityCoords(propObj)
     spawnWeaponOnProp(propObj, coords, wHash)
-
+    FreezePlayer()
     Wait(500)
     StartCamOnWeapon(wepObj, Config.distFov)
     StartPromptThread()
