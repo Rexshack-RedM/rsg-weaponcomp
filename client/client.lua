@@ -78,14 +78,6 @@ local function GetAvailableComponents(weaponName, wHash)
     return merged
 end
 
-local function CalculatePrice(selection)
-    local total = 0
-    for cat, _ in pairs(selection) do
-        total = total + (Config.price[cat] or 0)
-    end
-    return total
-end
-
 local function CanPlacePropHere(pos)
     for _,p in ipairs(Config.PlayerProps) do
         if #(pos - vector3(p.x,p.y,p.z)) < 1.3 then return false end
@@ -690,34 +682,27 @@ function MainWeaponMenu(wname, wHash, serial, propid)
             OpenTintsMenu(wname, wHash, serial)
 
         elseif data.current.value == 'buy' then
-            local price = CalculatePrice(selectedCache)
-            if price > 0 then
+            if next(selectedCache) then
                 TriggerEvent('rsg-weaponcomp:client:ExitCam')
-                TriggerServerEvent('rsg-weaponcomp:server:price',
-                    price, wHash, serial, selectedCache, selectedLabels
+                TriggerServerEvent('rsg-weaponcomp:server:setComponents',
+                    wHash, serial, selectedCache, selectedLabels
                 )
                 selectedCache  = {}
                 selectedLabels = {}
-                lib.notify({ title=locale('cl_notify_9'), description="$"..price, type="success" })
                 menu.close()
             else
                 lib.notify({ title=locale('cl_notify_10'), type="error" })
             end
         elseif data.current.value == 'reset' then
             RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getItemBySerial', function(comp)
-                if not comp then return TriggerEvent('rsg-weaponcomp:client:ExitCam') end
                 local totalComps = comp.components or {}
-
-                local price = (CalculatePrice(totalComps) * Config.RemovePrice)
-
-                if price > 0 then
+                if next(totalComps) then
                     TriggerEvent('rsg-weaponcomp:client:ExitCam')
-                    TriggerServerEvent('rsg-weaponcomp:server:price',
-                        price, wHash, serial, nil, nil
+                    TriggerServerEvent('rsg-weaponcomp:server:removeComponents',
+                        wHash, serial
                     )
                     selectedCache  = {}
                     selectedLabels = {}
-                    lib.notify({ title=locale('cl_notify_11'), description="$"..price, type="success" })
                     menu.close()
                 else
                     lib.notify({ title=locale('cl_notify_12'), type="error" })
@@ -943,7 +928,7 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
         ingunZone = false
     end
     PackingUpProps[propid] = false
-    TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)
+    TriggerServerEvent('rsg-weaponcomp:server:additem')
 end)
 
 ---------------------------------------------

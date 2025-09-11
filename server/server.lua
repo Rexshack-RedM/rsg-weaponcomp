@@ -245,10 +245,11 @@ end)
 ---------------------------------------------
 -- add item
 RegisterServerEvent('rsg-weaponcomp:server:additem')
-AddEventHandler('rsg-weaponcomp:server:additem', function(item, amount)
+AddEventHandler('rsg-weaponcomp:server:additem', function()
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
+    local item, amount = Config.Gunsmithitem, 1
     Player.Functions.AddItem(item, amount)
     TriggerClientEvent('rNotify:ShowAdvancedRightNotification', src, amount .." x "..RSGCore.Shared.Items[item].label, "generic_textures" , "tick" , "COLOR_PURE_WHITE", 4000)
 end)
@@ -316,24 +317,77 @@ local function saveWeaponComponents(serial, comps, compslabel, Player)
     TriggerEvent('rsg-log:server:CreateLog', Config.WebhookName, Config.WebhookTitle, Config.WebhookColour, msg)
 end
 
-RegisterServerEvent('rsg-weaponcomp:server:price')
-AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, serial, selectedCache, selectedLabels)
+local function CalculatePrice(selection)
+    local total = 0
+    for cat, _ in pairs(selection or {}) do
+        total = total + (Config.price[cat] or 0)
+    end
+    return total
+end
+
+RegisterServerEvent('rsg-weaponcomp:server:setComponents', function(objecthash, serial, selectedCache, selectedLabels)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
+    
     local currentCash = Player.Functions.GetMoney(Config.PaymentType)
+    local price = CalculatePrice(selectedCache)
+    
     if currentCash < price then
-        TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_10', price), description = locale('sv_lang_11'), type = 'error' })
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = locale('sv_lang_10', price),
+            description = locale('sv_lang_11'),
+            type = 'error'
+        })
         TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
         return
     end
-
+    
     Player.Functions.RemoveMoney(Config.PaymentType, price)
-    -- print(objecthash, serial, selectedCache, json.encode(selectedCache))
-
     saveWeaponComponents(serial, selectedCache, selectedLabels, Player)
     TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
-    TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_12', price), description = locale('sv_lang_13'), type = 'inform' })
+    
+    TriggerClientEvent('ox_lib:notify', src, {
+        title = locale('cl_notify_9'),
+        description = '$' .. price,
+        type = 'success',
+        duration = 5000,
+    })
+end)
+
+RegisterNetEvent('rsg-weaponcomp:server:removeComponents', function(objecthash, serial)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player then return end
+    
+    local item = GetWeaponItemEntry(Player, serial)
+    if not item then
+        return
+    end
+
+    local currentCash = Player.Functions.GetMoney(Config.PaymentType)
+    local price = CalculatePrice(item.info?.componentshash) * Config.RemovePrice
+    
+    if currentCash < price then
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = locale('sv_lang_10', price),
+            description = locale('sv_lang_11'),
+            type = 'error'
+        })
+        TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
+        return
+    end
+    
+    Player.Functions.RemoveMoney(Config.PaymentType, price)
+    saveWeaponComponents(serial, nil, nil, Player)
+    TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
+    
+    TriggerClientEvent('ox_lib:notify', src, {
+        title = locale('cl_notify_11'),
+        description = '$' .. price,
+        type = 'success',
+        duration = 5000,
+    })
 end)
 
 --------------------------------------------
