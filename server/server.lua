@@ -245,10 +245,11 @@ end)
 ---------------------------------------------
 -- add item
 RegisterServerEvent('rsg-weaponcomp:server:additem')
-AddEventHandler('rsg-weaponcomp:server:additem', function(item, amount)
+AddEventHandler('rsg-weaponcomp:server:additem', function()
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
+    local item, amount = Config.Gunsmithitem, 1
     Player.Functions.AddItem(item, amount)
     TriggerClientEvent('rNotify:ShowAdvancedRightNotification', src, amount .." x "..RSGCore.Shared.Items[item].label, "generic_textures" , "tick" , "COLOR_PURE_WHITE", 4000)
 end)

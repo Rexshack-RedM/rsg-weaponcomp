@@ -943,7 +943,7 @@ RegisterNetEvent('rsg-weaponcomp:client:packupgunsite', function(propid)
         ingunZone = false
     end
     PackingUpProps[propid] = false
-    TriggerServerEvent('rsg-weaponcomp:server:additem', Config.Gunsmithitem, 1)
+    TriggerServerEvent('rsg-weaponcomp:server:additem')
 end)
 
 ---------------------------------------------
