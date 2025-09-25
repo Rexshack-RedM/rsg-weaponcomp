@@ -105,7 +105,7 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
     local Player = RSGCore.Functions.GetPlayer(source)
     if not Player then cb(nil); return end
 
-    for _, item in ipairs(Player.PlayerData.items) do
+    for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon'
         and item.info
         and item.info.serie == serial
