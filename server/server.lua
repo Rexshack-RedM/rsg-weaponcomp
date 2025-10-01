@@ -24,7 +24,7 @@ end)
 
 -- Helper para buscar el item de arma por serie
 local function GetWeaponItemEntry(Player, serial)
-    for _, item in ipairs(Player.PlayerData.items) do
+    for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon'
         and item.info
         and item.info.serie == serial
@@ -91,7 +91,7 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getItemBySerial', functi
     local Player = RSGCore.Functions.GetPlayer(source)
     if not Player then cb(nil); return end
 
-    for _, item in ipairs(Player.PlayerData.items) do
+    for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info and item.info.serie == serial then
             cb({ components = item.info.componentshash})
             return
@@ -105,7 +105,7 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
     local Player = RSGCore.Functions.GetPlayer(source)
     if not Player then cb(nil); return end
 
-    for _, item in ipairs(Player.PlayerData.items) do
+    for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon'
         and item.info
         and item.info.serie == serial
@@ -297,7 +297,7 @@ end)
 -------------------------------------------
 local function saveWeaponComponents(serial, comps, compslabel, Player)
 
-    for _, item in ipairs(Player.PlayerData.items) do
+    for _, item in pairs(Player.PlayerData.items) do
         if item.type == 'weapon' and item.info.serie == serial then
             item.info.componentshash = (type(comps) == "table" and next(comps)) and comps or nil
             item.info.components = (type(compslabel) == "table" and next(compslabel)) and compslabel or nil
