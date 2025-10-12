@@ -1,50 +1,92 @@
-# ADD OPTION IN YOUR MENU FOR MODIFY COMP WEAPON
+<img width="2948" height="497" alt="rsg_framework" src="https://github.com/user-attachments/assets/638791d8-296d-4817-a596-785325c1b83a" />
 
-Basically it would be doing a debug, I think I am very organized and my programming is easy to read
-- open event with item
-- basic functions
-- functions apply
-- Load for inv or command /loadweapon and load selection in menu
-- Main Menu
-- Menu for options
-- Function cam
-- Event cam
-- Inspection extras
-- Extras others off for command
-- Start, Stop resource
+# 🔧 rsg-weaponcomp
+**Weapon components & customization (RSG Core).**
 
-# in config, 
-- Config.RemovePrice (0 - 1) = 100 % cost remove base price
-- can show stats in /w_inspect
-- Config permision command acces menu
-- change prices 
-- all data for components, material and engraving
+![Platform](https://img.shields.io/badge/platform-RedM-darkred)
+![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-# Commands
+> Open the customization flow **with an item** and **load selections via inventory or `/loadweapon`**. Includes camera helpers and menu pages for options.
 
-```
-/loadweapon -- refresh skin weapon
-/w_inspect -- inspect weapon need item weapon_repair_kit
-```
+---
 
-# add sql
-```sql
-CREATE TABLE `player_weapons_custom` (
-    `gunsiteid` VARCHAR(20) NOT NULL,
-    `propid` VARCHAR(20) NOT NULL,
-    `citizenid` VARCHAR(50) NOT NULL,
-    `item` VARCHAR(50) NOT NULL,
-    `propdata` LONGTEXT NOT NULL,
-    PRIMARY KEY (`gunsiteid`)
-);
-```
-# add item
+## 🛠️ Dependencies
+- **rsg-core** (framework)  
+- **ox_lib** (notifications & locale)  
+- **oxmysql** (database)
+
+**License:** GPL‑3.0
+
+---
+
+## ✨ What’s in this resource
+- **Open event with item** (uses a usable item to start the flow)  
+- **Basic functions**  
+- **Functions apply** (apply selected components/finishes)  
+- **Load for inventory or command** — `/loadweapon` and load selection in menu  
+- **Main Menu**  
+- **Menu for options** (components/finishes)  
+- **Function cam** (helper camera)  
+- **Event cam** (camera events)  
+- **Inspection extras**
+- **Extras others off for command**  
+- **Start, Stop resource**
+
+> ✅ Verified in code:  
+> • `Config.Gunsmithitem = 'gunsmith'` (usable item)  
+> • `Config.Gunsmithprop = \`p_gunsmithprops09x\`` (placement prop)  
+> • `Config.PaymentType = 'cash' | 'bloodmoney'`  
+> • Server registers the **usable item** and provides **`/loadweapon`**.  
+> • No `/w_inspect` command found in this repository.
+
+---
+
+## ⚙️ Configuration (`config.lua`)
 ```lua
-    gunsmith = { name = 'gunsmith', label = 'Gun craft', weight = 12000, type = 'item', image = 'guncraft.png', unique = false, useable = true,  shouldClose = true, description = 'Placeholder'},
+Config = {}
 
+Config.Debug           = true
+Config.PlaceDistance   = 5.0
+Config.RepairItem      = 'weapon_repair_kit'
+Config.Gunsmithrobbery = 'lockpick'
+Config.Gunsmithitem    = 'gunsmith'
+Config.Gunsmithprop    = `p_gunsmithprops09x`
+Config.MaxGunsites     = 1
+Config.MaxWeapon       = 1
+Config.PaymentType     = 'cash' -- or 'bloodmoney'
+
+-- Camera offsets
+Config.distBack = 0.7
+Config.distSide = 0.13
+Config.distUp   = 0.05
+Config.distFov  = 60.0
 ```
 
-# change inventory/html/app.js
+> Use the **`gunsmith`** item to open the customization flow. Use **`/loadweapon`** to reapply saved selections.
+
+---
+
+## 🕹️ Command
+| Command | Description |
+|--------|-------------|
+| `/loadweapon` | Load/reapply current selection to the weapon in hand. |
+
+---
+
+## 📂 Installation
+1. Drop `rsg-weaponcomp` in `resources/[rsg]`.  
+2. Ensure database (oxmysql) is running.  
+3. Add to `server.cfg`:
+   ```cfg
+   ensure ox_lib
+   ensure oxmysql
+   ensure rsg-core
+   ensure rsg-weaponcomp
+   ```
+4. Restart the server.
+
+---
+## change inventory/html/app.js
 - https://github.com/Rexshack-RedM/rsg-inventory/blob/main/html/app.js#L992C1-L1016C11
 ```js
 generateTooltipContent(item) {
@@ -96,10 +138,16 @@ generateTooltipContent(item) {
 - [rsg-appearance](https://github.com/Rexshack-RedM/rsg-appearance)
 - [vorp_weaponsv2](https://github.com/VORPCORE/vorp_weaponsv2) -- VORPCORE
 - [qc_weapModifier](https://github.com/Artmines/qc_weapModifier) -- QUANTUM CORE
+---
 
-# Also thank everyone who collaborated during the development, has tested it or participated:
-- [marcuzz](https://github.com/realmarcuzz/), [rms_dnb](https://github.com/RMS-dnb/), [rexshack](https://github.com/Rexshack-RedM/), [philmcraken](https://github.com/mrskunky69/), [Sadicius](https://github.com/Sadicius),
-- [jackp_](https://github.com/Jewsie/), [ttv_artmines_playz](https://github.com/Artmines/), [salahkham](https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg),
-- and there are many others...
-
-# For RSG
+## 💎 Credits
+- **marcuzz** — 🔗 https://github.com/realmarcuzz/  
+- **rms_dnb** — 🔗 https://github.com/RMS-dnb/
+- **Sadicius** — 🔗 https://github.com/Sadicius  
+- **jackp_ (Jewsie)** — 🔗 https://github.com/Jewsie/  
+- **artmines** — 🔗 https://github.com/Artmines/
+- **Ashley Inkham (YouTube)** — 🔗 https://www.youtube.com/channel/UC_-sYXe5B4qInE_ZGw6DITg
+- **RexshackGaming / RSG Framework** — 🔗 https://github.com/Rexshack-RedM
+- **RSG / Rexshack‑RedM** — adaptation & maintenance  
+- **Community contributors & translators**  
+- License: **GPL‑3.0**
