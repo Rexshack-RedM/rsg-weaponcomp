@@ -1,48 +1,78 @@
 local confirmed
 local heading
-local CancelPrompt, SetPrompt, RotateLeftPrompt, RotateRightPrompt
 local PromptPlacerGroup = GetRandomIntInRange(0, 0xffffff)
+local RSGCore = exports['rsg-core']:GetCoreObject()
 lib.locale()
 
+-- prompt controls
 CreateThread(function()
-    CancelPrompt = PromptRegisterBegin()
-    PromptSetControlAction(CancelPrompt, 0xF84FA74F)
-    PromptSetText(CancelPrompt, CreateVarString(10, 'LITERAL_STRING', locale('cl_promp_1')))
-    PromptSetEnabled(CancelPrompt, true)
-    PromptSetVisible(CancelPrompt, true)
-    PromptSetHoldMode(CancelPrompt, true)
-    PromptSetGroup(CancelPrompt, PromptPlacerGroup)
-    PromptRegisterEnd(CancelPrompt)
-
-    SetPrompt = PromptRegisterBegin()
-    PromptSetControlAction(SetPrompt, 0xC7B5340A)
-    PromptSetText(SetPrompt, CreateVarString(10, 'LITERAL_STRING', locale('cl_promp_2')))
-    PromptSetEnabled(SetPrompt, true)
-    PromptSetVisible(SetPrompt, true)
-    PromptSetHoldMode(SetPrompt, true)
-    PromptSetGroup(SetPrompt, PromptPlacerGroup)
-    PromptRegisterEnd(SetPrompt)
-
-    RotateLeftPrompt = PromptRegisterBegin()
-    PromptSetControlAction(RotateLeftPrompt, 0xA65EBAB4)
-    PromptSetText(RotateLeftPrompt, CreateVarString(10, 'LITERAL_STRING', locale('cl_promp_3')))
-    PromptSetEnabled(RotateLeftPrompt, true)
-    PromptSetVisible(RotateLeftPrompt, true)
-    PromptSetStandardMode(RotateLeftPrompt, true)
-    PromptSetGroup(RotateLeftPrompt, PromptPlacerGroup)
-    PromptRegisterEnd(RotateLeftPrompt)
-
-    RotateRightPrompt = PromptRegisterBegin()
-    PromptSetControlAction(RotateRightPrompt, 0xDEB34313)
-    PromptSetText(RotateRightPrompt, CreateVarString(10, 'LITERAL_STRING', locale('cl_promp_4')))
-    PromptSetEnabled(RotateRightPrompt, true)
-    PromptSetVisible(RotateRightPrompt, true)
-    PromptSetStandardMode(RotateRightPrompt, true)
-    PromptSetGroup(RotateRightPrompt, PromptPlacerGroup)
-    PromptRegisterEnd(RotateRightPrompt)
+    Set()
+    Del()
+    RotateLeft()
+    RotateRight()
 end)
 
-local function RotationToDirection(rotation)
+function Del()
+    CreateThread(function()
+        local str = locale('cl_promp_1')
+        CancelPrompt = PromptRegisterBegin()
+        PromptSetControlAction(CancelPrompt, 0xF84FA74F)
+        str = CreateVarString(10, 'LITERAL_STRING', str)
+        PromptSetText(CancelPrompt, str)
+        PromptSetEnabled(CancelPrompt, true)
+        PromptSetVisible(CancelPrompt, true)
+        PromptSetHoldMode(CancelPrompt, true)
+        PromptSetGroup(CancelPrompt, PromptPlacerGroup)
+        PromptRegisterEnd(CancelPrompt)
+    end)
+end
+
+function Set()
+    CreateThread(function()
+        local str = locale('cl_promp_2')
+        SetPrompt = PromptRegisterBegin()
+        PromptSetControlAction(SetPrompt, 0xC7B5340A)
+        str = CreateVarString(10, 'LITERAL_STRING', str)
+        PromptSetText(SetPrompt, str)
+        PromptSetEnabled(SetPrompt, true)
+        PromptSetVisible(SetPrompt, true)
+        PromptSetHoldMode(SetPrompt, true)
+        PromptSetGroup(SetPrompt, PromptPlacerGroup)
+        PromptRegisterEnd(SetPrompt)
+    end)
+end
+
+function RotateLeft()
+    CreateThread(function()
+        local str = locale('cl_promp_3')
+        RotateLeftPrompt = PromptRegisterBegin()
+        PromptSetControlAction(RotateLeftPrompt, 0xA65EBAB4)
+        str = CreateVarString(10, 'LITERAL_STRING', str)
+        PromptSetText(RotateLeftPrompt, str)
+        PromptSetEnabled(RotateLeftPrompt, true)
+        PromptSetVisible(RotateLeftPrompt, true)
+        PromptSetStandardMode(RotateLeftPrompt, true)
+        PromptSetGroup(RotateLeftPrompt, PromptPlacerGroup)
+        PromptRegisterEnd(RotateLeftPrompt)
+    end)
+end
+
+function RotateRight()
+    CreateThread(function()
+        local str = locale('cl_promp_4')
+        RotateRightPrompt = PromptRegisterBegin()
+        PromptSetControlAction(RotateRightPrompt, 0xDEB34313)
+        str = CreateVarString(10, 'LITERAL_STRING', str)
+        PromptSetText(RotateRightPrompt, str)
+        PromptSetEnabled(RotateRightPrompt, true)
+        PromptSetVisible(RotateRightPrompt, true)
+        PromptSetStandardMode(RotateRightPrompt, true)
+        PromptSetGroup(RotateRightPrompt, PromptPlacerGroup)
+        PromptRegisterEnd(RotateRightPrompt)
+    end)
+end
+
+function RotationToDirection(rotation)
     local adjustedRotation =
     {
         x = (math.pi / 180) * rotation.x,
@@ -58,7 +88,7 @@ local function RotationToDirection(rotation)
     return direction
 end
 
-local function DrawPropAxes(prop)
+function DrawPropAxes(prop)
     local propForward, propRight, propUp, propCoords = GetEntityMatrix(prop)
 
     local propXAxisEnd = propCoords + propRight * 0.20
@@ -70,7 +100,7 @@ local function DrawPropAxes(prop)
     DrawLine(propCoords.x, propCoords.y, propCoords.z + 0.1, propZAxisEnd.x, propZAxisEnd.y, propZAxisEnd.z, 0, 0, 255, 255)
 end
 
-local function RayCastGamePlayCamera(distance)
+function RayCastGamePlayCamera(distance)
     local cameraRotation = GetGameplayCamRot()
     local cameraCoord = GetGameplayCamCoord()
     local direction = RotationToDirection(cameraRotation)
@@ -85,11 +115,14 @@ local function RayCastGamePlayCamera(distance)
 end
 
 local function placeProp(propmodel, item, gunsitename, gunsiteid)
-    local propModel = joaat(propmodel)
+    prop = joaat(propmodel)
     heading = 0.0
     confirmed = false
 
-    lib.requestModel(propModel)
+    RequestModel(prop)
+    while not HasModelLoaded(prop) do
+        Wait(0)
+    end
 
     local hit, coords, entity
 
@@ -98,17 +131,17 @@ local function placeProp(propmodel, item, gunsitename, gunsiteid)
         Wait(0)
     end
 
-    local propObj = CreateObject(propModel, coords.x, coords.y, coords.z, true, false, true)
+    prop = CreateObject(prop, coords.x, coords.y, coords.z, true, false, true)
 
     CreateThread(function()
         while not confirmed do
             hit, coords, entity = RayCastGamePlayCamera(1000.0)
 
-            SetEntityCoordsNoOffset(propObj, coords.x, coords.y, coords.z, false, false, false, true)
-            FreezeEntityPosition(propObj, true)
-            SetEntityCollision(propObj, false, false)
-            SetEntityAlpha(propObj, 150, false)
-            DrawPropAxes(propObj)
+            SetEntityCoordsNoOffset(prop, coords.x, coords.y, coords.z, false, false, false, true)
+            FreezeEntityPosition(prop, true)
+            SetEntityCollision(prop, false, false)
+            SetEntityAlpha(prop, 150, false)
+            DrawPropAxes(prop)
             Wait(0)
 
             local PropPlacerGroupName  = CreateVarString(10, 'LITERAL_STRING', locale('cl_promp_5'))
@@ -126,13 +159,13 @@ local function placeProp(propmodel, item, gunsitename, gunsiteid)
                 heading = 360.0
             end
 
-            SetEntityHeading(propObj, heading)
+            SetEntityHeading(prop, heading)
 
             if PromptHasHoldModeCompleted(SetPrompt) then
                 confirmed = true
-                SetEntityAlpha(propObj, 255, false)
-                SetEntityCollision(propObj, true, true)
-                DeleteObject(propObj)
+                SetEntityAlpha(prop, 255, false)
+                SetEntityCollision(prop, true, true)
+                DeleteObject(prop)
                 if item == Config.Gunsmithitem then
                     TriggerEvent('rsg-weaponcomp:client:setupgunzone', propmodel, item, coords, heading)
                 else
@@ -141,8 +174,8 @@ local function placeProp(propmodel, item, gunsitename, gunsiteid)
             end
 
             if PromptHasHoldModeCompleted(CancelPrompt) then
-                DeleteObject(propObj)
-                SetModelAsNoLongerNeeded(propModel)
+                DeleteObject(prop)
+                SetModelAsNoLongerNeeded(prop)
                 break
             end
 
@@ -151,5 +184,18 @@ local function placeProp(propmodel, item, gunsitename, gunsiteid)
 end
 
 RegisterNetEvent('rsg-weaponcomp:client:createprop', function(data)
+    -- Check job requirement
+    if Config.RequiredJob then
+        local Player = RSGCore.Functions.GetPlayerData()
+        if not Player or Player.job.name ~= Config.RequiredJob then
+            lib.notify({
+                title = 'Access Denied',
+                description = 'You need to be a ' .. Config.RequiredJob .. ' to use this.',
+                type = 'error'
+            })
+            return
+        end
+    end
+    
     placeProp(data.propmodel, data.item, data.gunsitename, data.gunsiteid)
 end)

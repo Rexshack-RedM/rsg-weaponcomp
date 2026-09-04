@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gunsmith</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- App starts with display:none via inline style AND hidden class -->
+    <div id="app" class="hidden" style="display: none;">
+        <!-- Background overlay -->
+        <div class="bg-overlay"></div>
+        
+        <!-- Main Container -->
+        <div class="gunsmith-container">
+            <!-- Header -->
+            <div class="header">
+                <div class="title-container">
+                    <h1 class="title">WEAPON WORKSHOP</h1>
+                </div>
+            </div>
+
+            <!-- Weapon Display Area -->
+            <div class="weapon-display">
+                <div class="weapon-badge">
+                    <i class="fas fa-crosshairs"></i>
+                </div>
+                <div class="weapon-info">
+                    <div class="weapon-name" id="weaponName">CATTLEMAN REVOLVER</div>
+                    <div class="weapon-serial" id="weaponSerial"><i class="fas fa-fingerprint"></i> Serial: #000000</div>
+                </div>
+            </div>
+
+            <!-- Main Menu -->
+            <div id="mainMenu" class="menu-panel">
+                <div class="menu-header">
+                    <div class="menu-corner tl"></div>
+                    <div class="menu-corner tr"></div>
+                    <div class="menu-title">
+                        <i class="fas fa-tools"></i>
+                        MODIFICATIONS
+                        <i class="fas fa-tools"></i>
+                    </div>
+                </div>
+                <div class="menu-items" id="mainMenuItems">
+                </div>
+            </div>
+
+            <!-- Component Selection Menu -->
+            <div id="componentMenu" class="menu-panel hidden">
+                <div class="menu-header">
+                    <div class="menu-corner tl"></div>
+                    <div class="menu-corner tr"></div>
+                    <div class="menu-title">
+                        <i class="fas fa-cogs"></i>
+                        <span id="componentMenuTitle">COMPONENTS</span>
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                </div>
+                <div class="component-list" id="componentList">
+                </div>
+                <div class="menu-footer">
+                    <button class="btn-western btn-back" id="btnBack">
+                        <i class="fas fa-arrow-left"></i>
+                        BACK TO MENU
+                    </button>
+                </div>
+            </div>
+
+            <!-- Price Summary -->
+            <div class="price-panel">
+                <div class="price-frame">
+                    <div class="price-label">
+                        <i class="fas fa-coins"></i>
+                        TOTAL COST
+                    </div>
+                    <div class="price-value" id="totalPrice">$0.00</div>
+                </div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="action-bar">
+                <button class="btn-western btn-purchase" id="btnPurchase">
+                    <i class="fas fa-check-circle"></i>
+                    <span>PURCHASE</span>
+                </button>
+                <button class="btn-western btn-reset" id="btnReset">
+                    <i class="fas fa-undo"></i>
+                    <span>RESET</span>
+                </button>
+                <button class="btn-western btn-exit" id="btnExit">
+                    <i class="fas fa-door-open"></i>
+                    <span>EXIT</span>
+                </button>
+            </div>
+
+            <!-- Controls Help -->
+            <div class="controls-help">
+                <div class="control-item">
+                    <span class="key"><i class="fas fa-search"></i> SCROLL</span>
+                    <span class="action">Zoom</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">C</span>
+                    <span class="action">Random View</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">V</span>
+                    <span class="action">Reset Camera</span>
+                </div>
+            </div>
+            
+            <!-- Bottom decorative line -->
+            <div class="decor-bottom">
+                <i class="fas fa-certificate"></i>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="notification" class="notification hidden">
+            <div class="notification-inner">
+                <div class="notification-icon-box">
+                    <i class="fas"></i>
+                </div>
+                <div class="notification-text-box">
+                    <span class="notification-text"></span>
+                </div>
+            </div>
+            <div class="notification-shine"></div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

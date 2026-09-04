@@ -3,30 +3,38 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 description 'rsg-weaponcomp'
-version '2.8.2'
+version '2.8.3'
 
-shared_script {
+lua54 'yes'
+
+shared_scripts {
     '@ox_lib/init.lua',
+    '@rsg-core/shared/locale.lua',
     'config.lua',
+}
+
+client_scripts {
+    'client/*.lua',
 }
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/*.lua'
+    'server/*.lua',
 }
 
-client_scripts {
-    'client/*.lua'
-}
+ui_page 'html/index.html'
 
 files {
-    'locales/*.json'
+    'html/*.html',
+    'html/*.css',
+    'html/*.js',
+    'html/**/*',
+	'locales/*.json',
 }
 
 dependencies {
-    'oxmysql',
-    'ox_lib',
     'rsg-core',
+    'ox_lib',
+    'ox_target',
+    'oxmysql',
 }
-
-lua54 'yes'
