@@ -1,6 +1,5 @@
 Config = {}
 
-Config.Debug = false
 Config.PlayerProps = {}
 
 -- Placement settings
@@ -8,14 +7,17 @@ Config.PlaceDistance = 5.0
 
 -- Items and limits
 Config.RepairItem = 'weapon_repair_kit'
-Config.Gunsmithrobbery = 'lockpick'
 Config.Gunsmithitem = 'gunsmith'
 Config.RequiredJob = nil -- Job name required to use gunsmith item (set to nil to disable)
 Config.Gunsmithprop = `p_gunsmithprops09x`
 Config.MaxGunsites = 6
-Config.MaxWeapon = 1
 Config.PaymentType = 'cash'
 Config.animationSave = 10000
+
+-- Logging (rsg-log). Set a webhook name to enable
+Config.WebhookName = nil
+Config.WebhookTitle = nil
+Config.WebhookColour = 'green'
 
 -- Zone settings
 Config.gunZoneActive = false
@@ -28,27 +30,16 @@ Config.distSide = 0.13
 Config.distUp = 0.05
 Config.distFov = 60.0
 
-Config.StartCamObj = true
 Config.showStats = true
 Config.Commandinspect = "w_inspect"
 Config.Commandloadweapon = "loadweapon"
 Config.Commandequipscope = "scope"
 Config.Commanddesequipscope = "unscope"
 
--- Blip
-Config.Blip = {
-    blipName = 'Custom Weapon',
-    blipSprite = 'blip_camp_tent',
-    blipScale = 0.2,
-    blipColour = 'BLIP_MODIFIER_MP_COLOR_6',
-}
-
 -- Prompt controls
 Config.prompts = {
     zoIn = 0x62800C92,
     zoOut = 0x8BDE7443,
-    rotL = 0x8CC9CD42,
-    rotR = 0x4CC0E2FE,
     ranPos = 0x7F8D09B8,
     re = 0x9959A6F0,
 }
@@ -56,6 +47,7 @@ Config.prompts = {
 --------------------
 -- WEAPON RESTRICTIONS
 --------------------
+-- Weapons that can not be customised at the gunsmith
 Config.WeaponRestriction = {
     'WEAPON_MELEE_CLEAVER',
     'WEAPON_MELEE_HATCHET',

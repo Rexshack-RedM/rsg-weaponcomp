@@ -98,7 +98,8 @@ const App = {
                     this.hide();
                     break;
                 case 'updatePrice':
-                    this.updatePriceDisplay(data.price);
+                    this.totalPrice = Number(data.price) || 0;
+                    this.updatePriceDisplay(this.totalPrice);
                     break;
                 case 'notify':
                     this.showNotification(data.type, data.message);
@@ -107,7 +108,24 @@ const App = {
         });
     },
 
+    locales: {},
+
+    t(key, fallback) {
+        return (this.locales && this.locales[key]) || fallback || key;
+    },
+
+    applyLocales() {
+        document.querySelectorAll('[data-i18n]').forEach((el) => {
+            const key = el.getAttribute('data-i18n');
+            if (this.locales[key]) el.textContent = this.locales[key];
+        });
+    },
+
     open(data) {
+        if (data.locales) {
+            this.locales = data.locales;
+            this.applyLocales();
+        }
         
         
         // Reset state
@@ -131,10 +149,10 @@ const App = {
         const weaponSerialEl = document.getElementById('weaponSerial');
         
         if (weaponNameEl) {
-            weaponNameEl.textContent = data.weaponName || 'UNKNOWN WEAPON';
+            weaponNameEl.textContent = data.weaponName || this.t('ui_unknown_weapon', 'UNKNOWN WEAPON');
         }
         if (weaponSerialEl) {
-            weaponSerialEl.innerHTML = '<i class="fas fa-fingerprint"></i> Serial: #' + (data.serial || '000000');
+            weaponSerialEl.innerHTML = '<i class="fas fa-fingerprint"></i> ' + this.t('ui_serial', 'Serial') + ': #' + (data.serial || '000000');
         }
 
         // Build main menu
@@ -193,8 +211,8 @@ const App = {
 
     buildMainMenu() {
         const menuItems = [
-            { action: 'parts', icon: 'fa-wrench', label: 'Parts & Attachments' },
-            { action: 'packup', icon: 'fa-box-open', label: 'Pack Up Workbench' }
+            { action: 'parts', icon: 'fa-wrench', label: this.t('ui_parts', 'Parts & Attachments') },
+            { action: 'packup', icon: 'fa-box-open', label: this.t('ui_packup', 'Pack Up Workbench') }
         ];
 
         const container = document.getElementById('mainMenuItems');
@@ -215,7 +233,7 @@ const App = {
     handleMenuClick(action) {
         switch (action) {
             case 'parts':
-                this.showComponentMenu('ALL PARTS & ATTACHMENTS');
+                this.showComponentMenu(this.t('ui_all_parts', 'ALL PARTS & ATTACHMENTS'));
                 break;
             case 'packup':
                 this.packup();
@@ -290,7 +308,7 @@ const App = {
         if (categories.length === 0) {
             container.innerHTML = '<div class="component-category">' +
                 '<p style="text-align: center; color: var(--text-dim);">' +
-                'No options available for this weapon.' +
+                this.t('ui_no_options', 'No options available for this weapon.') +
                 '</p></div>';
             return;
         }
@@ -363,7 +381,6 @@ const App = {
         }
 
         // Calculate initial price with saved components
-        this.calculatePrice();
         
         // Bind drag events to sliders
         this.bindSliderDragEvents();
@@ -408,7 +425,6 @@ const App = {
                 this.selectedLabels[category] = selectedItem.label || selectedItem.name;
 
                 this.updateSliderUI(category, newIndex, totalItems, selectedItem);
-                this.calculatePrice();
 
                 this.postToGame('componentChanged', {
                     category: category,
@@ -451,7 +467,6 @@ const App = {
                 this.selectedLabels[category] = selectedItem.label || selectedItem.name;
 
                 this.updateSliderUI(category, newIndex, totalItems, selectedItem);
-                this.calculatePrice();
 
                 this.postToGame('componentChanged', {
                     category: category,
@@ -501,7 +516,6 @@ const App = {
         this.updateSliderUI(category, currentIndex, items.length, selectedItem);
 
         // Calculate new price
-        this.calculatePrice();
 
         // Send to game
         this.postToGame('componentChanged', {
@@ -527,28 +541,6 @@ const App = {
         if (thumbEl) thumbEl.style.left = progress + '%';
         
         categoryEl.setAttribute('data-index', currentIndex);
-    },
-
-    calculatePrice() {
-        let total = 0;
-        const categories = Object.keys(this.selectedComponents);
-        
-        for (let i = 0; i < categories.length; i++) {
-            const cat = categories[i];
-            // Only count if there's a valid selection (not empty/undefined)
-            if (this.selectedComponents[cat] && this.selectedComponents[cat].name) {
-                const price = this.prices[cat];
-                if (typeof price === 'number') {
-                    total += price;
-                }
-            }
-        }
-        
-        this.totalPrice = total;
-        this.updatePriceDisplay(total);
-        
-        // Send price update to game
-        this.postToGame('updatePrice', { price: total });
     },
 
     updatePriceDisplay(price) {
@@ -578,32 +570,11 @@ const App = {
     },
 
     purchase() {
-        if (this.totalPrice <= 0 || Object.keys(this.selectedComponents).length === 0) {
-            this.showNotification('error', 'No modifications selected!');
+        if (this.totalPrice <= 0) {
+            this.showNotification('error', this.t('ui_no_mods_selected', 'No modifications selected!'));
             return;
         }
-
-        // Build simple data objects (no circular refs)
-        const cacheToSend = {};
-        const labelsToSend = {};
-        
-        const keys = Object.keys(this.selectedComponents);
-        for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            const sel = this.selectedComponents[key];
-            cacheToSend[key] = {
-                index: sel.index,
-                hash: sel.hash,
-                name: sel.name
-            };
-            labelsToSend[key] = this.selectedLabels[key] || sel.name;
-        }
-
-        this.postToGame('purchase', {
-            selectedCache: cacheToSend,
-            selectedLabels: labelsToSend,
-            price: this.totalPrice
-        });
+        this.postToGame('purchase', {});
     },
 
     reset() {

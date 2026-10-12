@@ -1,726 +1,431 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 lib.locale()
 
-local WeaponsDataFile = 'weapons_data.json'
-local PropsLoaded = false
+----------------------------------------
+-- Component whitelist (built from config)
+----------------------------------------
+local ValidComps = {}   -- ValidComps[category][componentName] = true
+local DefaultComps = {} -- first option of every list = the factory part
 
-----------------------------------------
--- JSON File Utilities
-----------------------------------------
-local function getResourceFilePath(filename)
-    return GetResourcePath(GetCurrentResourceName()) .. '/' .. filename
+local function indexComponents(source)
+    for cat, list in pairs(source or {}) do
+        ValidComps[cat] = ValidComps[cat] or {}
+        for i, comp in ipairs(list) do
+            ValidComps[cat][comp] = true
+            if i == 1 then DefaultComps[comp] = true end
+        end
+    end
 end
 
-local function loadJsonFile(filename)
-    local path = getResourceFilePath(filename)
-    local file = io.open(path, 'r')
-    if file then
-        local content = file:read('*all')
-        file:close()
-        return json.decode(content) or {}
-    end
-    return {}
-end
+for _, groupComps in pairs(Config.Shared or {}) do indexComponents(groupComps) end
+for _, weaponComps in pairs(Config.Specific or {}) do indexComponents(weaponComps) end
 
-local function saveJsonFile(filename, data)
-    local path = getResourceFilePath(filename)
-    local file = io.open(path, 'w')
-    if file then
-        file:write(json.encode(data, { indent = true }))
-        file:close()
-        return true
-    end
+----------------------------------------
+-- Helpers
+----------------------------------------
+local RestrictedWeapons = {}
+for _, name in ipairs(Config.WeaponRestriction or {}) do RestrictedWeapons[joaat(name)] = true end
+
+local Cooldowns = {}
+
+local function onCooldown(src, key, ms)
+    local now = GetGameTimer()
+    Cooldowns[src] = Cooldowns[src] or {}
+    if Cooldowns[src][key] and now - Cooldowns[src][key] < ms then return true end
+    Cooldowns[src][key] = now
     return false
 end
 
-----------------------------------------
--- Export All Weapons Data on Start
-----------------------------------------
-local function ExportAllWeaponsData()
-   
-    
-    local weaponsData = {}
-    
-    -- Fetch all weapons from player_weapons table with correct columns
-    local weapons = MySQL.query.await('SELECT id, serial, citizenid, components, components_before, price, town FROM player_weapons')
-    
-    if weapons and #weapons > 0 then
-        for _, w in ipairs(weapons) do
-            local citizenid = tostring(w.citizenid)
-            local serial = tostring(w.serial)
-            
-            if not weaponsData[citizenid] then
-                weaponsData[citizenid] = {
-                    citizenid = citizenid,
-                    weapons = {}
-                }
-            end
-            
-            -- Parse components JSON
-            local comps = {}
-            local compsBefore = {}
-            
-            if w.components and w.components ~= '' and w.components ~= '{}' then
-                comps = json.decode(w.components) or {}
-            end
-            
-            if w.components_before and w.components_before ~= '' and w.components_before ~= '{}' then
-                compsBefore = json.decode(w.components_before) or {}
-            end
-            
-            weaponsData[citizenid].weapons[serial] = {
-                id = w.id,
-                serial = serial,
-                components = comps,
-                componentsBefore = compsBefore,
-                price = tonumber(w.price) or 0,
-                town = w.town or 0
-            }
-        end
-        
-        
-    else
-       
-    end
-    
-    -- Save to JSON
-    saveJsonFile(WeaponsDataFile, weaponsData)
-    
-  
-    return weaponsData
+AddEventHandler('playerDropped', function()
+    Cooldowns[source] = nil
+end)
+
+local function notify(src, title, description, nType)
+    TriggerClientEvent('ox_lib:notify', src, {
+        title = title,
+        description = description,
+        type = nType or 'inform',
+        duration = 5000
+    })
 end
 
--- Export on resource start
-CreateThread(function()
-    Wait(2000) -- Wait for database connection
-    
-    -- Check if table exists first
-    local tableCheck = MySQL.query.await([[
-        SELECT COUNT(*) as count 
-        FROM information_schema.tables 
-        WHERE table_schema = DATABASE() 
-        AND table_name = 'player_weapons'
-    ]])
-    
-    if tableCheck and tableCheck[1] and tableCheck[1].count > 0 then
-        ExportAllWeaponsData()
-    else
-       
+local function roundMoney(value)
+    return math.floor(value * 100 + 0.5) / 100
+end
+
+local function hasRequiredJob(Player)
+    return not Config.RequiredJob or Player.PlayerData.job.name == Config.RequiredJob
+end
+
+--- Finds the weapon item a customisation applies to.
+--- Serialised weapons match on serial; melee/bows (serial == weapon hash) match on item name.
+local function findWeaponItem(Player, serial, weaponName)
+    if type(serial) ~= 'string' and type(serial) ~= 'number' then return nil end
+    serial = tostring(serial)
+
+    for _, item in pairs(Player.PlayerData.items) do
+        if item.type == 'weapon' and item.info and item.info.serie and tostring(item.info.serie) == serial then
+            return item, false
+        end
     end
-    
-    -- Load props
-    TriggerEvent('rsg-weaponcomp:server:getProps')
-    PropsLoaded = true
+
+    -- compare modulo 2^32 so signed/unsigned hash representations both match
+    local serialHash = tonumber(serial)
+    if type(weaponName) == 'string' and serialHash and (serialHash - joaat(weaponName)) % 4294967296 == 0 then
+        local wanted = weaponName:lower()
+        for _, item in pairs(Player.PlayerData.items) do
+            if item.type == 'weapon' and item.name and item.name:lower() == wanted then
+                return item, true
+            end
+        end
+    end
+
+    return nil
+end
+
+--- Returns a clean component table containing only whitelisted parts.
+local function sanitizeComponents(comps)
+    if type(comps) ~= 'table' then return nil end
+    local clean, count = {}, 0
+    for cat, comp in pairs(comps) do
+        if type(cat) == 'string' and type(comp) == 'string' and cat ~= 'FRAME_VERTDATA'
+            and ValidComps[cat] and ValidComps[cat][comp] then
+            clean[cat] = comp
+            count = count + 1
+        end
+        if count > 64 then return nil end
+    end
+    return clean
+end
+
+--- Only categories that actually change are charged; picking the factory part on an
+--- unmodified slot is free.
+local function calculateChangePrice(current, new)
+    local total = 0
+    for cat, comp in pairs(new) do
+        local changed = current[cat] ~= comp and not (current[cat] == nil and DefaultComps[comp])
+        if changed then total = total + (Config.price[cat] or 0) end
+    end
+    return roundMoney(total)
+end
+
+local function calculateRemovePrice(current)
+    local total = 0
+    for cat in pairs(current) do
+        total = total + (Config.price[cat] or 0)
+    end
+    return roundMoney(total * (Config.RemovePrice or 0.5))
+end
+
+local function buildLabels(comps)
+    local labels = {}
+    for cat, comp in pairs(comps) do labels[cat] = locale(comp) end
+    return labels
+end
+
+local function saveToDatabase(citizenid, serial, components, componentsBefore, price)
+    local params = { json.encode(components), json.encode(componentsBefore), price, serial, citizenid }
+    local updated = MySQL.update.await('UPDATE player_weapons SET components = ?, components_before = ?, price = ? WHERE serial = ? AND citizenid = ?', params)
+    if updated == 0 then
+        MySQL.insert.await('INSERT INTO player_weapons (components, components_before, price, serial, citizenid) VALUES (?, ?, ?, ?, ?)', params)
+    end
+end
+
+local function logChange(Player, serial, comps)
+    if not Config.WebhookName then return end
+    local msg = table.concat({
+        locale('sv_lang_6') .. ': **' .. Player.PlayerData.citizenid .. '**',
+        locale('sv_lang_7') .. ': **' .. tostring(Player.PlayerData.cid) .. '**',
+        locale('sv_lang_8') .. ': **' .. tostring(serial) .. '**',
+        locale('sv_lang_9') .. ': **' .. json.encode(comps) .. '**'
+    }, '\n')
+    TriggerEvent('rsg-log:server:CreateLog', Config.WebhookName, Config.WebhookTitle or locale('sv_log_title'), Config.WebhookColour or 'green', msg)
+end
+
+--- Applies a new component set to the weapon item, charges the player and persists it.
+local function applyWeaponChange(src, Player, item, serial, newComps, price, wHash)
+    local paymentType = Config.PaymentType or 'cash'
+
+    if price > 0 then
+        if Player.Functions.GetMoney(paymentType) < price then
+            notify(src, locale('sv_lang_10'), locale('sv_lang_11', price), 'error')
+            return false
+        end
+        if not Player.Functions.RemoveMoney(paymentType, price, 'weapon-customisation') then
+            return false
+        end
+    end
+
+    local before = item.info.componentshash or {}
+    item.info.componentshash = next(newComps) and newComps or nil
+    item.info.components = next(newComps) and buildLabels(newComps) or nil
+    Player.Functions.SetInventory(Player.PlayerData.items)
+
+    saveToDatabase(Player.PlayerData.citizenid, tostring(serial), newComps, before, price)
+    logChange(Player, serial, newComps)
+
+    notify(src, locale('sv_lang_12'), locale('sv_lang_13', price), 'success')
+    TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, wHash)
+    return true
+end
+
+----------------------------------------
+-- Purchase / Reset
+----------------------------------------
+RegisterNetEvent('rsg-weaponcomp:server:purchase', function(serial, wHash, weaponName, comps)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player or onCooldown(src, 'purchase', 3000) then return end
+    if type(wHash) ~= 'number' or RestrictedWeapons[wHash] then return end
+
+    local item = findWeaponItem(Player, serial, weaponName)
+    if not item then
+        notify(src, locale('cl_notify_13'), locale('cl_no_weapon'), 'error')
+        return
+    end
+
+    local newComps = sanitizeComponents(comps)
+    if not newComps or not next(newComps) then
+        notify(src, locale('ui_notify_title'), locale('cl_notify_10'), 'error')
+        return
+    end
+
+    local current = item.info.componentshash or {}
+    local price = calculateChangePrice(current, newComps)
+    if price <= 0 then
+        notify(src, locale('ui_notify_title'), locale('cl_notify_10'), 'error')
+        return
+    end
+
+    applyWeaponChange(src, Player, item, serial, newComps, price, wHash)
+end)
+
+RegisterNetEvent('rsg-weaponcomp:server:reset', function(serial, wHash, weaponName)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player or onCooldown(src, 'purchase', 3000) then return end
+    if type(wHash) ~= 'number' then return end
+
+    local item = findWeaponItem(Player, serial, weaponName)
+    if not item then
+        notify(src, locale('cl_notify_13'), locale('cl_cannot_reset'), 'error')
+        return
+    end
+
+    local current = item.info.componentshash or {}
+    if not next(current) then
+        notify(src, locale('ui_notify_title'), locale('cl_notify_12'), 'error')
+        return
+    end
+
+    applyWeaponChange(src, Player, item, serial, {}, calculateRemovePrice(current), wHash)
 end)
 
 ----------------------------------------
--- Usable Item
+-- Component lookup
 ----------------------------------------
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial, weaponName)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then return cb(nil) end
+
+    local item = findWeaponItem(Player, serial, weaponName)
+    if item and item.info.componentshash and next(item.info.componentshash) then
+        return cb({ components = item.info.componentshash })
+    end
+
+    -- Fallback to the database (e.g. inventory data lost) and sync it back
+    local row = MySQL.single.await('SELECT components FROM player_weapons WHERE serial = ? AND citizenid = ?',
+        { tostring(serial), Player.PlayerData.citizenid })
+    local comps = row and sanitizeComponents(json.decode(row.components or '{}'))
+    if comps and next(comps) then
+        if item then
+            item.info.componentshash = comps
+            item.info.components = buildLabels(comps)
+            Player.Functions.SetInventory(Player.PlayerData.items)
+        end
+        return cb({ components = comps })
+    end
+
+    cb(nil)
+end)
+
+----------------------------------------
+-- Scope
+----------------------------------------
+local function setScope(source, cb, serial, equip)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then return cb(false) end
+
+    local item = findWeaponItem(Player, serial)
+    if not item then return cb(false) end
+
+    if (item.info.equippedScope == true) == equip then
+        notify(source, nil, locale(equip and 'cl_scope_already_on' or 'cl_scope_already_off'), 'error')
+        return cb(false)
+    end
+
+    item.info.equippedScope = equip
+    Player.Functions.SetInventory(Player.PlayerData.items)
+    cb(true)
+end
+
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:equipScope', function(source, cb, serial)
+    setScope(source, cb, serial, true)
+end)
+
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:unequipScope', function(source, cb, serial)
+    setScope(source, cb, serial, false)
+end)
+
+----------------------------------------
+-- Gunsmith workbench props
+----------------------------------------
+local function syncProps(target)
+    TriggerClientEvent('rsg-weaponcomp:client:updatePropData', target or -1, Config.PlayerProps)
+end
+
+local function generateId(prefix, column)
+    while true do
+        local id = prefix .. math.random(11111111, 99999999)
+        local exists = MySQL.scalar.await(('SELECT 1 FROM player_weapons_custom WHERE %s = ?'):format(column), { id })
+        if not exists then return id end
+    end
+end
+
+local function countPlayerProps(citizenid)
+    local count = 0
+    for _, prop in ipairs(Config.PlayerProps) do
+        if prop.citizenid == citizenid then count = count + 1 end
+    end
+    return count
+end
+
+CreateThread(function()
+    local rows = MySQL.query.await('SELECT propdata FROM player_weapons_custom') or {}
+    for _, row in ipairs(rows) do
+        local data = json.decode(row.propdata)
+        if data then Config.PlayerProps[#Config.PlayerProps + 1] = data end
+    end
+    syncProps()
+end)
+
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getProps', function(_, cb)
+    cb(Config.PlayerProps)
+end)
+
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(source, cb)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    cb(Player and countPlayerProps(Player.PlayerData.citizenid) or 0)
+end)
+
 RSGCore.Functions.CreateUseableItem(Config.Gunsmithitem, function(source)
     local Player = RSGCore.Functions.GetPlayer(source)
     if not Player then return end
-    
-    -- Check job requirement
-    if Config.RequiredJob then
-        local playerJob = Player.PlayerData.job.name
-        if playerJob ~= Config.RequiredJob then
-            TriggerClientEvent('ox_lib:notify', source, {
-                title = locale('sv_lang_1') or 'Access Denied',
-                description = 'You need to be a ' .. Config.RequiredJob .. ' to use this item.',
-                type = 'error'
-            })
-            return
-        end
+
+    if not hasRequiredJob(Player) then
+        notify(source, locale('sv_access_denied'), locale('sv_job_required', Config.RequiredJob), 'error')
+        return
     end
-    
+
     TriggerClientEvent('rsg-weaponcomp:client:createprop', source, {
         propmodel = Config.Gunsmithprop,
         item = Config.Gunsmithitem
     })
 end)
 
-----------------------------------------
--- Commands
-----------------------------------------
-RSGCore.Commands.Add(Config.Commandinspect, locale('cl_lang_30') or 'Inspect weapon', {}, false, function(source)
-    TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', source)
-end)
-
-RSGCore.Commands.Add(Config.Commandloadweapon, locale('cl_lang_31') or 'Load weapon components', {}, false, function(source)
-    TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', source)
-end)
-
-RSGCore.Commands.Add('reloadweaponcomps', 'Force reload weapon components (debug)', {}, false, function(source)
+RegisterNetEvent('rsg-weaponcomp:server:createnewprop', function(coords, heading)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    
-    local ped = PlayerPedId()
-    local wHash = GetPedCurrentHeldWeapon(ped)
-    
-    if wHash == 0 or wHash == `WEAPON_UNARMED` then
-        TriggerClientEvent('ox_lib:notify', src, { type = 'error', description = 'No weapon in hand' })
+    if not Player or onCooldown(src, 'createprop', 5000) then return end
+    if type(coords) ~= 'vector3' or type(heading) ~= 'number' then return end
+    if not hasRequiredJob(Player) then return end
+
+    local citizenid = Player.PlayerData.citizenid
+    local pedCoords = GetEntityCoords(GetPlayerPed(src))
+    if #(pedCoords - coords) > (Config.PlaceDistance or 5.0) + 2.0 then
+        notify(src, locale('cl_lang_15'), locale('cl_lang_16'), 'error')
         return
     end
-    
-    local weaponInHands = exports['rsg-weapons']:weaponInHands()
-    local serial = weaponInHands and weaponInHands[wHash]
-    
-    if not serial then
-        TriggerClientEvent('ox_lib:notify', src, { type = 'error', description = 'Could not get weapon serial' })
+
+    if countPlayerProps(citizenid) >= (Config.MaxGunsites or 5) then
+        notify(src, locale('cl_lang_17'), locale('cl_lang_18'), 'error')
         return
     end
-    
-    TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', src)
-    TriggerClientEvent('ox_lib:notify', src, { type = 'success', description = 'Reloading weapon components...' })
-end)
 
-
-
-----------------------------------------
--- Helper Functions
-----------------------------------------
-local function GetWeaponItemEntry(Player, serial)
-    for _, item in ipairs(Player.PlayerData.items) do
-        if item.type == 'weapon' and item.info and item.info.serie == serial then
-            return item
-        end
-    end
-    return nil
-end
-
-local function UpdateWeaponsJson(citizenid, serial, componentData)
-    local weaponsData = loadJsonFile(WeaponsDataFile)
-    
-    if not weaponsData[citizenid] then
-        weaponsData[citizenid] = {
-            citizenid = citizenid,
-            weapons = {}
-        }
-    end
-    
-    if not weaponsData[citizenid].weapons[serial] then
-        weaponsData[citizenid].weapons[serial] = {
-            serial = serial,
-            components = {},
-            componentsBefore = {},
-            price = 0,
-            town = 0
-        }
-    end
-    
-    -- Store current as "before" and update with new
-    weaponsData[citizenid].weapons[serial].componentsBefore = weaponsData[citizenid].weapons[serial].components or {}
-    weaponsData[citizenid].weapons[serial].components = componentData.componentshash or {}
-    
-    saveJsonFile(WeaponsDataFile, weaponsData)
-end
-
--- Update or insert weapon components in database
-local function SaveWeaponToDatabase(citizenid, serial, components, componentsBefore, price, town)
-    local compsJson = json.encode(components or {})
-    local compsBeforeJson = json.encode(componentsBefore or {})
-    
-    -- Check if record exists
-    local existing = MySQL.query.await('SELECT id FROM player_weapons WHERE serial = ? AND citizenid = ?', { serial, citizenid })
-    
-    if existing and existing[1] then
-        -- Update existing record
-        MySQL.update.await('UPDATE player_weapons SET components = ?, components_before = ?, price = ?, town = ? WHERE serial = ? AND citizenid = ?', 
-            { compsJson, compsBeforeJson, price or 0, town or 0, serial, citizenid })
-    else
-        -- Insert new record
-        MySQL.insert.await('INSERT INTO player_weapons (serial, citizenid, components, components_before, price, town) VALUES (?, ?, ?, ?, ?, ?)',
-            { serial, citizenid, compsJson, compsBeforeJson, price or 0, town or 0 })
-    end
-end
-
-----------------------------------------
--- Scope Callbacks
-----------------------------------------
-RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:equipScope', function(source, cb, serial)
-    local Player = RSGCore.Functions.GetPlayer(source)
-    if not Player then return cb(false) end
-
-    local weaponItem = GetWeaponItemEntry(Player, serial)
-    if not weaponItem then return cb(false) end
-
-    if weaponItem.info.equippedScope then
-        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = locale('cl_scope_already_on') or 'Scope already equipped' })
-        return cb(false)
-    end
-
-    weaponItem.info.equippedScope = true
-    Player.Functions.SetInventory(Player.PlayerData.items)
-    cb(true)
-end)
-
-RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:unequipScope', function(source, cb, serial)
-    local Player = RSGCore.Functions.GetPlayer(source)
-    if not Player then return cb(false) end
-
-    local weaponItem = GetWeaponItemEntry(Player, serial)
-    if not weaponItem then return cb(false) end
-
-    if not weaponItem.info.equippedScope then
-        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = locale('cl_scope_already_off') or 'Scope not equipped' })
-        return cb(false)
-    end
-
-    weaponItem.info.equippedScope = false
-    Player.Functions.SetInventory(Player.PlayerData.items)
-    cb(true)
-end)
-
-----------------------------------------
--- Data Callbacks
-----------------------------------------
-RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:countprop', function(source, cb, proptype)
-    local ply = RSGCore.Functions.GetPlayer(source)
-    if not ply then return cb(0) end
-    local res = MySQL.prepare.await(
-        "SELECT COUNT(*) as count FROM player_weapons_custom WHERE citizenid = ? AND item = ?",
-        { ply.PlayerData.citizenid, proptype }
-    )
-    cb(res or 0)
-end)
-
-RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getItemBySerial', function(source, cb, serial)
-    local Player = RSGCore.Functions.GetPlayer(source)
-    if not Player then cb(nil) return end
-
-    -- Check inventory first
-    for _, item in ipairs(Player.PlayerData.items) do
-        if item.type == 'weapon' and item.info and item.info.serie == serial then
-            cb({ components = item.info.componentshash or {} })
-            return
-        end
-    end
-    
-    -- Check JSON file
-    local citizenid = Player.PlayerData.citizenid
-    local weaponsData = loadJsonFile(WeaponsDataFile)
-    if weaponsData[citizenid] and weaponsData[citizenid].weapons and weaponsData[citizenid].weapons[serial] then
-        local comps = weaponsData[citizenid].weapons[serial].components or {}
-        if next(comps) then
-            cb({ components = comps })
-            return
-        end
-    end
-    
-    -- Check database
-    local dbRecord = MySQL.query.await('SELECT components FROM player_weapons WHERE serial = ?', { serial })
-    if dbRecord and dbRecord[1] and dbRecord[1].components then
-        local comps = json.decode(dbRecord[1].components) or {}
-        if next(comps) then
-            cb({ components = comps })
+    for _, prop in ipairs(Config.PlayerProps) do
+        if #(coords - vector3(prop.x, prop.y, prop.z)) < (Config.gunZoneSize or 3.0) then
+            notify(src, locale('cl_lang_19'), locale('cl_lang_20'), 'error')
             return
         end
     end
 
-    cb(nil)
-end)
+    if not Player.Functions.RemoveItem(Config.Gunsmithitem, 1, nil, 'gunsmith-placed') then return end
+    TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.Gunsmithitem], 'remove', 1)
 
-RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(source, cb, serial)
-    local Player = RSGCore.Functions.GetPlayer(source)
-    if not Player then cb(nil) return end
-
-    local loadedComps = nil
-    local citizenid = Player.PlayerData.citizenid
-    
-    -- Check inventory items first
-    for _, item in ipairs(Player.PlayerData.items) do
-        if item.type == 'weapon' and item.info and item.info.serie == serial then
-            loadedComps = item.info.componentshash or {}
-            break
-        end
-    end
-    
-    -- Try loading from JSON file
-    if not loadedComps or not next(loadedComps) then
-        local weaponsData = loadJsonFile(WeaponsDataFile)
-        
-        if weaponsData[citizenid] and weaponsData[citizenid].weapons and weaponsData[citizenid].weapons[serial] then
-            loadedComps = weaponsData[citizenid].weapons[serial].components or {}
-        end
-    end
-    
-    -- Try loading from database as final fallback
-    if not loadedComps or not next(loadedComps) then
-        local dbRecord = MySQL.query.await('SELECT components FROM player_weapons WHERE serial = ?', { serial })
-        if dbRecord and dbRecord[1] and dbRecord[1].components then
-            local dbComps = json.decode(dbRecord[1].components)
-            if dbComps and next(dbComps) then
-                loadedComps = dbComps
-                
-                -- Sync back to inventory if found in database
-                for _, item in ipairs(Player.PlayerData.items) do
-                    if item.type == 'weapon' and item.info and item.info.serie == serial then
-                        item.info.componentshash = loadedComps
-                        Player.Functions.SetInventory(Player.PlayerData.items)
-                        break
-                    end
-                end
-            end
-        end
-    end
-    
-    if loadedComps and next(loadedComps) then
-        return cb({ components = loadedComps })
-    end
-
-    cb(nil)
-end)
-
-----------------------------------------
--- Prop Management
-----------------------------------------
-local function CreategunsiteId()
-    local UniqueFound = false
-    local gunsiteId = nil
-    while not UniqueFound do
-        gunsiteId = 'CSID' .. math.random(11111111, 99999999)
-        local query = "%" .. gunsiteId .. "%"
-        local result = MySQL.prepare.await("SELECT COUNT(*) as count FROM player_weapons_custom WHERE gunsiteid LIKE ?", { query })
-        if result == 0 then
-            UniqueFound = true
-        end
-    end
-    return gunsiteId
-end
-
-local function CreatePropId()
-    local UniqueFound = false
-    local PropId = nil
-    while not UniqueFound do
-        PropId = 'PID' .. math.random(11111111, 99999999)
-        local query = "%" .. PropId .. "%"
-        local result = MySQL.prepare.await("SELECT COUNT(*) as count FROM player_weapons_custom WHERE propid LIKE ?", { query })
-        if result == 0 then
-            UniqueFound = true
-        end
-    end
-    return PropId
-end
-
-RegisterServerEvent('rsg-weaponcomp:server:createnewprop')
-AddEventHandler('rsg-weaponcomp:server:createnewprop', function(propmodel, item, coords, heading)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    
-    local gunsiteid = CreategunsiteId()
-    local propid = CreatePropId()
-    local citizenid = Player.PlayerData.citizenid
-
-    local PropData = {
-        gunsitename = locale('cl_lang_32') or 'Gunsmith Workbench',
-        gunsiteid = gunsiteid,
-        propid = propid,
-        item = item,
-        x = coords.x,
-        y = coords.y,
-        z = coords.z,
-        h = heading,
-        propmodel = propmodel,
+    local propData = {
+        gunsitename = locale('cl_lang_32'),
+        gunsiteid = generateId('CSID', 'gunsiteid'),
+        propid = generateId('PID', 'propid'),
+        item = Config.Gunsmithitem,
+        x = coords.x, y = coords.y, z = coords.z,
+        h = heading % 360.0,
+        propmodel = Config.Gunsmithprop,
         citizenid = citizenid,
         buildttime = os.time()
     }
 
-    local newpropdata = json.encode(PropData)
+    MySQL.insert.await('INSERT INTO player_weapons_custom (gunsiteid, propid, citizenid, item, propdata) VALUES (?, ?, ?, ?, ?)',
+        { propData.gunsiteid, propData.propid, citizenid, propData.item, json.encode(propData) })
 
-    MySQL.Async.execute(
-        'INSERT INTO player_weapons_custom (gunsiteid, propid, citizenid, item, propdata) VALUES (@gunsiteid, @propid, @citizenid, @item, @propdata)',
-        {
-            ['@gunsiteid'] = gunsiteid,
-            ['@propid'] = propid,
-            ['@citizenid'] = citizenid,
-            ['@item'] = item,
-            ['@propdata'] = newpropdata
-        }
-    )
-
-    table.insert(Config.PlayerProps, PropData)
-    Player.Functions.RemoveItem(Config.Gunsmithitem, 1)
-    TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.Gunsmithitem], 'remove', 1)
-    TriggerClientEvent('rsg-weaponcomp:client:updatePropData', -1, Config.PlayerProps)
+    Config.PlayerProps[#Config.PlayerProps + 1] = propData
+    syncProps()
 end)
 
-----------------------------------------
--- Props Update
-----------------------------------------
-RegisterServerEvent('rsg-weaponcomp:server:updateProps')
-AddEventHandler('rsg-weaponcomp:server:updateProps', function()
-    TriggerClientEvent('rsg-weaponcomp:client:updatePropData', -1, Config.PlayerProps)
-end)
-
-CreateThread(function()
-    while true do
-        Wait(5000)
-        if PropsLoaded then
-            TriggerClientEvent('rsg-weaponcomp:client:updatePropData', -1, Config.PlayerProps)
-        end
-    end
-end)
-
-RegisterServerEvent('rsg-weaponcomp:server:getProps')
-AddEventHandler('rsg-weaponcomp:server:getProps', function()
-    local result = MySQL.query.await('SELECT * FROM player_weapons_custom')
-    if not result or not result[1] then return end
-    for i = 1, #result do
-        local propData = json.decode(result[i].propdata)
-        table.insert(Config.PlayerProps, propData)
-    end
-   
-end)
-
-----------------------------------------
--- Item Management
-----------------------------------------
-RegisterServerEvent('rsg-weaponcomp:server:additem')
-AddEventHandler('rsg-weaponcomp:server:additem', function(item, amount)
+RegisterNetEvent('rsg-weaponcomp:server:removegunsiteprops', function(propid)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    Player.Functions.AddItem(item, amount)
-    TriggerClientEvent('ox_lib:notify', src, { 
-        title = 'Item Received', 
-        description = amount .. 'x ' .. (RSGCore.Shared.Items[item] and RSGCore.Shared.Items[item].label or item), 
-        type = 'success' 
-    })
-end)
+    if not Player or type(propid) ~= 'string' or onCooldown(src, 'removeprop', 3000) then return end
 
-RegisterServerEvent('rsg-weaponcomp:server:removeitem')
-AddEventHandler('rsg-weaponcomp:server:removeitem', function(item, amount)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    Player.Functions.RemoveItem(item, amount)
-    TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[item], 'remove', amount)
-end)
-
-RegisterServerEvent('rsg-weaponcomp:server:removegunsiteprops')
-AddEventHandler('rsg-weaponcomp:server:removegunsiteprops', function(propid)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    local citizenid = Player.PlayerData.citizenid
-    local result = MySQL.query.await('SELECT * FROM player_weapons_custom WHERE propid = ?', { propid })
-    if not result or not result[1] then return end
-    local propData = json.decode(result[1].propdata)
-
-    if propData.citizenid ~= citizenid then return end
-
-    MySQL.Async.execute('DELETE FROM player_weapons_custom WHERE propid = @propid', { ['@propid'] = propid })
-
-    for k, v in pairs(Config.PlayerProps) do
-        if v.propid == propid then
-            table.remove(Config.PlayerProps, k)
-            break
-        end
+    local index
+    for i, prop in ipairs(Config.PlayerProps) do
+        if prop.propid == propid then index = i break end
     end
+    if not index then return end
 
-    TriggerClientEvent('rsg-weaponcomp:client:updatePropData', -1, Config.PlayerProps)
-    TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
-end)
-
-----------------------------------------
--- Save Components & Payment
-----------------------------------------
-local function saveWeaponComponents(serial, comps, compslabel, Player, wHash, weaponName)
-    local weaponSaved = false
-    local citizenid = Player.PlayerData.citizenid
-    
-    local isMeleeOrBow = false
-    if serial and tonumber(serial) == wHash then
-        isMeleeOrBow = true
-    end
-
-    local function getWeaponBaseName(weaponNameOrHash)
-        if not weaponNameOrHash then return nil end
-        local name = tostring(weaponNameOrHash):lower()
-        local base = string.match(name, "weapon_melee_(%w+)") or 
-                     string.match(name, "weapon_(%w+)") or 
-                     name
-        return base
-    end
-
-    local targetBaseName = nil
-    if isMeleeOrBow and weaponName then
-        targetBaseName = getWeaponBaseName(weaponName)
-    end
-
-    local function tryMatch(itemNameLower, targetBase)
-        if not itemNameLower then return false end
-        if targetBase then
-            if string.find(itemNameLower, targetBase, 1, true) then
-                return true
-            end
-        end
-        return false
-    end
-
-    local saveSerial = serial
-    local componentsBefore = {}
-    
-    -- Check inventory and get current components
-    for _, item in ipairs(Player.PlayerData.items) do
-        if item.type == 'weapon' then
-            local match = false
-            local itemNameLower = string.lower(item.name or "")
-            
-            if isMeleeOrBow then
-                if targetBaseName and tryMatch(itemNameLower, targetBaseName) then
-                    match = true
-                end
-            else
-                if serial and item.info and item.info.serie then
-                    if item.info.serie == serial or tostring(item.info.serie) == tostring(serial) then
-                        match = true
-                        saveSerial = item.info.serie
-                    end
-                end
-            end
-            
-            if match then
-                -- Store previous components
-                componentsBefore = item.info.componentshash or {}
-                
-                -- Set new components - create new tables to avoid reference issues
-                if type(comps) == "table" and next(comps) then
-                    item.info.componentshash = {}
-                    for k, v in pairs(comps) do
-                        item.info.componentshash[k] = v
-                    end
-                else
-                    item.info.componentshash = nil
-                end
-                
-                if type(compslabel) == "table" and next(compslabel) then
-                    item.info.components = {}
-                    for k, v in pairs(compslabel) do
-                        item.info.components[k] = v
-                    end
-                else
-                    item.info.components = nil
-                end
-                
-                weaponSaved = true
-                break
-            end
-        end
-    end
-    
-    -- Calculate total price for this transaction
-    local totalPrice = 0
-    for cat, _ in pairs(comps or {}) do
-        totalPrice = totalPrice + (Config.price and Config.price[cat] or 0)
-    end
-    
-    -- Save to weapons_data.json
-    if saveSerial then
-        UpdateWeaponsJson(citizenid, saveSerial, {
-            componentshash = comps,
-            components = compslabel
-        })
-    end
-    
-    -- Also save to database for persistence
-    if saveSerial then
-        SaveWeaponToDatabase(citizenid, saveSerial, comps, componentsBefore, totalPrice, 0)
-    end
-
-    -- Update player inventory
-    Player.Functions.SetInventory(Player.PlayerData.items)
-    if Player.PlayerData.metadata then
-        Player.Functions.SetMetaData(Player.PlayerData.metadata)
-    end
-
-    -- Logging
-    local serialStr = serial or ("hash:" .. tostring(wHash))
-    local msg = table.concat({
-        (locale('sv_lang_6') or 'Citizen') .. ': **' .. citizenid .. '**',
-        (locale('sv_lang_7') or 'CID') .. ': **' .. Player.PlayerData.cid .. '**',
-        (locale('sv_lang_8') or 'Serial') .. ': **' .. serialStr .. '**',
-        (locale('sv_lang_9') or 'Components') .. ': **' .. json.encode(comps) .. '**'
-    }, '\n')
-    
-    if Config.WebhookName then
-        TriggerEvent('rsg-log:server:CreateLog', Config.WebhookName, Config.WebhookTitle or 'Weapon Components', Config.WebhookColour or 'green', msg)
-    end
-    
-    return weaponSaved
-end
-
-RegisterServerEvent('rsg-weaponcomp:server:price')
-AddEventHandler('rsg-weaponcomp:server:price', function(price, objecthash, serial, selectedCache, selectedLabels, wHash, weaponName)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    
-    local paymentType = Config.PaymentType or 'cash'
-    local currentCash = Player.Functions.GetMoney(paymentType)
-    
-    if currentCash < price then
-        TriggerClientEvent('ox_lib:notify', src, { 
-            title = (locale('sv_lang_10') or 'Not Enough Money'), 
-            description = (locale('sv_lang_11') or 'You need $' .. price), 
-            type = 'error' 
-        })
-        TriggerClientEvent('rsg-weaponcomp:client:ExitCam', src)
+    local prop = Config.PlayerProps[index]
+    if prop.citizenid ~= Player.PlayerData.citizenid then
+        notify(src, locale('sv_access_denied'), nil, 'error')
         return
     end
 
-    Player.Functions.RemoveMoney(paymentType, price)
+    local pedCoords = GetEntityCoords(GetPlayerPed(src))
+    if #(pedCoords - vector3(prop.x, prop.y, prop.z)) > 10.0 then return end
 
-    saveWeaponComponents(serial, selectedCache, selectedLabels, Player, wHash, weaponName)
-    TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, objecthash, serial)
-    TriggerClientEvent('ox_lib:notify', src, { 
-        title = (locale('sv_lang_12') or 'Purchase Complete'), 
-        description = (locale('sv_lang_13') or 'Paid $' .. price), 
-        type = 'success' 
-    })
-end)
+    MySQL.query.await('DELETE FROM player_weapons_custom WHERE propid = ?', { propid })
+    table.remove(Config.PlayerProps, index)
+    syncProps()
 
-----------------------------------------
--- Reload on Login/Equip
-----------------------------------------
--- Disabled - causes issues when no weapon is equipped on login
--- AddEventHandler('rsg-core:server:playerLoggedIn', function(playerId, player)
---     Wait(2000)
---     TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', playerId)
--- end)
-
-RegisterNetEvent('rsg-weapons:server:saveEquippedKnife')
-AddEventHandler('rsg-weapons:server:saveEquippedKnife', function(knifeName, equipped)
-    local src = source
-    if equipped then
-        Wait(500)
-        TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', src)
+    if Player.Functions.AddItem(Config.Gunsmithitem, 1, nil, nil, 'gunsmith-packed') then
+        TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.Gunsmithitem], 'add', 1)
     end
 end)
 
-RegisterNetEvent('rsg-weapons:server:saveEquippedWeapon')
-AddEventHandler('rsg-weapons:server:saveEquippedWeapon', function(weaponData, equipped)
-    local src = source
-    if equipped then
-        Wait(500)
-        TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', src)
-    end
-end)
-
-RegisterNetEvent('rsg-weaponcomp:server:check_comps')
-AddEventHandler('rsg-weaponcomp:server:check_comps', function()
-    local src = source
-    TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', src)
-end)
-
-RegisterServerEvent('rsg-weaponcomp:server:inspectkitConsume')
-AddEventHandler('rsg-weaponcomp:server:inspectkitConsume', function()
+----------------------------------------
+-- Inspect / commands
+----------------------------------------
+RegisterNetEvent('rsg-weaponcomp:server:inspectkitConsume', function()
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    if Config.RepairItem then
-        Player.Functions.RemoveItem(Config.RepairItem, 1)
+    if not Player or not Config.RepairItem or onCooldown(src, 'inspectkit', 8000) then return end
+    if Player.Functions.RemoveItem(Config.RepairItem, 1, nil, 'weapon-cleaned') then
+        TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.RepairItem], 'remove', 1)
     end
+end)
+
+RSGCore.Commands.Add(Config.Commandinspect, locale('cl_lang_30'), {}, false, function(source)
+    TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', source)
+end)
+
+RSGCore.Commands.Add(Config.Commandloadweapon, locale('cl_lang_31'), {}, false, function(source)
+    TriggerClientEvent('rsg-weaponcomp:client:reloadWeapon', source)
 end)

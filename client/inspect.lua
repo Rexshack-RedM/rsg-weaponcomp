@@ -44,55 +44,57 @@ AddEventHandler("rsg-weaponcomp:client:InspectionWeapon", function()
     local hasGunOil = RSGCore.Functions.HasItem(Config.RepairItem)
     SetPedBlackboardBool(cache.ped, "GENERIC_WEAPON_CLEAN_PROMPT_AVAILABLE", true, -1) -- Citizen.InvokeNative(0xCB9401F918CB0F75, 
 
-    local interaction, act = nil, nil
-    if IsWeaponOneHanded(wHash) and weaponType == 'SHORTARM' then
-        interaction, act = "SHORTARM_HOLD_ENTER", GetHashKey("SHORTARM_CLEAN_ENTER")
-    elseif IsWeaponOneHanded(wHash) and weaponType == 'LONGARM' then
-        interaction, act = "LONGARM_HOLD_ENTER", GetHashKey("LONGARM_CLEAN_ENTER")
-    elseif IsWeaponOneHanded(wHash) and weaponType == 'SHOTGUN' then
-        interaction, act = "LONGARM_HOLD_ENTER", GetHashKey("LONGARM_CLEAN_ENTER")
-    elseif IsWeaponOneHanded(wHash) and weaponType == 'GROUP_BOW' then
-    elseif IsWeaponOneHanded(wHash) and weaponType == 'MELEE_BLADE' then
+    local interaction, act
+    if weaponType == 'SHORTARM' then
+        interaction, act = 'SHORTARM_HOLD_ENTER', `SHORTARM_CLEAN_ENTER`
+    elseif weaponType == 'LONGARM' or weaponType == 'SHOTGUN' then
+        interaction, act = 'LONGARM_HOLD_ENTER', `LONGARM_CLEAN_ENTER`
     end
-    if weaponType == 'GROUP_BOW' then return lib.notify({ title = locale('cl_notify_13'), description=locale('cl_notify_14'), type='error' }) end
-    if wHash ~= -1569615261 and hasGunOil then
-        if interaction then
-            StartTaskItemInteraction(cache.ped, wHash, GetHashKey(interaction), 0,0,0)
-        end
-        if Config.showStats == true then showstats() end
-        while not Citizen.InvokeNative(0xEC7E480FF8BD0BED, cache.ped) do Wait(300) end
 
-        while Citizen.InvokeNative(0xEC7E480FF8BD0BED, cache.ped) do
-            Wait(100)
+    -- Bows, melee and unarmed have no inspection interaction (waiting for one would hang)
+    if not interaction then
+        return lib.notify({ title = locale('cl_notify_13'), description = locale('cl_notify_14'), type = 'error' })
+    end
 
-            if IsDisabledControlJustReleased(0, 3002300392) then
-                ClearPedTasks(cache.ped, 1, 1)
-                Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) -- UiStateMachineDestroy(
-            end
+    if not hasGunOil then
+        local label = RSGCore.Shared.Items[Config.RepairItem] and RSGCore.Shared.Items[Config.RepairItem].label or Config.RepairItem
+        return lib.notify({ title = locale('cl_notify_13'), description = locale('cl_no_repair_item', label), type = 'error' })
+    end
 
-            if IsDisabledControlJustReleased(0, 3820983707) and not cleaning then
-                cleaning = true
-                local Cloth= CreateObject(GetHashKey('s_balledragcloth01x'), GetEntityCoords(cache.ped), false, true, false, false, true)
-                local PropId = GetHashKey("CLOTH")
-                Citizen.InvokeNative(0x72F52AA2D2B172CC, cache.ped, 1242464081, Cloth, PropId, act, 1, 0, -1.0) -- TaskItemInteraction2
-                Wait(9500)
-                TriggerServerEvent('rsg-weaponcomp:server:inspectkitConsume')
-                TriggerServerEvent('rsg-weapons:server:repairweapon', serial)
-                ClearPedTasks(cache.ped, 1, 1)
+    StartTaskItemInteraction(cache.ped, wHash, joaat(interaction), 0, 0, 0)
+    if Config.showStats == true then showstats() end
+    while not Citizen.InvokeNative(0xEC7E480FF8BD0BED, cache.ped) do Wait(300) end
 
-                if Config.showStats then
-                    Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801)
-                    Citizen.InvokeNative(0xA7A57E89E965D839, object, 0.0, 0) -- SetWeaponDegradation(
-                    Citizen.InvokeNative(0x812CE61DEBCAB948, object, 0.0, 0) -- SetWeaponDirt(
-                end
+    while Citizen.InvokeNative(0xEC7E480FF8BD0BED, cache.ped) do
+        Wait(100)
 
-                break
-            end
-
+        if IsDisabledControlJustReleased(0, 3002300392) then
+            ClearPedTasks(cache.ped, 1, 1)
+            Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) -- UiStateMachineDestroy(
         end
 
-        if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
+        if IsDisabledControlJustReleased(0, 3820983707) and not cleaning then
+            cleaning = true
+            local Cloth = CreateObject(`s_balledragcloth01x`, GetEntityCoords(cache.ped), false, true, false, false, true)
+            local PropId = `CLOTH`
+            Citizen.InvokeNative(0x72F52AA2D2B172CC, cache.ped, 1242464081, Cloth, PropId, act, 1, 0, -1.0) -- TaskItemInteraction2
+            Wait(9500)
+            TriggerServerEvent('rsg-weaponcomp:server:inspectkitConsume')
+            TriggerServerEvent('rsg-weapons:server:repairweapon', serial)
+            ClearPedTasks(cache.ped, 1, 1)
+            if DoesEntityExist(Cloth) then DeleteEntity(Cloth) end
+
+            if Config.showStats then
+                Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801)
+                Citizen.InvokeNative(0xA7A57E89E965D839, object, 0.0, 0) -- SetWeaponDegradation(
+                Citizen.InvokeNative(0x812CE61DEBCAB948, object, 0.0, 0) -- SetWeaponDirt(
+            end
+
+            break
+        end
     end
+
+    if Config.showStats then Citizen.InvokeNative(0x4EB122210A90E2D8, -813354801) end
 end)
 
 AddEventHandler('onResourceStop', function(r)

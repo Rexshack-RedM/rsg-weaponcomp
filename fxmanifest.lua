@@ -3,14 +3,14 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 description 'rsg-weaponcomp'
-version '2.8.3'
+version '3.0.0'
 
 lua54 'yes'
+ox_lib 'locale'
 
 shared_scripts {
     '@ox_lib/init.lua',
-    '@rsg-core/shared/locale.lua',
-    'config.lua',
+    'shared/config.lua',
 }
 
 client_scripts {
