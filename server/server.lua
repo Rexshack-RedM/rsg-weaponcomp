@@ -401,9 +401,10 @@ RegisterNetEvent('rsg-weaponcomp:server:removegunsiteprops', function(propid)
     local pedCoords = GetEntityCoords(GetPlayerPed(src))
     if #(pedCoords - vector3(prop.x, prop.y, prop.z)) > 10.0 then return end
 
-    MySQL.query.await('DELETE FROM player_weapons_custom WHERE propid = ?', { propid })
+    -- remove from memory first (index is only valid before any await), then the DB
     table.remove(Config.PlayerProps, index)
     syncProps()
+    MySQL.query.await('DELETE FROM player_weapons_custom WHERE propid = ?', { propid })
 
     if Player.Functions.AddItem(Config.Gunsmithitem, 1, nil, nil, 'gunsmith-packed') then
         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.Gunsmithitem], 'add', 1)
