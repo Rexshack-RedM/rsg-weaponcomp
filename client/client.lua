@@ -112,22 +112,55 @@ local function setPlayerFrozen(state)
     SetPedCanRagdoll(ped, not state)
 end
 
-local function mergeComponents(merged, source)
-    for cat, list in pairs(source or {}) do
-        merged[cat] = merged[cat] or {}
-        for _, comp in ipairs(list) do
-            merged[cat][#merged[cat] + 1] = comp
+--- True when a weapon-type (shared) category applies to this weapon (see Config.SharedRequires).
+local function sharedCategoryAllowed(cat, weaponName, specific)
+    local rule = Config.SharedRequires and Config.SharedRequires[cat]
+    if not rule then return true end
+    if rule.part and not (specific and specific[rule.part]) then return false end
+    if rule.weapon then
+        local ok = false
+        for _, pattern in ipairs(rule.weapon) do
+            if weaponName:find(pattern, 1, true) then ok = true break end
         end
+        if not ok then return false end
     end
+    return true
 end
 
+local function copyList(list)
+    local out, seen = {}, {}
+    for _, comp in ipairs(list or {}) do
+        if not seen[comp] then
+            seen[comp] = true
+            out[#out + 1] = comp
+        end
+    end
+    return out
+end
+
+--- Builds the options for one weapon: its own (Config.Specific) categories first, then the
+--- weapon-type (Config.Shared) categories it doesn't already define and that fit it.
+--- Returns the component table plus an ordered list of categories ({ cat, specific }).
 function GetAvailableComponents(weaponName, wHash)
-    local merged = {}
+    local merged, order = {}, {}
+    weaponName = (weaponName or ''):upper()
+    local specific = Config.Specific and Config.Specific[weaponName]
     local group = GetWeaponType(wHash)
-    if group and Config.Shared then mergeComponents(merged, Config.Shared[group]) end
-    if Config.Specific then mergeComponents(merged, Config.Specific[weaponName]) end
-    merged.FRAME_VERTDATA = nil -- conflicts with other component visuals
-    return merged
+    local shared = group and Config.Shared and Config.Shared[group]
+
+    for cat, list in pairs(specific or {}) do
+        if cat ~= 'FRAME_VERTDATA' and #list > 0 then -- FRAME_VERTDATA conflicts with other visuals
+            merged[cat] = copyList(list)
+            order[#order + 1] = { cat = cat, specific = true }
+        end
+    end
+    for cat, list in pairs(shared or {}) do
+        if not merged[cat] and cat ~= 'FRAME_VERTDATA' and #list > 0 and sharedCategoryAllowed(cat, weaponName, specific) then
+            merged[cat] = copyList(list)
+            order[#order + 1] = { cat = cat, specific = false }
+        end
+    end
+    return merged, order
 end
 
 --- Price/changed state versus what the weapon had when the menu opened (mirrors the server).
@@ -388,14 +421,17 @@ local function getWeaponLabel(weaponName)
     return item and item.label or locale('ui_unknown_weapon')
 end
 
-local function openWeaponUI(weaponName, wHash, serial, comps)
+local function openWeaponUI(weaponName, wHash, serial, comps, order)
+    -- Weapon-specific categories first, then weapon-type categories, each group in CATEGORY_ORDER
     local cats = {}
-    for cat in pairs(comps) do cats[#cats + 1] = cat end
+    for _, entry in ipairs(order or {}) do cats[#cats + 1] = entry end
     table.sort(cats, function(a, b)
-        local oa, ob = CATEGORY_ORDER[a] or 999, CATEGORY_ORDER[b] or 999
-        if oa == ob then return a < b end
+        if a.specific ~= b.specific then return a.specific end
+        local oa, ob = CATEGORY_ORDER[a.cat] or 999, CATEGORY_ORDER[b.cat] or 999
+        if oa == ob then return a.cat < b.cat end
         return oa < ob
     end)
+    for i, entry in ipairs(cats) do cats[i] = entry.cat end
 
     -- Sent as an ordered array: JSON objects don't keep key order in the UI
     local formatted = {}
@@ -597,14 +633,14 @@ local function startCustomisation(propid, wHash, serial, weaponName)
     startCamOnWeapon(wepObj, Config.distFov or 75.0)
     startPromptThread()
 
-    local comps = GetAvailableComponents(weaponName, wHash)
+    local comps, order = GetAvailableComponents(weaponName, wHash)
     currentWeaponData = { weaponName = weaponName, wHash = wHash, serial = serial, propid = propid, comps = comps }
     selectedCache, baselineCache = {}, {}
 
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(result)
         if currentWeaponData and wepObj then
             applyComponents(wepObj, wHash, comps, result and result.components or {})
-            openWeaponUI(weaponName, wHash, serial, comps)
+            openWeaponUI(weaponName, wHash, serial, comps, order)
         end
         isBusy = false
     end, serial, weaponName)

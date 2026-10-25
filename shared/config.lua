@@ -152,6 +152,22 @@ Config.price = {
 }
 
 --------------------
+-- SHARED COMPONENT RULES
+-- Weapon-type (Config.Shared) categories are only offered when the weapon fits:
+--   part   = the weapon must define this category in Config.Specific (e.g. no wrap, no wrap tints)
+--   weapon = the weapon name must contain one of these strings
+-- Categories a weapon defines in Config.Specific always replace the shared version.
+--------------------
+Config.SharedRequires = {
+    WRAP_MATERIAL = { part = 'WRAP' },
+    WRAP_TINT = { part = 'WRAP' },
+    SCOPE = { part = 'SCOPE' },
+    CYLINDER_MATERIAL = { weapon = { 'REVOLVER' } },
+    CYLINDER_ENGRAVING = { weapon = { 'REVOLVER' } },
+    CYLINDER_ENGRAVING_MATERIAL = { weapon = { 'REVOLVER' } },
+}
+
+--------------------
 -- SHARED COMPONENTS
 --------------------
 Config.Shared = {
