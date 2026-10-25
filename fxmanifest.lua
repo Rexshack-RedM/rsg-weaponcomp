@@ -3,7 +3,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 description 'rsg-weaponcomp'
-version '3.1.0'
+version '3.2.0'
 
 lua54 'yes'
 ox_lib 'locale'
@@ -20,7 +20,10 @@ client_scripts {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/*.lua',
+    'server/config.lua',
+    'server/discord.lua',
+    'server/server.lua',
+    'server/versionchecker.lua',
 }
 
 ui_page 'html/index.html'

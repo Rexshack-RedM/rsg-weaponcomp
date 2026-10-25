@@ -3,6 +3,8 @@ lib.locale()
 local PromptPlacerGroup = GetRandomIntInRange(0, 0xffffff)
 local SetPrompt, CancelPrompt
 local isPlacing = false
+local ghostProp
+local ROTATE_SPEED = 60.0 -- degrees per second
 
 local CONTROL_SET = 0xC7B5340A
 local CONTROL_CANCEL = 0xF84FA74F
@@ -58,6 +60,7 @@ local function placeProp(propmodel)
     local heading = 0.0
     local _, coords = raycastFromCamera(20.0)
     local prop = CreateObject(model, coords.x, coords.y, coords.z, false, false, false)
+    ghostProp = prop
     SetModelAsNoLongerNeeded(model)
     FreezeEntityPosition(prop, true)
     SetEntityCollision(prop, false, false)
@@ -72,12 +75,17 @@ local function placeProp(propmodel)
 
             SetEntityCoordsNoOffset(prop, coords.x, coords.y, coords.z, false, false, false)
             drawPropAxes(prop)
+
+            -- ghost goes faint when out of range so players know before they try to place
+            local inRange = #(GetEntityCoords(cache.ped) - coords) <= (Config.PlaceDistance or 5.0)
+            SetEntityAlpha(prop, inRange and 150 or 60, false)
             PromptSetActiveGroupThisFrame(PromptPlacerGroup, groupLabel)
 
+            local step = ROTATE_SPEED * GetFrameTime()
             if IsControlPressed(1, CONTROL_ROTATE_LEFT) then
-                heading = (heading + 1.0) % 360.0
+                heading = (heading + step) % 360.0
             elseif IsControlPressed(1, CONTROL_ROTATE_RIGHT) then
-                heading = (heading - 1.0) % 360.0
+                heading = (heading - step) % 360.0
             end
             SetEntityHeading(prop, heading)
 
@@ -94,9 +102,15 @@ local function placeProp(propmodel)
 
             Wait(0)
         end
+        ghostProp = nil
         isPlacing = false
     end)
 end
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    if ghostProp and DoesEntityExist(ghostProp) then DeleteObject(ghostProp) end
+end)
 
 RegisterNetEvent('rsg-weaponcomp:client:createprop', function(data)
     placeProp(data.propmodel)

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="ui_page_title">Gunsmith</title>
+    <title data-i18n="ui_page_title"></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -18,7 +18,7 @@
             <!-- Header -->
             <div class="header">
                 <div class="title-container">
-                    <h1 class="title" data-i18n="ui_title">WEAPON WORKSHOP</h1>
+                    <h1 class="title" data-i18n="ui_title"></h1>
                 </div>
             </div>
 
@@ -29,7 +29,7 @@
                 </div>
                 <div class="weapon-info">
                     <div class="weapon-name" id="weaponName"></div>
-                    <div class="weapon-serial" id="weaponSerial"><i class="fas fa-fingerprint"></i> <span data-i18n="ui_serial">Serial</span>: #000000</div>
+                    <div class="weapon-serial" id="weaponSerial"></div>
                 </div>
             </div>
 
@@ -40,7 +40,7 @@
                     <div class="menu-corner tr"></div>
                     <div class="menu-title">
                         <i class="fas fa-tools"></i>
-                        <span data-i18n="ui_modifications">MODIFICATIONS</span>
+                        <span data-i18n="ui_modifications"></span>
                         <i class="fas fa-tools"></i>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                     <div class="menu-corner tr"></div>
                     <div class="menu-title">
                         <i class="fas fa-cogs"></i>
-                        <span id="componentMenuTitle" data-i18n="ui_components">COMPONENTS</span>
+                        <span id="componentMenuTitle" data-i18n="ui_components"></span>
                         <i class="fas fa-cogs"></i>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
                 <div class="menu-footer">
                     <button class="btn-western btn-back" id="btnBack">
                         <i class="fas fa-arrow-left"></i>
-                        <span data-i18n="ui_back">BACK TO MENU</span>
+                        <span data-i18n="ui_back"></span>
                     </button>
                 </div>
             </div>
@@ -74,9 +74,9 @@
                 <div class="price-frame">
                     <div class="price-label">
                         <i class="fas fa-coins"></i>
-                        <span data-i18n="ui_total_cost">TOTAL COST</span>
+                        <span data-i18n="ui_total_cost"></span>
                     </div>
-                    <div class="price-value" id="totalPrice">$0.00</div>
+                    <div class="price-value" id="totalPrice"></div>
                 </div>
             </div>
 
@@ -84,32 +84,40 @@
             <div class="action-bar">
                 <button class="btn-western btn-purchase" id="btnPurchase">
                     <i class="fas fa-check-circle"></i>
-                    <span data-i18n="ui_purchase">PURCHASE</span>
+                    <span data-i18n="ui_purchase"></span>
                 </button>
                 <button class="btn-western btn-reset" id="btnReset">
                     <i class="fas fa-undo"></i>
-                    <span data-i18n="ui_reset">RESET</span>
+                    <span data-i18n="ui_reset"></span>
                 </button>
                 <button class="btn-western btn-exit" id="btnExit">
                     <i class="fas fa-door-open"></i>
-                    <span data-i18n="ui_exit">EXIT</span>
+                    <span data-i18n="ui_exit"></span>
                 </button>
             </div>
 
             <!-- Controls Help -->
             <div class="controls-help">
                 <div class="control-item">
-                    <span class="key"><i class="fas fa-search"></i> <span data-i18n="ui_scroll">SCROLL</span></span>
-                    <span class="action" data-i18n="ui_zoom">Zoom</span>
+                    <span class="key"><i class="fas fa-search"></i> <span data-i18n="ui_scroll"></span></span>
+                    <span class="action" data-i18n="ui_zoom"></span>
                 </div>
                 <div class="control-item">
-                    <span class="key">C</span>
-                    <span class="action" data-i18n="ui_random_view">Random View</span>
+                    <span class="key" data-i18n="ui_key_random"></span>
+                    <span class="action" data-i18n="ui_random_view"></span>
                 </div>
                 <div class="control-item">
-                    <span class="key">V</span>
-                    <span class="action" data-i18n="ui_reset_camera">Reset Camera</span>
+                    <span class="key" data-i18n="ui_key_reset"></span>
+                    <span class="action" data-i18n="ui_reset_camera"></span>
                 </div>
+                <div class="control-item">
+                    <span class="key"><i class="fas fa-arrow-left"></i><i class="fas fa-arrow-right"></i></span>
+                    <span class="action" data-i18n="ui_rotate"></span>
+                </div>
+                <button class="control-item focus-toggle" id="btnFocus" type="button">
+                    <span class="key"><i class="fas fa-bullseye"></i> <span id="focusState"></span></span>
+                    <span class="action" data-i18n="ui_auto_focus"></span>
+                </button>
             </div>
             
             <!-- Bottom decorative line -->

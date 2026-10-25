@@ -748,3 +748,16 @@ body {
 
 .menu-item:nth-child(1) { animation-delay: 0.05s; }
 .menu-item:nth-child(2) { animation-delay: 0.1s; }
+
+/* Auto focus toggle */
+.focus-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+.focus-toggle .key { transition: color .15s, border-color .15s; }
+.focus-toggle.active .key { color: var(--accent); border-color: var(--accent-dim); }
+.focus-toggle:hover .key { border-color: var(--accent); }

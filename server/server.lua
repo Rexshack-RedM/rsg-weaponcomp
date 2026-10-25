@@ -28,6 +28,10 @@ for _, name in ipairs(Config.WeaponRestriction or {}) do RestrictedWeapons[joaat
 
 local Cooldowns = {}
 
+-- Weapons already checked against the database this session (no saved row = skip next time).
+-- The lookup runs on every weapon draw, so this avoids a query per draw for unmodified weapons.
+local DbChecked = {}
+
 local function onCooldown(src, key, ms)
     local now = GetGameTimer()
     Cooldowns[src] = Cooldowns[src] or {}
@@ -85,18 +89,21 @@ end
 
 --- Returns a clean component table containing only whitelisted, non-factory parts.
 --- Factory parts are dropped so only real modifications are stored and charged.
+--- Second return value lists anything that isn't in the config at all (tampering).
 local function sanitizeComponents(comps)
     if type(comps) ~= 'table' then return nil end
-    local clean, count = {}, 0
+    local clean, invalid, count = {}, {}, 0
     for cat, comp in pairs(comps) do
         count = count + 1
-        if count > 64 then return nil end
-        if type(cat) == 'string' and type(comp) == 'string' and cat ~= 'FRAME_VERTDATA'
-            and ValidComps[cat] and ValidComps[cat][comp] and not FactoryComps[comp] then
+        if count > 64 then return nil, { 'more than 64 entries' } end
+        local valid = type(cat) == 'string' and type(comp) == 'string' and ValidComps[cat] and ValidComps[cat][comp]
+        if not valid then
+            invalid[#invalid + 1] = ('%s = %s'):format(tostring(cat), tostring(comp))
+        elseif cat ~= 'FRAME_VERTDATA' and not FactoryComps[comp] then
             clean[cat] = comp
         end
     end
-    return clean
+    return clean, invalid
 end
 
 local function calculateRemovePrice(current)
@@ -121,15 +128,18 @@ local function saveToDatabase(citizenid, serial, components, componentsBefore, p
     end
 end
 
-local function logChange(Player, serial, comps)
-    if not Config.WebhookName then return end
-    local msg = table.concat({
-        locale('sv_lang_6') .. ': **' .. Player.PlayerData.citizenid .. '**',
-        locale('sv_lang_7') .. ': **' .. tostring(Player.PlayerData.cid) .. '**',
-        locale('sv_lang_8') .. ': **' .. tostring(serial) .. '**',
-        locale('sv_lang_9') .. ': **' .. json.encode(comps) .. '**'
-    }, '\n')
-    TriggerEvent('rsg-log:server:CreateLog', Config.WebhookName, Config.WebhookTitle or locale('sv_log_title'), Config.WebhookColour or 'green', msg)
+local function logChange(src, item, serial, before, after, price)
+    local isReset = not next(after)
+    local fields = {
+        { locale('sv_dc_weapon'), RSGCore.Shared.Items[item.name] and RSGCore.Shared.Items[item.name].label or item.name },
+        { locale('sv_dc_serial'), tostring(serial) },
+        { locale('sv_dc_paid'), ('%s%.2f (%s)'):format(locale('ui_currency'), price, Config.PaymentType or 'cash') },
+    }
+    if DiscordConfig.ShowComponents then
+        fields[#fields + 1] = { locale('sv_dc_before'), Discord.FormatComponents(before), false }
+        if not isReset then fields[#fields + 1] = { locale('sv_dc_after'), Discord.FormatComponents(after), false } end
+    end
+    Discord.Log(isReset and 'reset' or 'purchase', src, locale(isReset and 'sv_dc_reset' or 'sv_dc_purchase'), fields)
 end
 
 --- Applies a new component set to the weapon item, charges the player and persists it.
@@ -146,13 +156,14 @@ local function applyWeaponChange(src, Player, item, serial, newComps, price, wHa
         end
     end
 
-    local before = item.info.componentshash or {}
+    local before = sanitizeComponents(item.info.componentshash) or {}
     item.info.componentshash = next(newComps) and newComps or nil
     item.info.components = next(newComps) and buildLabels(newComps) or nil
     Player.Functions.SetInventory(Player.PlayerData.items)
 
     saveToDatabase(Player.PlayerData.citizenid, tostring(serial), newComps, before, price)
-    logChange(Player, serial, newComps)
+    DbChecked[Player.PlayerData.citizenid .. ':' .. tostring(serial)] = true
+    logChange(src, item, serial, before, newComps, price)
 
     notify(src, locale('sv_lang_12'), locale('sv_lang_13', price), 'success')
     TriggerClientEvent('rsg-weaponcomp:client:animationSaved', src, wHash)
@@ -173,8 +184,15 @@ RegisterNetEvent('rsg-weaponcomp:server:purchase', function(serial, wHash, weapo
         notify(src, locale('cl_notify_13'), locale('cl_no_weapon'), 'error')
         return
     end
+    if RestrictedWeapons[joaat(item.name)] then -- don't trust the client's hash
+        Discord.Security(src, locale('sv_sec_restricted'), item.name)
+        return
+    end
 
-    local newComps = sanitizeComponents(comps)
+    local newComps, invalid = sanitizeComponents(comps)
+    if not newComps or (invalid and #invalid > 0) then
+        Discord.Security(src, locale('sv_sec_invalid'), invalid and table.concat(invalid, '\n') or locale('sv_sec_not_table'))
+    end
     if not newComps then return end
 
     local current = sanitizeComponents(item.info.componentshash) or {}
@@ -219,6 +237,10 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
     if item and item.info.componentshash and next(item.info.componentshash) then
         return cb({ components = item.info.componentshash })
     end
+
+    local key = Player.PlayerData.citizenid .. ':' .. tostring(serial)
+    if DbChecked[key] then return cb(nil) end
+    DbChecked[key] = true
 
     -- Fallback to the database (e.g. inventory data lost) and sync it back
     local row = MySQL.single.await('SELECT components FROM player_weapons WHERE serial = ? AND citizenid = ?',
@@ -331,6 +353,7 @@ RegisterNetEvent('rsg-weaponcomp:server:createnewprop', function(coords, heading
     local pedCoords = GetEntityCoords(GetPlayerPed(src))
     if #(pedCoords - coords) > (Config.PlaceDistance or 5.0) + 2.0 then
         notify(src, locale('cl_lang_15'), locale('cl_lang_16'), 'error')
+        Discord.Security(src, locale('sv_sec_place_range'), locale('sv_sec_distance', #(pedCoords - coords)))
         return
     end
 
@@ -366,6 +389,12 @@ RegisterNetEvent('rsg-weaponcomp:server:createnewprop', function(coords, heading
 
     Config.PlayerProps[#Config.PlayerProps + 1] = propData
     syncProps()
+
+    Discord.Log('workbench', src, locale('sv_dc_placed'), {
+        { locale('sv_dc_workbench_id'), propData.gunsiteid },
+        { locale('sv_dc_location'), ('`%.2f, %.2f, %.2f`'):format(coords.x, coords.y, coords.z) },
+        { locale('sv_dc_owned'), ('%d / %d'):format(countPlayerProps(citizenid), Config.MaxGunsites or 5) },
+    })
 end)
 
 RegisterNetEvent('rsg-weaponcomp:server:removegunsiteprops', function(propid)
@@ -382,32 +411,51 @@ RegisterNetEvent('rsg-weaponcomp:server:removegunsiteprops', function(propid)
     local prop = Config.PlayerProps[index]
     if prop.citizenid ~= Player.PlayerData.citizenid then
         notify(src, locale('sv_access_denied'), nil, 'error')
+        Discord.Security(src, locale('sv_sec_not_owner'), locale('sv_sec_owner', prop.gunsiteid, prop.citizenid))
         return
     end
 
     local pedCoords = GetEntityCoords(GetPlayerPed(src))
-    if #(pedCoords - vector3(prop.x, prop.y, prop.z)) > 10.0 then return end
+    if #(pedCoords - vector3(prop.x, prop.y, prop.z)) > 10.0 then
+        Discord.Security(src, locale('sv_sec_pack_range'), prop.gunsiteid)
+        return
+    end
 
     -- remove from memory first (index is only valid before any await), then the DB
     table.remove(Config.PlayerProps, index)
     syncProps()
     MySQL.query.await('DELETE FROM player_weapons_custom WHERE propid = ?', { propid })
 
-    if Player.Functions.AddItem(Config.Gunsmithitem, 1, nil, nil, 'gunsmith-packed') then
+    local returned = Player.Functions.AddItem(Config.Gunsmithitem, 1, nil, nil, 'gunsmith-packed')
+    if returned then
         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.Gunsmithitem], 'add', 1)
     end
+
+    Discord.Log('workbench', src, locale('sv_dc_packed'), {
+        { locale('sv_dc_workbench_id'), prop.gunsiteid },
+        { locale('sv_dc_location'), ('`%.2f, %.2f, %.2f`'):format(prop.x, prop.y, prop.z) },
+        { locale('sv_dc_item_returned'), locale(returned and 'sv_dc_yes' or 'sv_dc_no_full') },
+    })
 end)
 
 ----------------------------------------
 -- Inspect / commands
 ----------------------------------------
-RegisterNetEvent('rsg-weaponcomp:server:inspectkitConsume', function()
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player or not Config.RepairItem or onCooldown(src, 'inspectkit', 8000) then return end
-    if Player.Functions.RemoveItem(Config.RepairItem, 1, nil, 'weapon-cleaned') then
-        TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[Config.RepairItem], 'remove', 1)
-    end
+--- Takes one repair kit; the client only repairs the weapon when this returns true.
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:useRepairKit', function(source, cb, serial)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player or not Config.RepairItem or onCooldown(source, 'inspectkit', 8000) then return cb(false) end
+    local item = findWeaponItem(Player, serial)
+    if not item then return cb(false) end
+    if not Player.Functions.RemoveItem(Config.RepairItem, 1, nil, 'weapon-cleaned') then return cb(false) end
+    TriggerClientEvent('rsg-inventory:client:ItemBox', source, RSGCore.Shared.Items[Config.RepairItem], 'remove', 1)
+    cb(true)
+
+    Discord.Log('repair', source, locale('sv_dc_repair'), {
+        { locale('sv_dc_weapon'), RSGCore.Shared.Items[item.name] and RSGCore.Shared.Items[item.name].label or item.name },
+        { locale('sv_dc_serial'), tostring(serial) },
+        { locale('sv_dc_used'), RSGCore.Shared.Items[Config.RepairItem] and RSGCore.Shared.Items[Config.RepairItem].label or Config.RepairItem },
+    })
 end)
 
 RSGCore.Commands.Add(Config.Commandinspect, locale('cl_lang_30'), {}, false, function(source)

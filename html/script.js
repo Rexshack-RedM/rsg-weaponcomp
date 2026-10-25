@@ -13,6 +13,7 @@ const App = {
     hasChanges: false,
     categoryLabels: {},
     drag: null,
+    autoFocus: true,
 
     init() {
         // Ensure app is hidden on load
@@ -51,6 +52,15 @@ const App = {
         const btnReset = document.getElementById('btnReset');
         if (btnReset) {
             btnReset.addEventListener('click', () => this.reset());
+        }
+
+        // Auto focus toggle
+        const btnFocus = document.getElementById('btnFocus');
+        if (btnFocus) {
+            btnFocus.addEventListener('click', () => {
+                this.setAutoFocus(!this.autoFocus);
+                this.postToGame('setAutoFocus', { enabled: this.autoFocus });
+            });
         }
 
         // Exit button
@@ -115,8 +125,9 @@ const App = {
 
     locales: {},
 
-    t(key, fallback) {
-        return (this.locales && this.locales[key]) || fallback || key;
+    // All UI text comes from the locale files (sent by the client on open)
+    t(key) {
+        return (this.locales && this.locales[key]) || key;
     },
 
     applyLocales() {
@@ -153,16 +164,17 @@ const App = {
             this.categoryLabels[entry.category] = entry.label || entry.category;
         }
         this.prices = data.prices || {};
+        this.setAutoFocus(data.autoFocus !== false);
 
         // Set weapon info
         const weaponNameEl = document.getElementById('weaponName');
         const weaponSerialEl = document.getElementById('weaponSerial');
         
         if (weaponNameEl) {
-            weaponNameEl.textContent = data.weaponName || this.t('ui_unknown_weapon', 'UNKNOWN WEAPON');
+            weaponNameEl.textContent = data.weaponName || this.t('ui_unknown_weapon');
         }
         if (weaponSerialEl) {
-            weaponSerialEl.innerHTML = '<i class="fas fa-fingerprint"></i> ' + this.t('ui_serial', 'Serial') + ': #' + (data.serial || '000000');
+            weaponSerialEl.innerHTML = '<i class="fas fa-fingerprint"></i> ' + this.escape(this.t('ui_serial')) + ': #' + this.escape(data.serial || '000000');
         }
 
         // Build main menu
@@ -218,8 +230,8 @@ const App = {
 
     buildMainMenu() {
         const menuItems = [
-            { action: 'parts', icon: 'fa-wrench', label: this.t('ui_parts', 'Parts & Attachments') },
-            { action: 'packup', icon: 'fa-box-open', label: this.t('ui_packup', 'Pack Up Workbench') }
+            { action: 'parts', icon: 'fa-wrench', label: this.t('ui_parts') },
+            { action: 'packup', icon: 'fa-box-open', label: this.t('ui_packup') }
         ];
 
         const container = document.getElementById('mainMenuItems');
@@ -240,7 +252,7 @@ const App = {
     handleMenuClick(action) {
         switch (action) {
             case 'parts':
-                this.showComponentMenu(this.t('ui_all_parts', 'ALL PARTS & ATTACHMENTS'));
+                this.showComponentMenu(this.t('ui_all_parts'));
                 break;
             case 'packup':
                 this.packup();
@@ -315,7 +327,7 @@ const App = {
         if (categories.length === 0) {
             container.innerHTML = '<div class="component-category">' +
                 '<p style="text-align: center; color: var(--text-dim);">' +
-                this.t('ui_no_options', 'No options available for this weapon.') +
+                this.t('ui_no_options') +
                 '</p></div>';
             return;
         }
@@ -439,6 +451,14 @@ const App = {
         document.addEventListener('touchend', end);
     },
 
+    setAutoFocus(enabled) {
+        this.autoFocus = !!enabled;
+        const btn = document.getElementById('btnFocus');
+        const state = document.getElementById('focusState');
+        if (btn) btn.classList.toggle('active', this.autoFocus);
+        if (state) state.textContent = this.autoFocus ? this.t('ui_on') : this.t('ui_off');
+    },
+
     escape(str) {
         return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     },
@@ -473,7 +493,7 @@ const App = {
         const priceEl = document.getElementById('totalPrice');
         if (priceEl) {
             const displayPrice = typeof price === 'number' ? price.toFixed(2) : '0.00';
-            priceEl.textContent = '$' + displayPrice;
+            priceEl.textContent = this.t('ui_currency') + displayPrice;
         }
     },
 
@@ -497,7 +517,7 @@ const App = {
 
     purchase() {
         if (!this.hasChanges) {
-            this.showNotification('error', this.t('ui_no_mods_selected', 'No modifications selected!'));
+            this.showNotification('error', this.t('ui_no_mods_selected'));
             return;
         }
         this.postToGame('purchase', {});

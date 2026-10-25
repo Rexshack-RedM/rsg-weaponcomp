@@ -23,8 +23,18 @@ local UI_LOCALE_KEYS = {
     'ui_page_title', 'ui_title', 'ui_modifications', 'ui_components', 'ui_back', 'ui_total_cost',
     'ui_purchase', 'ui_reset', 'ui_exit', 'ui_scroll', 'ui_zoom', 'ui_random_view', 'ui_reset_camera',
     'ui_unknown_weapon', 'ui_serial', 'ui_parts', 'ui_packup', 'ui_all_parts', 'ui_no_options',
-    'ui_no_mods_selected',
+    'ui_no_mods_selected', 'ui_rotate', 'ui_auto_focus', 'ui_on', 'ui_off', 'ui_currency',
+    'ui_key_random', 'ui_key_reset', 'ui_notify_title',
 }
+
+-- Auto part focus is a per-player preference, remembered between sessions (client KVP)
+local FOCUS_KVP = 'rsg-weaponcomp:autoFocus'
+local function loadAutoFocus()
+    local saved = GetResourceKvpString(FOCUS_KVP)
+    if saved == nil then return Config.AutoFocusDefault ~= false end
+    return saved == 'true'
+end
+local autoFocus = loadAutoFocus()
 
 -- Category display order for the menu (related parts grouped together)
 local CATEGORY_ORDER = {
@@ -77,8 +87,25 @@ end
 ----------------------------------------
 -- Utility
 ----------------------------------------
+--- Hides the player's ped while customising. SetEntityLocallyInvisible doesn't work on
+--- your own ped under a scripted camera in RedM, so the ped is made fully invisible.
+local function hidePlayerPed(state)
+    local ped = cache.ped
+    SetEntityVisible(ped, not state)
+    if state then
+        SetEntityAlpha(ped, 0, false)
+    else
+        ResetEntityAlpha(ped)
+    end
+end
+
 local function setPlayerFrozen(state)
     local ped = cache.ped
+    if state then
+        ClearPedTasksImmediately(ped)
+    end
+    hidePlayerPed(state)
+    LocalPlayer.state:set('inv_busy', state, true) -- blocks inventory/hotbar while customising
     FreezeEntityPosition(ped, state)
     SetEntityInvincible(ped, state)
     SetBlockingOfNonTemporaryEvents(ped, state)
@@ -118,26 +145,125 @@ end
 ----------------------------------------
 -- Camera
 ----------------------------------------
+-- Orbit camera: always looks at the centre of the weapon model and circles around it
+local orbit = { yaw = 0.0, pitch = 10.0, radius = 0.8, target = nil }
+
+--- Centre of the weapon's bounding box in world space (the entity origin sits at the grip).
+local function getWeaponCentre(obj)
+    local min, max = GetModelDimensions(GetEntityModel(obj))
+    local mid = (min + max) / 2
+    return GetOffsetFromEntityInWorldCoords(obj, mid.x, mid.y, mid.z), #(max - min)
+end
+
+local function updateOrbitCam()
+    if not camera or not orbit.target then return end
+    local yaw, pitch = math.rad(orbit.yaw), math.rad(orbit.pitch)
+    local t, r = orbit.target, orbit.radius
+    SetCamCoord(camera,
+        t.x + r * math.cos(pitch) * math.sin(yaw),
+        t.y - r * math.cos(pitch) * math.cos(yaw),
+        t.z + r * math.sin(pitch))
+    PointCamAtCoord(camera, t.x, t.y, t.z)
+end
+
+--- Default view: side-on to the weapon, slightly above, framed by its length.
+local function resetOrbit(obj)
+    local centre, size = getWeaponCentre(obj)
+    orbit.target = centre
+    orbit.radius = math.max(0.5, size * (Config.distBack or 0.7) + 0.2)
+    orbit.pitch = 10.0
+    orbit.yaw = GetEntityHeading(obj) + 90.0
+end
+
 local function startCamOnWeapon(obj, fov)
     if not (obj and DoesEntityExist(obj)) then return end
     ClearFocus()
-    local forward, right, up, origin = GetEntityMatrix(obj)
-    local camPos = origin - forward * (Config.distBack or 0.8) + right * (Config.distSide or 0.3) + up * (Config.distUp or 0.2)
+    resetOrbit(obj)
 
-    if camera then DestroyCam(camera, true) end
-    camera = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA', camPos.x, camPos.y, camPos.z, 0, 0, 0, fov or 75.0, false, 0)
-    SetCamActive(camera, true)
-    RenderScriptCams(true, true, 1000, true, false)
-    PointCamAtCoord(camera, origin.x, origin.y, origin.z + 0.1)
+    if not camera then
+        camera = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
+        SetCamFov(camera, fov or 60.0)
+        updateOrbitCam()
+        SetCamActive(camera, true)
+        RenderScriptCams(true, true, 1000, true, false)
+    else
+        SetCamFov(camera, fov or 60.0)
+        updateOrbitCam()
+    end
+end
+
+local function rotateCamera(degrees)
+    orbit.yaw = (orbit.yaw + degrees) % 360.0
+    updateOrbitCam()
+end
+
+--- Point along the weapon's length for a part. 0.0 = rear (stock/grip end),
+--- 1.0 = muzzle. The muzzle is the end of the longest axis furthest from the entity origin.
+local function getPartPosition(obj, fraction)
+    local min, max = GetModelDimensions(GetEntityModel(obj))
+    local mid = (min + max) / 2
+    local size = max - min
+    local axis = 'x'
+    if size.y > size[axis] then axis = 'y' end
+    if size.z > size[axis] then axis = 'z' end
+
+    local rearV, muzzleV = min[axis], max[axis]
+    if math.abs(min[axis]) > math.abs(max[axis]) then rearV, muzzleV = max[axis], min[axis] end
+
+    local offset = { x = mid.x, y = mid.y, z = mid.z }
+    offset[axis] = rearV + (muzzleV - rearV) * fraction
+    return GetOffsetFromEntityInWorldCoords(obj, offset.x, offset.y, offset.z), #size
+end
+
+local focusToken = 0
+
+--- Smoothly moves the orbit target/radius to a new point.
+local function animateOrbitTo(target, radius, duration)
+    focusToken = focusToken + 1
+    local token = focusToken
+    local fromT, fromR = orbit.target, orbit.radius
+    if not fromT then orbit.target, orbit.radius = target, radius updateOrbitCam() return end
+
+    CreateThread(function()
+        local start = GetGameTimer()
+        duration = duration or 400
+        while token == focusToken and camera do
+            local p = math.min(1.0, (GetGameTimer() - start) / duration)
+            local e = p * p * (3 - 2 * p) -- smoothstep
+            orbit.target = fromT + (target - fromT) * e
+            orbit.radius = fromR + (radius - fromR) * e
+            updateOrbitCam()
+            if p >= 1.0 then break end
+            Wait(0)
+        end
+    end)
+end
+
+--- Finds the focus settings for a category (exact name first, then the first matching prefix).
+local function getFocusFor(category)
+    local focus = Config.PartFocus or {}
+    if focus[category] then return focus[category] end
+    local best, bestLen
+    for key, v in pairs(focus) do
+        if category:sub(1, #key) == key and (not bestLen or #key > bestLen) then best, bestLen = v, #key end
+    end
+    return best
+end
+
+--- Moves the camera to the part of the weapon that a category changes.
+local function focusOnCategory(category)
+    if not autoFocus or not camera or not wepObj or not DoesEntityExist(wepObj) then return end
+    local focus = getFocusFor(category)
+    if not focus then return end
+    local pos, size = getPartPosition(wepObj, focus.at)
+    animateOrbitTo(pos, math.max(0.25, size * (focus.zoom or 0.35)), 400)
 end
 
 local function setRandomCameraAroundWeapon()
     if not camera or not wepObj then return end
-    local c = GetEntityCoords(wepObj)
-    local yaw, pitch = math.rad(math.random(1, 360)), math.rad(math.random(-10, 50))
-    local r = 0.5
-    SetCamCoord(camera, c.x + r * math.cos(yaw) * math.cos(pitch), c.y + r * math.sin(yaw) * math.cos(pitch), c.z + r * math.sin(pitch))
-    PointCamAtCoord(camera, c.x, c.y, c.z)
+    orbit.yaw = math.random(0, 359) + 0.0
+    orbit.pitch = math.random(-10, 45) + 0.0
+    updateOrbitCam()
 end
 
 local function adjustZoom(zoomIn)
@@ -178,9 +304,10 @@ local function clearCameraPrompts()
     cameraPrompts = {}
 end
 
-local function registerPrompt(control, textKey, hold)
+local function registerPrompt(control, textKey, hold, control2)
     local p = PromptRegisterBegin()
     PromptSetControlAction(p, control)
+    if control2 then PromptSetControlAction(p, control2) end
     PromptSetText(p, CreateVarString(10, 'LITERAL_STRING', locale(textKey)))
     PromptSetEnabled(p, true)
     PromptSetVisible(p, true)
@@ -196,6 +323,7 @@ local function startPromptThread()
 
     local controls = Config.prompts
     cameraPrompts = {
+        registerPrompt(controls.rotLeft, 'weapon_cam_rotate', false, controls.rotRight),
         registerPrompt(controls.ranPos, 'weapon_cam_rand'),
         registerPrompt(controls.zoIn, 'zoom_in'),
         registerPrompt(controls.zoOut, 'zoom_out'),
@@ -206,17 +334,32 @@ local function startPromptThread()
         return IsControlJustPressed(2, control) or IsDisabledControlJustPressed(2, control)
     end
 
+    local function held(control)
+        return IsDisabledControlPressed(0, control) or IsControlPressed(0, control)
+            or IsDisabledControlPressed(2, control) or IsControlPressed(2, control)
+    end
+
+    local rotateSpeed = Config.camRotateSpeed or 90.0 -- degrees per second
+
     CreateThread(function()
         local groupLabel = CreateVarString(10, 'LITERAL_STRING', locale('cl_camera_controls'))
         while promptThreadActive and camera do
             PromptSetActiveGroupThisFrame(promptGroup, groupLabel)
-            DisableControlAction(0, 0xCEFD9220, true) -- INPUT_CURSOR_ACCEPT
-            DisableControlAction(0, 0x156F7119, true) -- INPUT_CURSOR_CANCEL
+            -- block every player action (move, attack, weapon wheel, horse whistle, emotes...)
+            -- and re-enable only the camera prompt keys
+            DisableAllControlActions(0)
+            DisableAllControlActions(1)
+            for _, control in pairs(controls) do EnableControlAction(0, control, true) end
 
             if pressed(controls.zoIn) then adjustZoom(true) end
             if pressed(controls.zoOut) then adjustZoom(false) end
-            if pressed(controls.re) then startCamOnWeapon(wepObj, Config.distFov or 75.0) end
+            if pressed(controls.re) then focusToken = focusToken + 1 startCamOnWeapon(wepObj, Config.distFov or 75.0) end
             if pressed(controls.ranPos) then setRandomCameraAroundWeapon() end
+
+            -- hold left/right to orbit around the weapon
+            local step = rotateSpeed * GetFrameTime()
+            if held(controls.rotLeft) then rotateCamera(-step) end
+            if held(controls.rotRight) then rotateCamera(step) end
             Wait(0)
         end
         clearCameraPrompts()
@@ -237,6 +380,12 @@ local function closeWeaponUI()
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
     SendNUIMessage({ action = 'close' })
+end
+
+--- Weapon display name: the item label from rsg-core (already in the server's language).
+local function getWeaponLabel(weaponName)
+    local item = weaponName and RSGCore.Shared.Items[weaponName:lower()]
+    return item and item.label or locale('ui_unknown_weapon')
 end
 
 local function openWeaponUI(weaponName, wHash, serial, comps)
@@ -265,11 +414,12 @@ local function openWeaponUI(weaponName, wHash, serial, comps)
     SetNuiFocusKeepInput(true)
     SendNUIMessage({
         action = 'open',
-        weaponName = locale(weaponName),
+        weaponName = getWeaponLabel(weaponName),
         serial = serial or '000000',
         components = formatted,
         prices = Config.price or {},
         savedComponents = selectedCache,
+        autoFocus = autoFocus,
         locales = getUILocales()
     })
 end
@@ -289,6 +439,17 @@ RegisterNetEvent('rsg-weaponcomp:client:ExitCam', exitCustomisation)
 RegisterNUICallback('closeUI', function(_, cb)
     cb('ok')
     exitCustomisation()
+end)
+
+RegisterNUICallback('setAutoFocus', function(data, cb)
+    cb('ok')
+    autoFocus = data.enabled == true
+    SetResourceKvp(FOCUS_KVP, tostring(autoFocus))
+    if not autoFocus and wepObj and DoesEntityExist(wepObj) then
+        -- back to the whole-weapon view
+        focusToken = focusToken + 1
+        startCamOnWeapon(wepObj, Config.distFov or 60.0)
+    end
 end)
 
 RegisterNUICallback('notify', function(data, cb)
@@ -343,6 +504,8 @@ RegisterNUICallback('componentChanged', function(data, cb)
     if WeaponComp.Priority(category) < 20 or compName == '' then
         reapplyFinishes(wHash)
     end
+
+    focusOnCategory(category)
 
     local price, changed = calculatePrice()
     SendNUIMessage({ action = 'updatePrice', price = price, changed = changed })
@@ -642,12 +805,18 @@ RegisterNetEvent('rsg-weaponcomp:client:setupgunzone', function(coords, heading)
         if IsPedInAnyVehicle(ped, false) or isBusy then return end
 
         isBusy = true
-        FreezeEntityPosition(ped, true)
         TaskStartScenarioInPlace(ped, `WORLD_HUMAN_STAND_WAITING`, 0, true)
-        Wait(10000)
+        local done = lib.progressBar({
+            duration = Config.SetupTime or 10000,
+            label = locale('cl_setting_up'),
+            useWhileDead = false,
+            canCancel = true,
+            disable = { move = true, car = true, combat = true, mouse = false },
+        })
         ClearPedTasks(ped)
-        FreezeEntityPosition(ped, false)
-        TriggerServerEvent('rsg-weaponcomp:server:createnewprop', coords, heading)
+        if done then
+            TriggerServerEvent('rsg-weaponcomp:server:createnewprop', coords, heading)
+        end
         isBusy = false
     end)
 end)
