@@ -5,14 +5,14 @@ lib.locale()
 -- Component whitelist (built from config)
 ----------------------------------------
 local ValidComps = {}   -- ValidComps[category][componentName] = true
-local DefaultComps = {} -- first option of every list = the factory part
+local FactoryComps = {} -- factory parts (first entry of structural lists such as the wood stock)
 
 local function indexComponents(source)
     for cat, list in pairs(source or {}) do
         ValidComps[cat] = ValidComps[cat] or {}
         for i, comp in ipairs(list) do
             ValidComps[cat][comp] = true
-            if i == 1 then DefaultComps[comp] = true end
+            if i == 1 and WeaponComp.IsFactoryCategory(cat) then FactoryComps[comp] = true end
         end
     end
 end
@@ -83,30 +83,20 @@ local function findWeaponItem(Player, serial, weaponName)
     return nil
 end
 
---- Returns a clean component table containing only whitelisted parts.
+--- Returns a clean component table containing only whitelisted, non-factory parts.
+--- Factory parts are dropped so only real modifications are stored and charged.
 local function sanitizeComponents(comps)
     if type(comps) ~= 'table' then return nil end
     local clean, count = {}, 0
     for cat, comp in pairs(comps) do
-        if type(cat) == 'string' and type(comp) == 'string' and cat ~= 'FRAME_VERTDATA'
-            and ValidComps[cat] and ValidComps[cat][comp] then
-            clean[cat] = comp
-            count = count + 1
-        end
+        count = count + 1
         if count > 64 then return nil end
+        if type(cat) == 'string' and type(comp) == 'string' and cat ~= 'FRAME_VERTDATA'
+            and ValidComps[cat] and ValidComps[cat][comp] and not FactoryComps[comp] then
+            clean[cat] = comp
+        end
     end
     return clean
-end
-
---- Only categories that actually change are charged; picking the factory part on an
---- unmodified slot is free.
-local function calculateChangePrice(current, new)
-    local total = 0
-    for cat, comp in pairs(new) do
-        local changed = current[cat] ~= comp and not (current[cat] == nil and DefaultComps[comp])
-        if changed then total = total + (Config.price[cat] or 0) end
-    end
-    return roundMoney(total)
 end
 
 local function calculateRemovePrice(current)
@@ -185,14 +175,11 @@ RegisterNetEvent('rsg-weaponcomp:server:purchase', function(serial, wHash, weapo
     end
 
     local newComps = sanitizeComponents(comps)
-    if not newComps or not next(newComps) then
-        notify(src, locale('ui_notify_title'), locale('cl_notify_10'), 'error')
-        return
-    end
+    if not newComps then return end
 
-    local current = item.info.componentshash or {}
-    local price = calculateChangePrice(current, newComps)
-    if price <= 0 then
+    local current = sanitizeComponents(item.info.componentshash) or {}
+    local price, changed = WeaponComp.ChangePrice(current, newComps)
+    if not changed then
         notify(src, locale('ui_notify_title'), locale('cl_notify_10'), 'error')
         return
     end
@@ -212,7 +199,7 @@ RegisterNetEvent('rsg-weaponcomp:server:reset', function(serial, wHash, weaponNa
         return
     end
 
-    local current = item.info.componentshash or {}
+    local current = sanitizeComponents(item.info.componentshash) or {}
     if not next(current) then
         notify(src, locale('ui_notify_title'), locale('cl_notify_12'), 'error')
         return

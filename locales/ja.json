@@ -20,6 +20,7 @@
     "ui_all_parts": "全パーツ＆アタッチメント",
     "ui_no_options": "この武器に利用できるオプションはありません。",
     "ui_no_mods_selected": "改造が選択されていません！",
+    "ui_factory": "Factory",
     "cl_camera_controls": "カメラ操作",
     "cl_gunsmith": "ガンスミス",
     "cl_cannot_reset": "この武器はリセットできません！",

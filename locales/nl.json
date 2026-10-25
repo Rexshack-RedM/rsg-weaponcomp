@@ -20,6 +20,7 @@
     "ui_all_parts": "ALLE ONDERDELEN & ACCESSOIRES",
     "ui_no_options": "Geen opties beschikbaar voor dit wapen.",
     "ui_no_mods_selected": "Geen aanpassingen geselecteerd!",
+    "ui_factory": "Factory",
     "cl_camera_controls": "Camerabediening",
     "cl_gunsmith": "Wapensmid",
     "cl_cannot_reset": "Dit wapen kan niet worden gereset!",

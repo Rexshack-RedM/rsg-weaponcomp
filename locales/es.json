@@ -20,6 +20,7 @@
     "ui_all_parts": "TODAS LAS PIEZAS Y ACCESORIOS",
     "ui_no_options": "No hay opciones disponibles para esta arma.",
     "ui_no_mods_selected": "¡No has seleccionado modificaciones!",
+    "ui_factory": "Factory",
     "cl_camera_controls": "Controles de cámara",
     "cl_gunsmith": "Armero",
     "cl_cannot_reset": "¡Esta arma no se puede restablecer!",

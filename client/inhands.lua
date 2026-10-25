@@ -1,359 +1,155 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 lib.locale()
 
+local UNARMED = `WEAPON_UNARMED`
 local reloadingWeapon = false
 
--- Component application order - this is CRITICAL
--- Base components first, then materials, then engravings, then tints, then wraps last
-local function getComponentPriority(cat)
-    if not cat then return 50 end
-    local catUpper = cat:upper()
-
-    -- Base structural components (applied first)
-    if catUpper == "BARREL" then return 1 end
-    if catUpper == "GRIP" then return 2 end
-    if catUpper == "GRIPSTOCK" then return 3 end
-    if catUpper == "STOCK" then return 4 end
-    if catUpper == "SIGHT" then return 5 end
-    if catUpper == "SCOPE" then return 6 end
-    if catUpper == "CLIP" then return 7 end
-    if catUpper == "MAG" then return 8 end
-    if catUpper == "TUBE" then return 9 end
-    if catUpper == "CYLINDER" then return 10 end
-    if catUpper == "FRAME" then return 11 end
-    if catUpper == "HAMMER" then return 12 end
-    if catUpper == "TRIGGER" then return 13 end
-
-    -- Rifling
-    if catUpper:find("RIFLING") then return 20 end
-
-    -- Materials (applied after base components)
-    if catUpper:find("_MATERIAL") and not catUpper:find("ENGRAVING_MATERIAL") then return 30 end
-
-    -- Engravings
-    if catUpper:find("_ENGRAVING") and not catUpper:find("_MATERIAL") then return 40 end
-
-    -- Engraving materials
-    if catUpper:find("ENGRAVING_MATERIAL") then return 45 end
-
-    -- Tints (but not wrap tints)
-    if catUpper:find("_TINT") and not catUpper:find("WRAP") then return 50 end
-
-    -- Base wrap (must be applied before wrap tint/material)
-    if catUpper == "WRAP" then return 60 end
-
-    -- Wrap material
-    if catUpper == "WRAP_MATERIAL" then return 65 end
-
-    -- Wrap tint (applied last)
-    if catUpper == "WRAP_TINT" then return 70 end
-
-    return 35 -- Default for unknown categories
+local function isArmed(wHash)
+    return wHash and wHash ~= 0 and wHash ~= UNARMED
 end
 
-local function getSortedComponentKeys(comps)
-    local keys = {}
-    for k in pairs(comps) do
-        keys[#keys + 1] = k
-    end
-    table.sort(keys, function(a, b)
-        return getComponentPriority(a) < getComponentPriority(b)
-    end)
-    return keys
-end
-
--- Check if category is a visual component that might need reapplication
-local function isVisualComponent(cat)
-    if not cat then return false end
-    local catUpper = cat:upper()
-    return catUpper:find("_TINT") or
-           catUpper:find("WRAP") or
-           catUpper:find("_MATERIAL") or
-           catUpper:find("_ENGRAVING") or
-           catUpper:find("COLOR") or
-           catUpper:find("COLOUR")
-end
-
-local function attachComponent(ped, compHash, weaponHash)
-    if compHash == 0 then return false end
-
+local function attachComponent(ped, compHash, wHash)
+    if compHash == 0 then return end
     local mdl = GetWeaponComponentTypeModel(compHash)
-    if mdl and mdl ~= 0 then
-        lib.requestModel(mdl)
-        local timeout = 0
-        while not HasModelLoaded(mdl) and timeout < 100 do
-            Wait(10)
-            timeout = timeout + 1
-        end
-    end
+    local loaded = mdl and mdl ~= 0 and pcall(lib.requestModel, mdl, 1000)
 
-    if IsEntityAPed(ped) then
-        GiveWeaponComponentToEntity(ped, compHash, weaponHash, true)
-        ApplyShopItemToPed(ped, compHash, true, true, true)
-    else
-        GiveWeaponComponentToEntity(ped, compHash, -1, true)
-    end
+    GiveWeaponComponentToEntity(ped, compHash, wHash, true)
+    ApplyShopItemToPed(ped, compHash, true, true, true)
 
-    if mdl and mdl ~= 0 then
-        SetModelAsNoLongerNeeded(mdl)
-    end
-
-    return true
+    if loaded then SetModelAsNoLongerNeeded(mdl) end
 end
 
-local function clearAllComponents(ped, weaponHash)
-    local wName = GetWeaponNameFromHash(weaponHash)
-    local weaponType = GetWeaponType(weaponHash)
-
-    if weaponType and Config.Shared and Config.Shared[weaponType] then
-        for _, list in pairs(Config.Shared[weaponType]) do
-            for _, h in ipairs(list) do
-                local compHash = type(h) == "string" and GetHashKey(h) or h
-                RemoveWeaponComponentFromPed(ped, compHash, weaponHash)
-            end
-        end
-    end
-
-    if wName and Config.Specific and Config.Specific[wName] then
-        for _, list in pairs(Config.Specific[wName]) do
-            for _, h in ipairs(list) do
-                local compHash = type(h) == "string" and GetHashKey(h) or h
-                RemoveWeaponComponentFromPed(ped, compHash, weaponHash)
-            end
+local function clearAllComponents(ped, wHash, available)
+    for _, list in pairs(available) do
+        for _, comp in ipairs(list) do
+            RemoveWeaponComponentFromPed(ped, joaat(comp), wHash)
         end
     end
 end
 
-local function applyAllComponents(ped, wHash, comps)
-    if not comps or not next(comps) then return end
-
-    -- Get keys sorted by priority
-    local sortedKeys = getSortedComponentKeys(comps)
-
-    -- Apply all components in priority order with small delays for visual components
-    for _, cat in ipairs(sortedKeys) do
-        local compName = comps[cat]
-        if compName and compName ~= "" then
-            local compHash = GetHashKey(compName)
-            if compHash ~= 0 then
-                attachComponent(ped, compHash, wHash)
-
-                -- Small delay after visual components to let them apply
-                if isVisualComponent(cat) then
-                    Wait(50)
-                end
-            end
+--- Saved modifications plus the factory part for every structural slot that wasn't modified,
+--- so the weapon never ends up without its wood stock/grip/barrel after the clear.
+local function buildLoadout(available, saved)
+    local loadout = {}
+    for cat, list in pairs(available) do
+        if saved[cat] then
+            loadout[cat] = saved[cat]
+        elseif WeaponComp.IsFactoryCategory(cat) and list[1] then
+            loadout[cat] = list[1]
         end
     end
-
-    -- Force refresh the weapon appearance
-    Wait(100)
-    Citizen.InvokeNative(0x76A18844E743BF91, ped)
+    return loadout
 end
 
-local function reapplyVisualComponents(ped, wHash, comps)
-    if not comps or not next(comps) then return end
-
-    -- Get sorted keys for visual components only
-    local sortedKeys = getSortedComponentKeys(comps)
-
-    for _, cat in ipairs(sortedKeys) do
-        local compName = comps[cat]
-        if compName and compName ~= "" and isVisualComponent(cat) then
-            local compHash = GetHashKey(compName)
-            if compHash ~= 0 then
-                GiveWeaponComponentToEntity(ped, compHash, wHash, true)
-                ApplyShopItemToPed(ped, compHash, true, true, true)
-                Wait(25)
-            end
+local function applyLoadout(ped, wHash, loadout, finishesOnly)
+    for _, cat in ipairs(WeaponComp.SortedKeys(loadout)) do
+        if not finishesOnly or WeaponComp.Priority(cat) >= 20 then
+            attachComponent(ped, joaat(loadout[cat]), wHash)
+            if WeaponComp.Priority(cat) >= 20 then Wait(25) end
         end
     end
-
-    Citizen.InvokeNative(0x76A18844E743BF91, ped)
+    Citizen.InvokeNative(0x76A18844E743BF91, ped) -- refresh ped visuals
 end
 
-RegisterNetEvent("rsg-weaponcomp:client:reloadWeapon")
-AddEventHandler("rsg-weaponcomp:client:reloadWeapon", function()
+--- force = true re-applies even when nothing is saved (after a reset, to strip old parts)
+AddEventHandler('rsg-weaponcomp:client:reloadWeapon', function(force)
     if reloadingWeapon then return end
     reloadingWeapon = true
 
-    local ped = PlayerPedId()
+    local ped = cache.ped
     local wHash = GetPedCurrentHeldWeapon(ped)
+    if not isArmed(wHash) then reloadingWeapon = false return end
 
-    if wHash == 0 or wHash == GetHashKey("WEAPON_UNARMED") then
-        reloadingWeapon = false
-        return
-    end
+    Wait(500) -- let rsg-weapons finish registering the weapon
+    if GetPedCurrentHeldWeapon(ped) ~= wHash then reloadingWeapon = false return end
 
-    -- Wait for weapon to be fully registered
-    Wait(500)
-
-    -- Verify weapon is still equipped after wait
-    local currentWeapon = GetPedCurrentHeldWeapon(ped)
-    if currentWeapon ~= wHash or currentWeapon == 0 or currentWeapon == GetHashKey("WEAPON_UNARMED") then
-        reloadingWeapon = false
-        return
-    end
-
+    local weaponName = GetWeaponNameFromHash(wHash)
     local serial = exports['rsg-weapons']:weaponInHands()[wHash] or tostring(wHash)
 
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(result)
-        local comps = result and result.components or {}
-        if not next(comps) then
+        local saved = result and result.components or {}
+        if (not next(saved) and not force) or GetPedCurrentHeldWeapon(ped) ~= wHash or not HasPedGotWeapon(ped, wHash, false, false) then
             reloadingWeapon = false
             return
         end
 
-        -- Verify weapon is still equipped and exists on ped
-        local verifyWeapon = GetPedCurrentHeldWeapon(ped)
-        if verifyWeapon ~= wHash then
-            reloadingWeapon = false
-            return
-        end
+        local available = GetAvailableComponents(weaponName, wHash)
+        local loadout = buildLoadout(available, saved)
 
-        if not HasPedGotWeapon(ped, wHash) then
-            reloadingWeapon = false
-            return
-        end
-
-        -- Clear existing components first
-        clearAllComponents(ped, wHash)
-
+        clearAllComponents(ped, wHash, available)
         Wait(150)
+        applyLoadout(ped, wHash, loadout)
 
-        -- Apply all components in correct order
-        applyAllComponents(ped, wHash, comps)
-
-        -- Retry mechanism: reapply visual components multiple times to ensure they stick
-        CreateThread(function()
-            for i = 1, 5 do
-                Wait(500)
-                local currentWeapon = GetPedCurrentHeldWeapon(ped)
-                if currentWeapon == wHash and HasPedGotWeapon(ped, wHash) then
-                    reapplyVisualComponents(ped, wHash, comps)
-                else
-                    break
-                end
-            end
-            reloadingWeapon = false
-        end)
-    end, serial, GetWeaponNameFromHash(wHash))
+        -- finishes sometimes don't stick on the first pass; re-apply them a few times
+        for _ = 1, 3 do
+            Wait(500)
+            if GetPedCurrentHeldWeapon(ped) ~= wHash then break end
+            applyLoadout(ped, wHash, loadout, true)
+        end
+        reloadingWeapon = false
+    end, serial, weaponName)
 end)
+RegisterNetEvent('rsg-weaponcomp:client:reloadWeapon')
 
--- Listen for weapon changes and reload components
+-- Re-apply components whenever the held weapon changes
 CreateThread(function()
-    local lastWeapon = nil
+    local lastWeapon
     while true do
         Wait(500)
-        local ped = PlayerPedId()
-        local currentWeapon = GetPedCurrentHeldWeapon(ped)
-
-        -- Check if weapon changed (and it's not unarmed)
-        if currentWeapon ~= lastWeapon and currentWeapon ~= 0 and currentWeapon ~= GetHashKey("WEAPON_UNARMED") then
-            lastWeapon = currentWeapon
-            -- Delay to ensure weapon is fully initialized in rsg-weapons
-            Wait(500)
-            TriggerEvent("rsg-weaponcomp:client:reloadWeapon")
-        elseif currentWeapon == 0 or currentWeapon == GetHashKey("WEAPON_UNARMED") then
+        local current = GetPedCurrentHeldWeapon(cache.ped)
+        if isArmed(current) then
+            if current ~= lastWeapon then
+                lastWeapon = current
+                TriggerEvent('rsg-weaponcomp:client:reloadWeapon')
+            end
+        else
             lastWeapon = nil
         end
     end
 end)
 
-RegisterCommand(Config.Commandequipscope, function()
-    local ped = PlayerPedId()
-    local wHash = GetPedCurrentHeldWeapon(ped)
-    if wHash == GetHashKey("WEAPON_UNARMED") then return end
-
-    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
-    if not serial then return end
-
-    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:equipScope', function(success)
-        if success then
-            local Player = RSGCore.Functions.GetPlayerData()
-            for _, item in pairs(Player.items or {}) do
-                if item.info and item.info.serie == serial then
-                    local scopeName = item.info.componentshash and item.info.componentshash["SCOPE"]
-                    if scopeName then
-                        TriggerEvent('rsg-weaponcomp:client:equipScope', scopeName)
-                        lib.notify({ type = 'success', description = locale('cl_scope_equipped_ok') })
-                    end
-                    break
-                end
-            end
-        end
-    end, serial)
-end, false)
-
-RegisterCommand(Config.Commanddesequipscope, function()
-    local ped = PlayerPedId()
-    local wHash = GetPedCurrentHeldWeapon(ped)
-    if wHash == GetHashKey("WEAPON_UNARMED") then return end
-
-    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
-    if not serial then return end
-
-    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:unequipScope', function(success)
-        if success then
-            local Player = RSGCore.Functions.GetPlayerData()
-            for _, item in pairs(Player.items or {}) do
-                if item.info and item.info.serie == serial then
-                    local scopeName = item.info.componentshash and item.info.componentshash["SCOPE"]
-                    if scopeName then
-                        TriggerEvent('rsg-weaponcomp:client:unequipScope', scopeName)
-                        lib.notify({ type = 'success', description = locale('cl_scope_removed_ok') })
-                    end
-                    break
-                end
-            end
-        end
-    end, serial)
-end, false)
-
-local anim = {
-    Animation = true,
-    AnimDict = "mech_inspection@weapons@longarms@rifle_bolt_action@base",
-    AnimName = "aim_enter",
-    AnimDuration = 2000
-}
+----------------------------------------
+-- Scope
+----------------------------------------
+local SCOPE_ANIM = { dict = 'mech_inspection@weapons@longarms@rifle_bolt_action@base', clip = 'aim_enter', duration = 2000 }
 
 local function playScopeAnim(ped)
-    lib.requestAnimDict(anim.AnimDict)
-    TaskPlayAnim(ped,
-        anim.AnimDict, anim.AnimName,
-        8.0, -8.0,
-        anim.AnimDuration or 1500,
-        0, 0, false, false, false
-    )
-    RemoveAnimDict(anim.AnimDict)
+    if not pcall(lib.requestAnimDict, SCOPE_ANIM.dict, 2000) then return end
+    TaskPlayAnim(ped, SCOPE_ANIM.dict, SCOPE_ANIM.clip, 8.0, -8.0, SCOPE_ANIM.duration, 0, 0, false, false, false)
+    RemoveAnimDict(SCOPE_ANIM.dict)
 end
 
-RegisterNetEvent('rsg-weaponcomp:client:equipScope', function(scopeName)
-    local ped = PlayerPedId()
+local function getSavedScope(serial)
+    for _, item in pairs(RSGCore.Functions.GetPlayerData().items or {}) do
+        if item.info and tostring(item.info.serie) == tostring(serial) then
+            return item.info.componentshash and item.info.componentshash.SCOPE
+        end
+    end
+end
+
+local function toggleScope(equip)
+    local ped = cache.ped
     local wHash = GetPedCurrentHeldWeapon(ped)
-    if wHash == GetHashKey("WEAPON_UNARMED") then return end
+    if not isArmed(wHash) then return end
+
     local serial = exports['rsg-weapons']:weaponInHands()[wHash]
     if not serial then return end
 
-    playScopeAnim(ped)
+    local scopeName = getSavedScope(serial)
+    if not scopeName then return end
 
-    local compHash = GetHashKey(scopeName)
-    if compHash ~= 0 then
-        attachComponent(ped, compHash, wHash)
-    end
-end)
+    local cbName = equip and 'rsg-weaponcomp:server:equipScope' or 'rsg-weaponcomp:server:unequipScope'
+    RSGCore.Functions.TriggerCallback(cbName, function(success)
+        if not success or GetPedCurrentHeldWeapon(ped) ~= wHash then return end
+        playScopeAnim(ped)
+        if equip then
+            attachComponent(ped, joaat(scopeName), wHash)
+        else
+            RemoveWeaponComponentFromPed(ped, joaat(scopeName), wHash)
+        end
+        lib.notify({ type = 'success', description = locale(equip and 'cl_scope_equipped_ok' or 'cl_scope_removed_ok') })
+    end, serial)
+end
 
-RegisterNetEvent('rsg-weaponcomp:client:unequipScope', function(scopeName)
-    local ped = PlayerPedId()
-    local wHash = GetPedCurrentHeldWeapon(ped)
-    if wHash == GetHashKey("WEAPON_UNARMED") then return end
-    local serial = exports['rsg-weapons']:weaponInHands()[wHash]
-    if not serial then return end
-
-    playScopeAnim(ped)
-
-    local compHash = GetHashKey(scopeName)
-    if compHash ~= 0 then
-        RemoveWeaponComponentFromPed(ped, compHash, wHash)
-    end
-end)
+RegisterCommand(Config.Commandequipscope, function() toggleScope(true) end, false)
+RegisterCommand(Config.Commanddesequipscope, function() toggleScope(false) end, false)

@@ -20,6 +20,7 @@
     "ui_all_parts": "WSZYSTKIE CZĘŚCI I DODATKI",
     "ui_no_options": "Brak dostępnych opcji dla tej broni.",
     "ui_no_mods_selected": "Nie wybrano żadnych modyfikacji!",
+    "ui_factory": "Factory",
     "cl_camera_controls": "Sterowanie kamerą",
     "cl_gunsmith": "Rusznikarz",
     "cl_cannot_reset": "Tej broni nie można zresetować!",

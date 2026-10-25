@@ -20,6 +20,7 @@
     "ui_all_parts": "ALL PARTS & ATTACHMENTS",
     "ui_no_options": "No options available for this weapon.",
     "ui_no_mods_selected": "No modifications selected!",
+    "ui_factory": "Factory",
     "cl_camera_controls": "Camera Controls",
     "cl_gunsmith": "Gunsmith",
     "cl_cannot_reset": "This weapon cannot be reset!",

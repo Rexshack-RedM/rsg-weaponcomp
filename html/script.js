@@ -10,11 +10,15 @@ const App = {
     savedComponents: {},
     prices: {},
     totalPrice: 0,
+    hasChanges: false,
+    categoryLabels: {},
+    drag: null,
 
     init() {
         // Ensure app is hidden on load
         this.hide();
         this.bindEvents();
+        this.bindTrackEvents();
         this.listenToGame();
         
     },
@@ -99,6 +103,7 @@ const App = {
                     break;
                 case 'updatePrice':
                     this.totalPrice = Number(data.price) || 0;
+                    this.hasChanges = !!data.changed;
                     this.updatePriceDisplay(this.totalPrice);
                     break;
                 case 'notify':
@@ -133,16 +138,21 @@ const App = {
         this.selectedComponents = {};
         this.selectedLabels = {};
         this.totalPrice = 0;
+        this.hasChanges = false;
         this.filteredComponents = {};
-        
-        // Deep copy components to avoid reference issues
-        try {
-            this.components = JSON.parse(JSON.stringify(data.components || {}));
-            this.prices = JSON.parse(JSON.stringify(data.prices || {}));
-        } catch (e) {
-            this.components = {};
-            this.prices = {};
+        this.savedComponents = data.savedComponents || {};
+
+        // Components arrive as an ordered array of { category, label, items }
+        this.components = {};
+        this.categoryLabels = {};
+        const list = Array.isArray(data.components) ? data.components : [];
+        for (let i = 0; i < list.length; i++) {
+            const entry = list[i];
+            if (!entry || !entry.category || !Array.isArray(entry.items)) continue;
+            this.components[entry.category] = entry.items;
+            this.categoryLabels[entry.category] = entry.label || entry.category;
         }
+        this.prices = data.prices || {};
 
         // Set weapon info
         const weaponNameEl = document.getElementById('weaponName');
@@ -164,9 +174,6 @@ const App = {
         // Show UI
         this.show();
         this.showMainMenu();
-        
-        // Store saved components for later use
-        this.savedComponents = data.savedComponents || {};
     },
 
     show() {
@@ -349,8 +356,8 @@ const App = {
             
             html += '<div class="component-category" data-category="' + category + '" data-index="' + currentIndex + '">' +
                 '<div class="category-header">' +
-                    '<span class="category-name">' + this.formatLabel(category) + '</span>' +
-                    '<span class="category-value">' + displayName + '</span>' +
+                    '<span class="category-name">' + this.escape(this.categoryLabels[category] || this.formatLabel(category)) + '</span>' +
+                    '<span class="category-value">' + this.escape(displayName) + '</span>' +
                 '</div>' +
                 '<div class="slider-container">' +
                     '<button class="slider-btn left" data-cat="' + category + '" data-dir="left"><i class="fas fa-chevron-left"></i></button>' +
@@ -380,149 +387,68 @@ const App = {
             });
         }
 
-        // Calculate initial price with saved components
-        
-        // Bind drag events to sliders
-        this.bindSliderDragEvents();
     },
 
-    bindSliderDragEvents() {
-        const sliders = document.querySelectorAll('.slider-container');
-        for (let i = 0; i < sliders.length; i++) {
-            const slider = sliders[i];
-            const track = slider.querySelector('.slider-track');
-            const thumb = slider.querySelector('.slider-thumb');
-            if (!track || !thumb) continue;
+    selectIndex(category, newIndex) {
+        const items = this.filteredComponents[category];
+        if (!items || !items[newIndex]) return;
+        const current = this.selectedComponents[category];
+        if (current && current.index === newIndex) return;
 
+        const selectedItem = items[newIndex];
+        this.selectedComponents[category] = { index: newIndex, hash: selectedItem.hash, name: selectedItem.name };
+        this.selectedLabels[category] = selectedItem.label || selectedItem.name;
+        this.updateSliderUI(category, newIndex, items.length, selectedItem);
+        this.postToGame('componentChanged', { category: category, component: selectedItem.name });
+    },
+
+    indexFromPointer(track, clientX, category) {
+        const items = this.filteredComponents[category];
+        if (!items || items.length === 0) return -1;
+        const rect = track.getBoundingClientRect();
+        const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        return Math.round(percent * (items.length - 1));
+    },
+
+    bindTrackEvents() {
+        const list = document.getElementById('componentList');
+        if (!list) return;
+        const pointX = (e) => (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
+
+        const start = (e) => {
+            const track = e.target.closest('.slider-track');
+            if (!track) return;
             const category = track.closest('.component-category')?.getAttribute('data-category');
-            if (!category) continue;
+            if (!category) return;
+            e.preventDefault();
+            this.drag = { track, category };
+            this.selectIndex(category, this.indexFromPointer(track, pointX(e), category));
+        };
+        const move = (e) => {
+            if (!this.drag) return;
+            e.preventDefault();
+            this.selectIndex(this.drag.category, this.indexFromPointer(this.drag.track, pointX(e), this.drag.category));
+        };
+        const end = () => { this.drag = null; };
 
-            let isDragging = false;
+        list.addEventListener('mousedown', start);
+        list.addEventListener('touchstart', start, { passive: false });
+        document.addEventListener('mousemove', move);
+        document.addEventListener('touchmove', move, { passive: false });
+        document.addEventListener('mouseup', end);
+        document.addEventListener('touchend', end);
+    },
 
-            const handleDrag = (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                
-                const rect = track.getBoundingClientRect();
-                const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                let percent = (clientX - rect.left) / rect.width;
-                percent = Math.max(0, Math.min(1, percent));
-
-                const items = this.filteredComponents[category];
-                if (!items || items.length === 0) return;
-
-                const totalItems = items.length;
-                const newIndex = Math.round(percent * (totalItems - 1));
-
-                const selectedItem = items[newIndex];
-                if (!selectedItem) return;
-
-                this.selectedComponents[category] = {
-                    index: newIndex,
-                    hash: selectedItem.hash,
-                    name: selectedItem.name
-                };
-                this.selectedLabels[category] = selectedItem.label || selectedItem.name;
-
-                this.updateSliderUI(category, newIndex, totalItems, selectedItem);
-
-                this.postToGame('componentChanged', {
-                    category: category,
-                    component: selectedItem.name,
-                    hash: selectedItem.hash
-                });
-            };
-
-            const startDrag = (e) => {
-                isDragging = true;
-                e.preventDefault();
-                handleDrag(e);
-            };
-
-            const endDrag = () => {
-                isDragging = false;
-            };
-
-            thumb.addEventListener('mousedown', startDrag);
-            thumb.addEventListener('touchstart', startDrag, { passive: false });
-            track.addEventListener('click', (e) => {
-                const rect = track.getBoundingClientRect();
-                let percent = (e.clientX - rect.left) / rect.width;
-                percent = Math.max(0, Math.min(1, percent));
-
-                const items = this.filteredComponents[category];
-                if (!items || items.length === 0) return;
-
-                const totalItems = items.length;
-                const newIndex = Math.round(percent * (totalItems - 1));
-
-                const selectedItem = items[newIndex];
-                if (!selectedItem) return;
-
-                this.selectedComponents[category] = {
-                    index: newIndex,
-                    hash: selectedItem.hash,
-                    name: selectedItem.name
-                };
-                this.selectedLabels[category] = selectedItem.label || selectedItem.name;
-
-                this.updateSliderUI(category, newIndex, totalItems, selectedItem);
-
-                this.postToGame('componentChanged', {
-                    category: category,
-                    component: selectedItem.name,
-                    hash: selectedItem.hash
-                });
-            });
-
-            document.addEventListener('mousemove', handleDrag);
-            document.addEventListener('mouseup', endDrag);
-            document.addEventListener('touchmove', handleDrag, { passive: false });
-            document.addEventListener('touchend', endDrag);
-        }
+    escape(str) {
+        return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     },
 
     changeComponent(category, direction) {
         const items = this.filteredComponents[category];
         if (!items || items.length === 0) return;
-
-        // Get current index
-        let currentIndex = 0;
-        if (this.selectedComponents[category] && typeof this.selectedComponents[category].index === 'number') {
-            currentIndex = this.selectedComponents[category].index;
-        }
-        
-        // Calculate new index
-        if (direction === 'left') {
-            currentIndex = currentIndex - 1;
-            if (currentIndex < 0) currentIndex = items.length - 1;
-        } else {
-            currentIndex = currentIndex + 1;
-            if (currentIndex >= items.length) currentIndex = 0;
-        }
-
-        const selectedItem = items[currentIndex];
-        if (!selectedItem) return;
-        
-        // Store selection (simple object, no circular refs)
-        this.selectedComponents[category] = {
-            index: currentIndex,
-            hash: selectedItem.hash,
-            name: selectedItem.name
-        };
-        this.selectedLabels[category] = selectedItem.label || selectedItem.name;
-
-        // Update UI
-        this.updateSliderUI(category, currentIndex, items.length, selectedItem);
-
-        // Calculate new price
-
-        // Send to game
-        this.postToGame('componentChanged', {
-            category: category,
-            component: selectedItem.name,
-            hash: selectedItem.hash
-        });
+        const current = this.selectedComponents[category] ? this.selectedComponents[category].index : 0;
+        const step = direction === 'left' ? -1 : 1;
+        this.selectIndex(category, (current + step + items.length) % items.length);
     },
 
     updateSliderUI(category, currentIndex, totalItems, selectedItem) {
@@ -570,7 +496,7 @@ const App = {
     },
 
     purchase() {
-        if (this.totalPrice <= 0) {
+        if (!this.hasChanges) {
             this.showNotification('error', this.t('ui_no_mods_selected', 'No modifications selected!'));
             return;
         }

@@ -103,15 +103,9 @@ function GetAvailableComponents(weaponName, wHash)
     return merged
 end
 
---- Price of the categories that differ from what the weapon had when the menu opened.
+--- Price/changed state versus what the weapon had when the menu opened (mirrors the server).
 local function calculatePrice()
-    local total = 0
-    for cat, comp in pairs(selectedCache) do
-        if baselineCache[cat] ~= comp then
-            total = total + (Config.price[cat] or 0)
-        end
-    end
-    return math.floor(total * 100 + 0.5) / 100
+    return WeaponComp.ChangePrice(baselineCache, selectedCache)
 end
 
 local function loadComponentModel(compHash)
@@ -254,12 +248,17 @@ local function openWeaponUI(weaponName, wHash, serial, comps)
         return oa < ob
     end)
 
+    -- Sent as an ordered array: JSON objects don't keep key order in the UI
     local formatted = {}
     for _, cat in ipairs(cats) do
-        formatted[cat] = {}
-        for i, comp in ipairs(comps[cat]) do
-            formatted[cat][i] = { name = comp, hash = joaat(comp), label = locale(comp) }
+        local items = {}
+        if not WeaponComp.IsFactoryCategory(cat) then
+            items[1] = { name = '', hash = 0, label = locale('ui_factory') }
         end
+        for _, comp in ipairs(comps[cat]) do
+            items[#items + 1] = { name = comp, hash = joaat(comp), label = locale(comp) }
+        end
+        formatted[#formatted + 1] = { category = cat, label = locale(cat), items = items }
     end
 
     SetNuiFocus(true, true)
@@ -297,38 +296,64 @@ RegisterNUICallback('notify', function(data, cb)
     lib.notify({ title = locale('ui_notify_title'), description = tostring(data.message or ''), type = data.type or 'inform' })
 end)
 
+local function isValidOption(category, compName)
+    local list = currentWeaponData.comps[category]
+    if not list then return false end
+    if compName == '' then return not WeaponComp.IsFactoryCategory(category) end
+    for _, comp in ipairs(list) do
+        if comp == compName then return true end
+    end
+    return false
+end
+
+--- Re-applies every finish (tint/material/engraving/wrap) on top of the current parts.
+--- Swapping the wood stock/grip model resets its finish, so this keeps the preview honest.
+local function reapplyFinishes(wHash)
+    for _, cat in ipairs(WeaponComp.SortedKeys(selectedCache)) do
+        if WeaponComp.Priority(cat) >= 20 then
+            GiveWeaponComponentToEntity(wepObj, joaat(selectedCache[cat]), wHash, true)
+        end
+    end
+end
+
 RegisterNUICallback('componentChanged', function(data, cb)
     cb('ok')
     if not currentWeaponData or not wepObj or not DoesEntityExist(wepObj) then return end
 
     local category, compName = data.category, data.component
-    if type(compName) ~= 'string' or not currentWeaponData.comps[category] then return end
+    if type(category) ~= 'string' or type(compName) ~= 'string' or not isValidOption(category, compName) then return end
 
     local wHash = currentWeaponData.wHash
-    local compHash = joaat(compName)
-    loadComponentModel(compHash)
-
-    if selectedCache[category] then
-        RemoveWeaponComponentFromWeaponObject(wepObj, joaat(selectedCache[category]))
-    end
-    GiveWeaponComponentToEntity(wepObj, compHash, wHash, true)
-
-    -- Gripstock parts get cleared when other components on the same part change
-    for _, cat in ipairs({ 'GRIPSTOCK_ENGRAVING', 'GRIPSTOCK_TINT' }) do
-        if category ~= cat and selectedCache[cat] then
-            GiveWeaponComponentToEntity(wepObj, joaat(selectedCache[cat]), wHash, true)
-        end
+    local list = currentWeaponData.comps[category]
+    local isFactoryPart = WeaponComp.IsFactoryCategory(category) and compName == list[1]
+    local previous = selectedCache[category] or (WeaponComp.IsFactoryCategory(category) and list[1])
+    if previous then
+        RemoveWeaponComponentFromWeaponObject(wepObj, joaat(previous))
     end
 
-    selectedCache[category] = compName
-    SendNUIMessage({ action = 'updatePrice', price = calculatePrice() })
+    if compName == '' then
+        selectedCache[category] = nil -- back to factory finish
+    else
+        local compHash = joaat(compName)
+        loadComponentModel(compHash)
+        GiveWeaponComponentToEntity(wepObj, compHash, wHash, true)
+        selectedCache[category] = not isFactoryPart and compName or nil
+    end
+
+    if WeaponComp.Priority(category) < 20 or compName == '' then
+        reapplyFinishes(wHash)
+    end
+
+    local price, changed = calculatePrice()
+    SendNUIMessage({ action = 'updatePrice', price = price, changed = changed })
 end)
 
 RegisterNUICallback('purchase', function(_, cb)
     cb('ok')
     if not currentWeaponData then return end
 
-    if calculatePrice() <= 0 then
+    local _, changed = calculatePrice()
+    if not changed then
         lib.notify({ title = locale('ui_notify_title'), description = locale('cl_notify_10'), type = 'error' })
         return
     end
@@ -359,23 +384,29 @@ end)
 ----------------------------------------
 -- Customisation
 ----------------------------------------
---- Puts saved (or factory) components on the display weapon and records them as the baseline.
+--- Puts the saved modifications on the display weapon and records them as the baseline.
+--- Only real modifications go into the cache; factory parts are shown but never stored,
+--- otherwise every purchase would also save the first tint/engraving/material of every list.
 local function applyComponents(obj, wHash, comps, savedComps)
+    local display = {}
     for cat, options in pairs(comps) do
-        local compToApply = options[1]
         local saved = savedComps[cat]
-        if saved then
-            for _, valid in ipairs(options) do
-                if valid == saved then compToApply = saved break end
+        for _, valid in ipairs(options) do
+            if saved and valid == saved then
+                selectedCache[cat] = saved
+                display[cat] = saved
+                break
             end
         end
-
-        if compToApply then
-            local compHash = joaat(compToApply)
-            loadComponentModel(compHash)
-            GiveWeaponComponentToEntity(obj, compHash, wHash, true)
-            selectedCache[cat] = compToApply
+        if not display[cat] and WeaponComp.IsFactoryCategory(cat) then
+            display[cat] = options[1]
         end
+    end
+
+    for _, cat in ipairs(WeaponComp.SortedKeys(display)) do
+        local compHash = joaat(display[cat])
+        loadComponentModel(compHash)
+        GiveWeaponComponentToEntity(obj, compHash, wHash, true)
     end
     baselineCache = cloneTable(selectedCache)
 end
@@ -487,7 +518,7 @@ RegisterNetEvent('rsg-weaponcomp:client:animationSaved', function(wHash)
         destroyCamera()
     end
 
-    TriggerEvent('rsg-weaponcomp:client:reloadWeapon')
+    TriggerEvent('rsg-weaponcomp:client:reloadWeapon', true)
 end)
 
 ----------------------------------------

@@ -20,6 +20,7 @@
     "ui_all_parts": "ALLE TEILE & ZUBEHÖR",
     "ui_no_options": "Für diese Waffe sind keine Optionen verfügbar.",
     "ui_no_mods_selected": "Keine Modifikationen ausgewählt!",
+    "ui_factory": "Factory",
     "cl_camera_controls": "Kamerasteuerung",
     "cl_gunsmith": "Büchsenmacher",
     "cl_cannot_reset": "Diese Waffe kann nicht zurückgesetzt werden!",

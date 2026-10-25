@@ -20,6 +20,7 @@
     "ui_all_parts": "TOATE PIESELE ȘI ACCESORIILE",
     "ui_no_options": "Nu există opțiuni disponibile pentru această armă.",
     "ui_no_mods_selected": "Nicio modificare selectată!",
+    "ui_factory": "Factory",
     "cl_camera_controls": "Controale cameră",
     "cl_gunsmith": "Armurier",
     "cl_cannot_reset": "Această armă nu poate fi resetată!",
