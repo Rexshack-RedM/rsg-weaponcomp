@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "%.1fm od gracza",
     "sv_sec_not_owner": "Próba złożenia cudzego warsztatu",
     "sv_sec_owner": "%s (właściciel %s)",
-    "sv_sec_pack_range": "Złożenie warsztatu poza zasięgiem"
+    "sv_sec_pack_range": "Złożenie warsztatu poza zasięgiem",
+    "sv_sec_no_bench": "Brak warsztatu w pobliżu",
+    "sv_sec_no_bench_desc": "Próba zakupu/resetu z dala od warsztatu rusznikarza",
+    "sv_inventory_full": "Twój ekwipunek jest pełny, zrób miejsce przed spakowaniem warsztatu",
+    "ui_condition": "Stan",
+    "ui_cleanliness": "Czystość",
+    "ui_clean_oil": "Wyczyść broń (Olej do broni)",
+    "ui_repair_kit": "Napraw broń (Zestaw naprawczy)",
+    "ui_maintenance": "Konserwacja",
+    "cl_oil_cleaning": "Oliwienie broni...",
+    "cl_no_gun_oil": "Potrzebujesz %s",
+    "cl_oil_done": "Broń wyczyszczona",
+    "cl_repair_done": "Broń naprawiona",
+    "cl_already_clean": "Twoja broń jest już czysta",
+    "cl_already_repaired": "Twoja broń jest już w idealnym stanie",
+    "sv_dc_oiled": "Broń naoliwiona"
 }

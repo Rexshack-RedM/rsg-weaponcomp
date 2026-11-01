@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "プレイヤーから%.1fm",
     "sv_sec_not_owner": "他人の作業台を片付けようとした",
     "sv_sec_owner": "%s（所有者 %s）",
-    "sv_sec_pack_range": "範囲外から作業台を片付け"
+    "sv_sec_pack_range": "範囲外から作業台を片付け",
+    "sv_sec_no_bench": "近くに作業台がありません",
+    "sv_sec_no_bench_desc": "ガンスミス作業台から離れた場所で購入/リセットが試みられました",
+    "sv_inventory_full": "インベントリがいっぱいです。作業台を片付ける前に空きを作ってください",
+    "ui_condition": "状態",
+    "ui_cleanliness": "清潔さ",
+    "ui_clean_oil": "武器を清掃（ガンオイル）",
+    "ui_repair_kit": "武器を修理（修理キット）",
+    "ui_maintenance": "メンテナンス",
+    "cl_oil_cleaning": "武器に油を差しています...",
+    "cl_no_gun_oil": "%s が必要です",
+    "cl_oil_done": "武器を清掃しました",
+    "cl_repair_done": "武器を修理しました",
+    "cl_already_clean": "武器はすでにきれいです",
+    "cl_already_repaired": "武器はすでに完璧な状態です",
+    "sv_dc_oiled": "武器に給油"
 }

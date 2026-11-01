@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "%.1fm from player",
     "sv_sec_not_owner": "Tried to pack up someone else's workbench",
     "sv_sec_owner": "%s (owner %s)",
-    "sv_sec_pack_range": "Workbench pack-up out of range"
+    "sv_sec_pack_range": "Workbench pack-up out of range",
+    "sv_sec_no_bench": "No workbench nearby",
+    "sv_sec_no_bench_desc": "Purchase/reset attempted away from any gunsmith workbench",
+    "sv_inventory_full": "Your inventory is full, make room before packing up the workbench",
+    "ui_condition": "Condition",
+    "ui_cleanliness": "Cleanliness",
+    "ui_clean_oil": "Clean Weapon (Gun Oil)",
+    "ui_repair_kit": "Repair Weapon (Repair Kit)",
+    "ui_maintenance": "Maintenance",
+    "cl_oil_cleaning": "Oiling weapon...",
+    "cl_no_gun_oil": "You need %s",
+    "cl_oil_done": "Weapon cleaned",
+    "cl_repair_done": "Weapon repaired",
+    "cl_already_clean": "Your weapon is already clean",
+    "cl_already_repaired": "Your weapon is already in perfect condition",
+    "sv_dc_oiled": "Weapon Oiled"
 }

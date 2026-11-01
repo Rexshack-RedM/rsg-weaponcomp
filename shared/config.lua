@@ -4,10 +4,13 @@ Config.PlayerProps = {}
 
 -- Placement settings
 Config.PlaceDistance = 5.0
+Config.UseDistance = 6.0 -- max distance (server-checked) from a workbench to buy/reset modifications
 Config.SetupTime = 10000 -- ms to set up a workbench after placing it (cancellable)
 
 -- Items and limits
 Config.RepairItem = 'weapon_repair_kit'
+Config.GunOilItem = 'weapon_gun_oil' -- quick clean: removes dirt/soot only (does not restore condition)
+Config.GunOilTime = 6000             -- ms the oiling animation takes
 Config.Gunsmithitem = 'gunsmith'
 Config.RequiredJob = nil -- Job name required to use gunsmith item (set to nil to disable)
 Config.Gunsmithprop = `p_gunsmithprops09x`

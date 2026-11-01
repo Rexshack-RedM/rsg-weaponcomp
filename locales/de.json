@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "%.1fm vom Spieler entfernt",
     "sv_sec_not_owner": "Versuchte, die Werkbank eines anderen abzubauen",
     "sv_sec_owner": "%s (Besitzer %s)",
-    "sv_sec_pack_range": "Werkbank außerhalb der Reichweite abgebaut"
+    "sv_sec_pack_range": "Werkbank außerhalb der Reichweite abgebaut",
+    "sv_sec_no_bench": "Keine Werkbank in der Nähe",
+    "sv_sec_no_bench_desc": "Kauf/Zurücksetzen fern von jeder Büchsenmacher-Werkbank versucht",
+    "sv_inventory_full": "Dein Inventar ist voll, schaffe Platz, bevor du die Werkbank abbaust",
+    "ui_condition": "Zustand",
+    "ui_cleanliness": "Sauberkeit",
+    "ui_clean_oil": "Waffe reinigen (Waffenöl)",
+    "ui_repair_kit": "Waffe reparieren (Reparaturset)",
+    "ui_maintenance": "Wartung",
+    "cl_oil_cleaning": "Waffe wird geölt...",
+    "cl_no_gun_oil": "Du brauchst %s",
+    "cl_oil_done": "Waffe gereinigt",
+    "cl_repair_done": "Waffe repariert",
+    "cl_already_clean": "Deine Waffe ist bereits sauber",
+    "cl_already_repaired": "Deine Waffe ist bereits in perfektem Zustand",
+    "sv_dc_oiled": "Waffe geölt"
 }

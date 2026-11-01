@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "a %.1fm del jugador",
     "sv_sec_not_owner": "Intentó recoger el banco de otra persona",
     "sv_sec_owner": "%s (dueño %s)",
-    "sv_sec_pack_range": "Recogida del banco fuera de alcance"
+    "sv_sec_pack_range": "Recogida del banco fuera de alcance",
+    "sv_sec_no_bench": "No hay banco de trabajo cerca",
+    "sv_sec_no_bench_desc": "Intento de compra/reinicio lejos de un banco de armero",
+    "sv_inventory_full": "Tu inventario está lleno, haz espacio antes de recoger el banco de trabajo",
+    "ui_condition": "Estado",
+    "ui_cleanliness": "Limpieza",
+    "ui_clean_oil": "Limpiar arma (Aceite)",
+    "ui_repair_kit": "Reparar arma (Kit de reparación)",
+    "ui_maintenance": "Mantenimiento",
+    "cl_oil_cleaning": "Aceitando el arma...",
+    "cl_no_gun_oil": "Necesitas %s",
+    "cl_oil_done": "Arma limpiada",
+    "cl_repair_done": "Arma reparada",
+    "cl_already_clean": "Tu arma ya está limpia",
+    "cl_already_repaired": "Tu arma ya está en perfecto estado",
+    "sv_dc_oiled": "Arma aceitada"
 }

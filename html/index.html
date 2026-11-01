@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="ui_page_title"></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -30,6 +33,20 @@
                 <div class="weapon-info">
                     <div class="weapon-name" id="weaponName"></div>
                     <div class="weapon-serial" id="weaponSerial"></div>
+                </div>
+            </div>
+
+            <!-- Weapon condition -->
+            <div class="condition-panel" id="conditionPanel">
+                <div class="stat-row">
+                    <span class="stat-label" data-i18n="ui_condition"></span>
+                    <div class="stat-track"><div class="stat-fill" id="qualityFill"></div></div>
+                    <span class="stat-value" id="qualityValue"></span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label" data-i18n="ui_cleanliness"></span>
+                    <div class="stat-track"><div class="stat-fill" id="cleanFill"></div></div>
+                    <span class="stat-value" id="cleanValue"></span>
                 </div>
             </div>
 
@@ -123,6 +140,19 @@
             <!-- Bottom decorative line -->
             <div class="decor-bottom">
                 <i class="fas fa-certificate"></i>
+            </div>
+        </div>
+
+        <!-- Pack-up confirmation -->
+        <div id="confirmModal" class="confirm-modal hidden">
+            <div class="confirm-card">
+                <div class="confirm-title" data-i18n="cl_lang_23"></div>
+                <div class="ink-divider"></div>
+                <div class="confirm-text" data-i18n="cl_lang_25"></div>
+                <div class="confirm-actions">
+                    <button class="btn-western btn-reset" id="confirmYes" data-i18n="cl_lang_26"></button>
+                    <button class="btn-western" id="confirmNo" data-i18n="cl_lang_27"></button>
+                </div>
             </div>
         </div>
 

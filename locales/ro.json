@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "la %.1fm de jucător",
     "sv_sec_not_owner": "A încercat să strângă bancul altcuiva",
     "sv_sec_owner": "%s (proprietar %s)",
-    "sv_sec_pack_range": "Banc de lucru strâns în afara razei"
+    "sv_sec_pack_range": "Banc de lucru strâns în afara razei",
+    "sv_sec_no_bench": "Niciun banc de lucru în apropiere",
+    "sv_sec_no_bench_desc": "Încercare de cumpărare/resetare departe de orice banc de armurier",
+    "sv_inventory_full": "Inventarul tău este plin, fă loc înainte de a strânge bancul de lucru",
+    "ui_condition": "Stare",
+    "ui_cleanliness": "Curățenie",
+    "ui_clean_oil": "Curăță arma (Ulei de armă)",
+    "ui_repair_kit": "Repară arma (Trusă de reparații)",
+    "ui_maintenance": "Întreținere",
+    "cl_oil_cleaning": "Se unge arma...",
+    "cl_no_gun_oil": "Ai nevoie de %s",
+    "cl_oil_done": "Armă curățată",
+    "cl_repair_done": "Armă reparată",
+    "cl_already_clean": "Arma ta este deja curată",
+    "cl_already_repaired": "Arma ta este deja în stare perfectă",
+    "sv_dc_oiled": "Armă unsă"
 }

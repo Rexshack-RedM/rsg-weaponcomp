@@ -1,5 +1,4 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 local INSPECT_UI = -813354801            -- weapon inspect UI state machine
 local CONTROL_CANCEL = 3002300392
@@ -41,7 +40,7 @@ local function showStats(wHash)
     closeStats() -- don't stack a new data container on every inspection
     local flowBlock = RequestFlowBlock(`PM_FLOW_WEAPON_INSPECT`)
     uiContainer = DatabindingAddDataContainerFromPath('', 'ItemInspection')
-    Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, 'stats', getWeaponStats(wHash), cache.ped)
+    Citizen.InvokeNative(0x46DB71883EE9D5AF, uiContainer, 'stats', getWeaponStats(wHash), PlayerPedId())
     DatabindingAddDataString(uiContainer, 'tipText', locale('cl_lang_29'))
     DatabindingAddDataHash(uiContainer, 'itemLabel', wHash)
     DatabindingAddDataBool(uiContainer, 'Visible', true)
@@ -57,7 +56,7 @@ local function cleanWeapon(ped, serial, cleanAct, weaponObj)
     local ok = Citizen.Await(p)
     if not ok then
         local item = RSGCore.Shared.Items[Config.RepairItem]
-        lib.notify({ title = locale('cl_notify_13'), description = locale('cl_no_repair_item', item and item.label or Config.RepairItem), type = 'error' })
+        RSGCore.Functions.Notify({ title = locale('cl_notify_13'), description = locale('cl_no_repair_item', item and item.label or Config.RepairItem), type = 'error' })
         ClearPedTasks(ped, 1, 1)
         return
     end
@@ -66,7 +65,7 @@ local function cleanWeapon(ped, serial, cleanAct, weaponObj)
     Citizen.InvokeNative(0x72F52AA2D2B172CC, ped, 1242464081, cloth, `CLOTH`, cleanAct, 1, 0, -1.0) -- TaskItemInteraction_2
     Wait(9500)
 
-    TriggerServerEvent('rsg-weapons:server:repairweapon', serial)
+    -- weapon quality is restored server-side in rsg-weaponcomp:server:useRepairKit
     if weaponObj and weaponObj ~= 0 then
         Citizen.InvokeNative(0xA7A57E89E965D839, weaponObj, 0.0, 0) -- SetWeaponDegradation
         Citizen.InvokeNative(0x812CE61DEBCAB948, weaponObj, 0.0, 0) -- SetWeaponDirt
@@ -77,18 +76,18 @@ local function cleanWeapon(ped, serial, cleanAct, weaponObj)
 end
 
 RegisterNetEvent('rsg-weaponcomp:client:InspectionWeapon', function()
-    local ped = cache.ped
+    local ped = PlayerPedId()
     local wHash = GetPedCurrentHeldWeapon(ped)
     local interaction = INTERACTIONS[GetWeaponType(wHash)]
     local serial = exports['rsg-weapons']:weaponInHands()[wHash]
 
     -- bows, melee and unarmed have no inspection interaction
     if not interaction or not serial then
-        return lib.notify({ title = locale('cl_notify_13'), description = locale('cl_notify_14'), type = 'error' })
+        return RSGCore.Functions.Notify({ title = locale('cl_notify_13'), description = locale('cl_notify_14'), type = 'error' })
     end
     if not RSGCore.Functions.HasItem(Config.RepairItem) then
         local item = RSGCore.Shared.Items[Config.RepairItem]
-        return lib.notify({ title = locale('cl_notify_13'), description = locale('cl_no_repair_item', item and item.label or Config.RepairItem), type = 'error' })
+        return RSGCore.Functions.Notify({ title = locale('cl_notify_13'), description = locale('cl_no_repair_item', item and item.label or Config.RepairItem), type = 'error' })
     end
 
     local weaponObj = GetObjectIndexFromEntityIndex(GetCurrentPedWeaponEntityIndex(ped, 0))

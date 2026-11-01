@@ -3,13 +3,11 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 description 'rsg-weaponcomp'
-version '3.2.1'
+version '3.3.0'
 
 lua54 'yes'
-ox_lib 'locale'
-
 shared_scripts {
-    '@ox_lib/init.lua',
+    '@rsg-core/shared/locale.lua',
     'shared/config.lua',
     'shared/utils.lua',
 }
@@ -33,12 +31,13 @@ files {
     'html/*.css',
     'html/*.js',
     'html/**/*',
-	'locales/*.json',
+    'locales/*.json',
 }
 
 dependencies {
     'rsg-core',
-    'ox_lib',
-    'ox_target',
+    'rsg-inventory',
+    'rsg-weapons',
+    'rsg-target',
     'oxmysql',
 }

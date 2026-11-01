@@ -5,7 +5,6 @@
 --   fields  = { { 'Name', 'value' }, ... } (inline) or { 'Name', 'value', false } (full width)
 ----------------------------------------
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 Discord = {}
 

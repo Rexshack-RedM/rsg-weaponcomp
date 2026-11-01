@@ -30,6 +30,7 @@ const App = {
         if (mainMenuItems) {
             mainMenuItems.addEventListener('click', (e) => {
                 const item = e.target.closest('.menu-item');
+                if (item && item.classList.contains('disabled')) return;
                 if (item && item.dataset.action) {
                     this.handleMenuClick(item.dataset.action);
                 }
@@ -89,6 +90,11 @@ const App = {
                 // Handle ESC for menu navigation
                 if (e.key === 'Escape') {
                     e.preventDefault();
+                    const modal = document.getElementById('confirmModal');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        modal.classList.add('hidden');
+                        return;
+                    }
                     if (this.currentMenu !== 'main') {
                         this.showMainMenu();
                     } else {
@@ -118,6 +124,9 @@ const App = {
                     break;
                 case 'notify':
                     this.showNotification(data.type, data.message);
+                    break;
+                case 'updateCondition':
+                    this.setCondition(data.condition);
                     break;
             }
         });
@@ -164,6 +173,7 @@ const App = {
             this.categoryLabels[entry.category] = entry.label || entry.category;
         }
         this.prices = data.prices || {};
+        this.setCondition(data.condition);
         this.setAutoFocus(data.autoFocus !== false);
 
         // Set weapon info
@@ -199,6 +209,8 @@ const App = {
     },
 
     hide() {
+        const cm = document.getElementById('confirmModal');
+        if (cm) cm.classList.add('hidden');
         const app = document.getElementById('app');
         if (app) {
             app.classList.add('hidden');
@@ -228,11 +240,38 @@ const App = {
         });
     },
 
+    setCondition(c) {
+        c = c || {};
+        this.condition = c;
+        const setBar = (fillId, valueId, pct) => {
+            pct = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+            const fill = document.getElementById(fillId);
+            const val = document.getElementById(valueId);
+            if (fill) {
+                fill.style.width = pct + '%';
+                fill.className = 'stat-fill ' + (pct >= 70 ? 'stat-good' : pct >= 35 ? 'stat-warn' : 'stat-bad');
+            }
+            if (val) val.textContent = pct + '%';
+        };
+        setBar('qualityFill', 'qualityValue', c.quality == null ? 100 : c.quality);
+        setBar('cleanFill', 'cleanValue', c.cleanliness == null ? 100 : c.cleanliness);
+        this.buildMainMenu();
+    },
+
     buildMainMenu() {
+        const c = this.condition || {};
         const menuItems = [
-            { action: 'parts', icon: 'fa-wrench', label: this.t('ui_parts') },
-            { action: 'packup', icon: 'fa-box-open', label: this.t('ui_packup') }
+            { action: 'parts', icon: 'fa-wrench', label: this.t('ui_parts') }
         ];
+        if (c.hasOil) {
+            menuItems.push({ action: 'oil', icon: 'fa-oil-can', label: this.t('ui_clean_oil'), badge: 'x' + (c.oilCount || 0),
+                disabled: !c.oilCount || (c.cleanliness != null && c.cleanliness >= 100) });
+        }
+        if (c.hasKit) {
+            menuItems.push({ action: 'repair', icon: 'fa-screwdriver-wrench', label: this.t('ui_repair_kit'), badge: 'x' + (c.kitCount || 0),
+                disabled: !c.kitCount || (c.quality != null && c.quality >= 100) });
+        }
+        menuItems.push({ action: 'packup', icon: 'fa-box-open', label: this.t('ui_packup') });
 
         const container = document.getElementById('mainMenuItems');
         if (!container) return;
@@ -240,9 +279,10 @@ const App = {
         let html = '';
         for (let i = 0; i < menuItems.length; i++) {
             const item = menuItems[i];
-            html += '<div class="menu-item" data-action="' + item.action + '">' +
+            html += '<div class="menu-item' + (item.disabled ? ' disabled' : '') + '" data-action="' + item.action + '">' +
                 '<span class="menu-item-icon"><i class="fas ' + item.icon + '"></i></span>' +
                 '<span class="menu-item-label">' + item.label + '</span>' +
+                (item.badge ? '<span class="menu-item-badge">' + item.badge + '</span>' : '') +
                 '<span class="menu-item-arrow"><i class="fas fa-chevron-right"></i></span>' +
             '</div>';
         }
@@ -253,6 +293,10 @@ const App = {
         switch (action) {
             case 'parts':
                 this.showComponentMenu(this.t('ui_all_parts'));
+                break;
+            case 'oil':
+            case 'repair':
+                this.postToGame('maintain', { kind: action });
                 break;
             case 'packup':
                 this.packup();
@@ -528,7 +572,17 @@ const App = {
     },
 
     packup() {
-        this.postToGame('packup', {});
+        const modal = document.getElementById('confirmModal');
+        if (!modal) return this.postToGame('packup', {});
+        modal.classList.remove('hidden');
+        const done = (yes) => {
+            modal.classList.add('hidden');
+            document.getElementById('confirmYes').onclick = null;
+            document.getElementById('confirmNo').onclick = null;
+            if (yes) this.postToGame('packup', {});
+        };
+        document.getElementById('confirmYes').onclick = () => done(true);
+        document.getElementById('confirmNo').onclick = () => done(false);
     },
 
     showNotification(type, message) {

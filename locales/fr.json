@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "à %.1fm du joueur",
     "sv_sec_not_owner": "A tenté de ranger l'établi d'un autre",
     "sv_sec_owner": "%s (propriétaire %s)",
-    "sv_sec_pack_range": "Rangement de l'établi hors de portée"
+    "sv_sec_pack_range": "Rangement de l'établi hors de portée",
+    "sv_sec_no_bench": "Aucun établi à proximité",
+    "sv_sec_no_bench_desc": "Achat/réinitialisation tenté loin de tout établi d'armurier",
+    "sv_inventory_full": "Ton inventaire est plein, libère de la place avant de ranger l'établi",
+    "ui_condition": "État",
+    "ui_cleanliness": "Propreté",
+    "ui_clean_oil": "Nettoyer l'arme (Huile)",
+    "ui_repair_kit": "Réparer l'arme (Kit de réparation)",
+    "ui_maintenance": "Entretien",
+    "cl_oil_cleaning": "Huilage de l'arme...",
+    "cl_no_gun_oil": "Il te faut %s",
+    "cl_oil_done": "Arme nettoyée",
+    "cl_repair_done": "Arme réparée",
+    "cl_already_clean": "Ton arme est déjà propre",
+    "cl_already_repaired": "Ton arme est déjà en parfait état",
+    "sv_dc_oiled": "Arme huilée"
 }

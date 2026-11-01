@@ -1,11 +1,9 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 ----------------------------------------
 -- State
 ----------------------------------------
 local SpawnedProps = {}     -- [propid] = { obj = entity, zone = zone }
-local ingunZone = false
 local isBusy = false
 local wepObj = nil
 local camera = nil
@@ -25,6 +23,8 @@ local UI_LOCALE_KEYS = {
     'ui_unknown_weapon', 'ui_serial', 'ui_parts', 'ui_packup', 'ui_all_parts', 'ui_no_options',
     'ui_no_mods_selected', 'ui_rotate', 'ui_auto_focus', 'ui_on', 'ui_off', 'ui_currency',
     'ui_key_random', 'ui_key_reset', 'ui_notify_title',
+    'cl_lang_23', 'cl_lang_25', 'cl_lang_26', 'cl_lang_27',
+    'ui_condition', 'ui_cleanliness', 'ui_clean_oil', 'ui_repair_kit', 'ui_maintenance',
 }
 
 -- Auto part focus is a per-player preference, remembered between sessions (client KVP)
@@ -77,7 +77,7 @@ end
 
 --- Loads a model, returning false instead of erroring on timeout.
 local function loadModel(model, timeout)
-    return pcall(lib.requestModel, model, timeout)
+    return pcall(RSGCore.Functions.RequestModel, model, timeout)
 end
 
 local function toModelHash(model)
@@ -90,7 +90,7 @@ end
 --- Hides the player's ped while customising. SetEntityLocallyInvisible doesn't work on
 --- your own ped under a scripted camera in RedM, so the ped is made fully invisible.
 local function hidePlayerPed(state)
-    local ped = cache.ped
+    local ped = PlayerPedId()
     SetEntityVisible(ped, not state)
     if state then
         SetEntityAlpha(ped, 0, false)
@@ -100,7 +100,7 @@ local function hidePlayerPed(state)
 end
 
 local function setPlayerFrozen(state)
-    local ped = cache.ped
+    local ped = PlayerPedId()
     if state then
         ClearPedTasksImmediately(ped)
     end
@@ -421,6 +421,26 @@ local function getWeaponLabel(weaponName)
     return item and item.label or locale('ui_unknown_weapon')
 end
 
+local function getItemCount(name)
+    local count = 0
+    for _, item in pairs(RSGCore.Functions.GetPlayerData().items or {}) do
+        if item.name == name then count = count + (item.amount or 0) end
+    end
+    return count
+end
+
+local function conditionPayload()
+    local d = currentWeaponData or {}
+    return {
+        quality = d.quality or 100,
+        cleanliness = math.floor((1.0 - (d.dirt or 0.0)) * 100 + 0.5),
+        oilCount = Config.GunOilItem and getItemCount(Config.GunOilItem) or 0,
+        kitCount = Config.RepairItem and getItemCount(Config.RepairItem) or 0,
+        hasOil = Config.GunOilItem ~= nil,
+        hasKit = Config.RepairItem ~= nil,
+    }
+end
+
 local function openWeaponUI(weaponName, wHash, serial, comps, order)
     -- Weapon-specific categories first, then weapon-type categories, each group in CATEGORY_ORDER
     local cats = {}
@@ -456,6 +476,7 @@ local function openWeaponUI(weaponName, wHash, serial, comps, order)
         prices = Config.price or {},
         savedComponents = selectedCache,
         autoFocus = autoFocus,
+        condition = conditionPayload(),
         locales = getUILocales()
     })
 end
@@ -466,6 +487,24 @@ local function exitCustomisation()
     promptThreadActive = false
     closeWeaponUI()
     setPlayerFrozen(false)
+
+    -- maintenance done at the bench is applied once the weapon is back in hand
+    local d = currentWeaponData
+    if d and (d.cleaned or d.repaired) then
+        CreateThread(function()
+            local ped = PlayerPedId()
+            if not HasPedGotWeapon(ped, d.wHash, false, false) then return end
+            SetCurrentPedWeapon(ped, d.wHash, true)
+            local timeout = GetGameTimer() + 2000
+            local obj = 0
+            while obj == 0 and GetGameTimer() < timeout do
+                Wait(100)
+                obj = Maintenance.GetHeldWeaponObject(ped)
+            end
+            if d.cleaned then Maintenance.ClearDirt(obj) end
+            if d.repaired then Maintenance.ClearDegradation(obj) end
+        end)
+    end
     selectedCache, baselineCache = {}, {}
     currentWeaponData = nil
 end
@@ -490,7 +529,8 @@ end)
 
 RegisterNUICallback('notify', function(data, cb)
     cb('ok')
-    lib.notify({ title = locale('ui_notify_title'), description = tostring(data.message or ''), type = data.type or 'inform' })
+    local nType = ({ success = true, error = true, inform = true, warning = true })[data.type] and data.type or 'inform'
+    RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = tostring(data.message or ''):sub(1, 200), type = nType })
 end)
 
 local function isValidOption(category, compName)
@@ -553,7 +593,7 @@ RegisterNUICallback('purchase', function(_, cb)
 
     local _, changed = calculatePrice()
     if not changed then
-        lib.notify({ title = locale('ui_notify_title'), description = locale('cl_notify_10'), type = 'error' })
+        RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = locale('cl_notify_10'), type = 'error' })
         return
     end
 
@@ -570,6 +610,42 @@ RegisterNUICallback('resetWeapon', function(_, cb)
     local data = currentWeaponData
     exitCustomisation()
     TriggerServerEvent('rsg-weaponcomp:server:reset', data.serial, data.wHash, data.weaponName)
+end)
+
+local maintaining = false
+RegisterNUICallback('maintain', function(data, cb)
+    cb('ok')
+    local d = currentWeaponData
+    if not d or maintaining then return end
+    local kind = data and data.kind
+
+    if kind == 'oil' and Config.GunOilItem then
+        if (d.dirt or 0.0) < 0.01 or d.cleaned then
+            return RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = locale('cl_already_clean'), type = 'inform' })
+        end
+        maintaining = true
+        local ok = RSGCore.Functions.AwaitCallback('rsg-weaponcomp:server:useGunOil', 5000, d.serial)
+        maintaining = false
+        if ok and currentWeaponData == d then
+            d.cleaned, d.dirt = true, 0.0
+            RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = locale('cl_oil_done'), type = 'success' })
+        end
+    elseif kind == 'repair' and Config.RepairItem then
+        maintaining = true
+        local ok = RSGCore.Functions.AwaitCallback('rsg-weaponcomp:server:useRepairKit', 5000, d.serial)
+        maintaining = false
+        if ok and currentWeaponData == d then
+            d.repaired, d.quality = true, 100
+            RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = locale('cl_repair_done'), type = 'success' })
+        end
+    else
+        return
+    end
+
+    if currentWeaponData == d then
+        Wait(250) -- let the inventory update arrive so item counts are current
+        SendNUIMessage({ action = 'updateCondition', condition = conditionPayload() })
+    end
 end)
 
 RegisterNUICallback('packup', function(_, cb)
@@ -616,7 +692,8 @@ local function startCustomisation(propid, wHash, serial, weaponName)
     if not prop or not DoesEntityExist(prop.obj) then return end
     isBusy = true
 
-    SetCurrentPedWeapon(cache.ped, UNARMED, true)
+    local dirt = Maintenance.GetDirt(PlayerPedId()) -- read before holstering
+    SetCurrentPedWeapon(PlayerPedId(), UNARMED, true)
     setPlayerFrozen(true)
 
     deleteWeaponObject()
@@ -634,11 +711,12 @@ local function startCustomisation(propid, wHash, serial, weaponName)
     startPromptThread()
 
     local comps, order = GetAvailableComponents(weaponName, wHash)
-    currentWeaponData = { weaponName = weaponName, wHash = wHash, serial = serial, propid = propid, comps = comps }
+    currentWeaponData = { weaponName = weaponName, wHash = wHash, serial = serial, propid = propid, comps = comps, dirt = dirt }
     selectedCache, baselineCache = {}, {}
 
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(result)
         if currentWeaponData and wepObj then
+            currentWeaponData.quality = result and result.quality or 100
             applyComponents(wepObj, wHash, comps, result and result.components or {})
             openWeaponUI(weaponName, wHash, serial, comps, order)
         end
@@ -647,16 +725,16 @@ local function startCustomisation(propid, wHash, serial, weaponName)
 end
 
 local function onUseGunsmith(propid)
-    local wHash = GetPedCurrentHeldWeapon(cache.ped)
+    local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
     if wHash == 0 or wHash == UNARMED then
-        return lib.notify({ title = locale('cl_notify_13'), description = locale('cl_no_weapon'), type = 'error' })
+        return RSGCore.Functions.Notify({ title = locale('cl_notify_13'), description = locale('cl_no_weapon'), type = 'error' })
     end
 
     local weaponType = GetWeaponType(wHash)
     local serial = exports['rsg-weapons']:weaponInHands()[wHash]
     if not serial then
         if weaponType ~= 'GROUP_BOW' and weaponType ~= 'MELEE_BLADE' then
-            return lib.notify({ title = locale('cl_notify_13'), description = locale('cl_no_serial'), type = 'error' })
+            return RSGCore.Functions.Notify({ title = locale('cl_notify_13'), description = locale('cl_no_serial'), type = 'error' })
         end
         serial = tostring(wHash)
     end
@@ -664,7 +742,7 @@ local function onUseGunsmith(propid)
     local weaponName = GetWeaponNameFromHash(wHash)
     for _, restricted in ipairs(Config.WeaponRestriction or {}) do
         if joaat(restricted) == wHash then
-            return lib.notify({ title = locale('cl_notify_13'), description = locale('cl_weapon_restricted'), type = 'error' })
+            return RSGCore.Functions.Notify({ title = locale('cl_notify_13'), description = locale('cl_weapon_restricted'), type = 'error' })
         end
     end
 
@@ -681,7 +759,7 @@ local CLEAN_ANIMS = {
 }
 
 local function startCleaningCam(zoom, offset)
-    local ped = cache.ped
+    local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
     local angle = math.rad(GetEntityHeading(ped))
     camera = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA',
@@ -693,7 +771,7 @@ local function startCleaningCam(zoom, offset)
 end
 
 RegisterNetEvent('rsg-weaponcomp:client:animationSaved', function(wHash)
-    local ped = cache.ped
+    local ped = PlayerPedId()
     if HasPedGotWeapon(ped, wHash, false, false) then
         SetCurrentPedWeapon(ped, wHash, true)
     end
@@ -704,7 +782,7 @@ RegisterNetEvent('rsg-weaponcomp:client:animationSaved', function(wHash)
         local cloth = CreateObject(`s_balledragcloth01x`, GetEntityCoords(ped), false, true, false, false, true)
         AttachEntityToEntity(cloth, ped, GetEntityBoneIndexByName(ped, 'SKEL_L_Finger00'), 0.02, -0.035, 0.0, 20.0, -24.0, 165.0, true, false, true, false, 0, true)
 
-        lib.progressBar({
+        RSGCore.Functions.ProgressBar({
             duration = tonumber(Config.animationSave) or 5000,
             useWhileDead = false,
             canCancel = false,
@@ -723,18 +801,20 @@ end)
 ----------------------------------------
 -- Workbench props
 ----------------------------------------
+local shownTextFor = nil
+local function hideZoneText()
+    exports['rsg-core']:HideText()
+    shownTextFor = nil
+end
+
 local function despawnProp(propid)
     local prop = SpawnedProps[propid]
     if not prop then return end
     if DoesEntityExist(prop.obj) then
-        exports.ox_target:removeLocalEntity(prop.obj)
+        exports['rsg-target']:removeLocalEntity(prop.obj)
         DeleteObject(prop.obj)
     end
-    if prop.zone then
-        prop.zone:remove()
-        if Config.showTextZone then lib.hideTextUI() end
-        ingunZone = false
-    end
+    if shownTextFor == propid then hideZoneText() end
     SpawnedProps[propid] = nil
 end
 
@@ -748,23 +828,7 @@ local function spawnProp(v)
     PlaceObjectOnGroundProperly(obj)
     FreezeEntityPosition(obj, true)
 
-    local zone
-    if Config.gunZoneActive then
-        zone = lib.zones.sphere({
-            coords = vec3(v.x, v.y, v.z),
-            radius = Config.gunZoneSize or 3.0,
-            onEnter = function()
-                ingunZone = true
-                if Config.showTextZone then lib.showTextUI(tostring(v.gunsitename or locale('cl_gunsmith'))) end
-            end,
-            onExit = function()
-                ingunZone = false
-                if Config.showTextZone then lib.hideTextUI() end
-            end
-        })
-    end
-
-    exports.ox_target:addLocalEntity(obj, {
+    exports['rsg-target']:addLocalEntity(obj, {
         {
             name = 'gunsite_prop_' .. v.propid,
             icon = 'far fa-eye',
@@ -774,17 +838,20 @@ local function spawnProp(v)
         },
     })
 
-    SpawnedProps[v.propid] = { obj = obj, zone = zone }
+    SpawnedProps[v.propid] = { obj = obj }
 end
 
 CreateThread(function()
     while true do
-        local pos = GetEntityCoords(cache.ped)
+        local pos = GetEntityCoords(PlayerPedId())
         local active = {}
 
+        local inZone
         for _, v in ipairs(Config.PlayerProps) do
             active[v.propid] = true
-            local near = #(pos - vector3(v.x, v.y, v.z)) < PROP_RENDER_DISTANCE
+            local dist = #(pos - vector3(v.x, v.y, v.z))
+            local near = dist < PROP_RENDER_DISTANCE
+            if dist < (Config.gunZoneSize or 3.0) then inZone = v end
             if near and not SpawnedProps[v.propid] then
                 spawnProp(v)
             elseif not near and SpawnedProps[v.propid] then
@@ -795,6 +862,16 @@ CreateThread(function()
         -- Remove props that were packed up by their owner
         for propid in pairs(SpawnedProps) do
             if not active[propid] then despawnProp(propid) end
+        end
+
+        -- optional workbench name text (replaces the old ox_lib sphere zone)
+        if Config.gunZoneActive and Config.showTextZone then
+            if inZone and shownTextFor ~= inZone.propid then
+                exports['rsg-core']:DrawText(tostring(inZone.gunsitename or locale('cl_gunsmith')), 'left')
+                shownTextFor = inZone.propid
+            elseif not inZone and shownTextFor then
+                hideZoneText()
+            end
         end
 
         Wait(1000)
@@ -825,24 +902,24 @@ end
 
 RegisterNetEvent('rsg-weaponcomp:client:setupgunzone', function(coords, heading)
     if isBusy then return end
-    local ped = cache.ped
+    local ped = PlayerPedId()
 
     if #(GetEntityCoords(ped) - coords) > (Config.PlaceDistance or 5.0) then
-        return lib.notify({ title = locale('cl_lang_15'), description = locale('cl_lang_16'), type = 'error', duration = 5000 })
+        return RSGCore.Functions.Notify({ title = locale('cl_lang_15'), description = locale('cl_lang_16'), type = 'error', duration = 5000 })
     end
-    if ingunZone or not canPlaceHere(coords) then
-        return lib.notify({ title = locale('cl_lang_19'), description = locale('cl_lang_20'), type = 'error', duration = 7000 })
+    if not canPlaceHere(coords) then
+        return RSGCore.Functions.Notify({ title = locale('cl_lang_19'), description = locale('cl_lang_20'), type = 'error', duration = 7000 })
     end
 
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:countprop', function(count)
         if count >= (Config.MaxGunsites or 5) then
-            return lib.notify({ title = locale('cl_lang_17'), description = locale('cl_lang_18'), type = 'error', duration = 7000 })
+            return RSGCore.Functions.Notify({ title = locale('cl_lang_17'), description = locale('cl_lang_18'), type = 'error', duration = 7000 })
         end
         if IsPedInAnyVehicle(ped, false) or isBusy then return end
 
         isBusy = true
         TaskStartScenarioInPlace(ped, `WORLD_HUMAN_STAND_WAITING`, 0, true)
-        local done = lib.progressBar({
+        local done = RSGCore.Functions.ProgressBar({
             duration = Config.SetupTime or 10000,
             label = locale('cl_setting_up'),
             useWhileDead = false,
@@ -863,25 +940,14 @@ RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
         if p.propid == propid then owner = p.citizenid break end
     end
     if owner ~= RSGCore.Functions.GetPlayerData().citizenid then
-        return lib.notify({ title = locale('sv_access_denied'), type = 'error' })
+        return RSGCore.Functions.Notify({ title = locale('sv_access_denied'), type = 'error' })
     end
 
-    local input = lib.inputDialog(locale('cl_lang_23'), {
-        {
-            label = locale('cl_lang_24'),
-            description = locale('cl_lang_25'),
-            type = 'select',
-            options = {
-                { value = 'yes', label = locale('cl_lang_26') },
-                { value = 'no', label = locale('cl_lang_27') }
-            },
-            required = true
-        },
-    })
-    if not input or input[1] ~= 'yes' then return end
-
+    -- confirmation is done in the NUI (confirm modal) before this event fires
+    if isBusy then return end
+    isBusy = true
     LocalPlayer.state:set('inv_busy', true, true)
-    local done = lib.progressBar({
+    local done = RSGCore.Functions.ProgressBar({
         duration = 10000,
         position = 'bottom',
         useWhileDead = false,
@@ -890,6 +956,7 @@ RegisterNetEvent('rsg-weaponcomp:client:confirmpackup', function(propid)
         label = locale('cl_lang_28'),
     })
     LocalPlayer.state:set('inv_busy', false, true)
+    isBusy = false
 
     if done then
         TriggerServerEvent('rsg-weaponcomp:server:removegunsiteprops', propid)
@@ -903,5 +970,6 @@ AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
     exitCustomisation()
     clearCameraPrompts()
+    if shownTextFor then hideZoneText() end
     for propid in pairs(SpawnedProps) do despawnProp(propid) end
 end)

@@ -1,5 +1,4 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 local UNARMED = `WEAPON_UNARMED`
 local reloadingWeapon = false
@@ -11,7 +10,7 @@ end
 local function attachComponent(ped, compHash, wHash)
     if compHash == 0 then return end
     local mdl = GetWeaponComponentTypeModel(compHash)
-    local loaded = mdl and mdl ~= 0 and pcall(lib.requestModel, mdl, 1000)
+    local loaded = mdl and mdl ~= 0 and pcall(RSGCore.Functions.RequestModel, mdl, 1000)
 
     GiveWeaponComponentToEntity(ped, compHash, wHash, true)
     ApplyShopItemToPed(ped, compHash, true, true, true)
@@ -56,7 +55,7 @@ AddEventHandler('rsg-weaponcomp:client:reloadWeapon', function(force)
     if reloadingWeapon then return end
     reloadingWeapon = true
 
-    local ped = cache.ped
+    local ped = PlayerPedId()
     local wHash = GetPedCurrentHeldWeapon(ped)
     if not isArmed(wHash) then reloadingWeapon = false return end
 
@@ -96,7 +95,7 @@ CreateThread(function()
     local lastWeapon
     while true do
         Wait(500)
-        local current = GetPedCurrentHeldWeapon(cache.ped)
+        local current = GetPedCurrentHeldWeapon(PlayerPedId())
         if isArmed(current) then
             if current ~= lastWeapon then
                 lastWeapon = current
@@ -114,7 +113,7 @@ end)
 local SCOPE_ANIM = { dict = 'mech_inspection@weapons@longarms@rifle_bolt_action@base', clip = 'aim_enter', duration = 2000 }
 
 local function playScopeAnim(ped)
-    if not pcall(lib.requestAnimDict, SCOPE_ANIM.dict, 2000) then return end
+    if not pcall(RSGCore.Functions.RequestAnimDict, SCOPE_ANIM.dict, 2000) then return end
     TaskPlayAnim(ped, SCOPE_ANIM.dict, SCOPE_ANIM.clip, 8.0, -8.0, SCOPE_ANIM.duration, 0, 0, false, false, false)
     RemoveAnimDict(SCOPE_ANIM.dict)
 end
@@ -128,7 +127,7 @@ local function getSavedScope(serial)
 end
 
 local function toggleScope(equip)
-    local ped = cache.ped
+    local ped = PlayerPedId()
     local wHash = GetPedCurrentHeldWeapon(ped)
     if not isArmed(wHash) then return end
 
@@ -147,7 +146,7 @@ local function toggleScope(equip)
         else
             RemoveWeaponComponentFromPed(ped, joaat(scopeName), wHash)
         end
-        lib.notify({ type = 'success', description = locale(equip and 'cl_scope_equipped_ok' or 'cl_scope_removed_ok') })
+        RSGCore.Functions.Notify({ title = locale('ui_notify_title'), type = 'success', description = locale(equip and 'cl_scope_equipped_ok' or 'cl_scope_removed_ok') })
     end, serial)
 end
 

@@ -1,4 +1,4 @@
-lib.locale()
+local RSGCore = exports['rsg-core']:GetCoreObject()
 
 local PromptPlacerGroup = GetRandomIntInRange(0, 0xffffff)
 local SetPrompt, CancelPrompt
@@ -38,7 +38,7 @@ end
 local function raycastFromCamera(distance)
     local camCoord = GetGameplayCamCoord()
     local dest = camCoord + rotationToDirection(GetGameplayCamRot()) * distance
-    local _, hit, coords = GetShapeTestResult(StartShapeTestRay(camCoord.x, camCoord.y, camCoord.z, dest.x, dest.y, dest.z, -1, cache.ped, 0))
+    local _, hit, coords = GetShapeTestResult(StartShapeTestRay(camCoord.x, camCoord.y, camCoord.z, dest.x, dest.y, dest.z, -1, PlayerPedId(), 0))
     return hit == 1, coords
 end
 
@@ -54,7 +54,7 @@ end
 local function placeProp(propmodel)
     if isPlacing then return end
     local model = type(propmodel) == 'number' and propmodel or joaat(propmodel)
-    if not pcall(lib.requestModel, model, 5000) then return end
+    if not pcall(RSGCore.Functions.RequestModel, model, 5000) then return end
     isPlacing = true
 
     local heading = 0.0
@@ -77,7 +77,7 @@ local function placeProp(propmodel)
             drawPropAxes(prop)
 
             -- ghost goes faint when out of range so players know before they try to place
-            local inRange = #(GetEntityCoords(cache.ped) - coords) <= (Config.PlaceDistance or 5.0)
+            local inRange = #(GetEntityCoords(PlayerPedId()) - coords) <= (Config.PlaceDistance or 5.0)
             SetEntityAlpha(prop, inRange and 150 or 60, false)
             PromptSetActiveGroupThisFrame(PromptPlacerGroup, groupLabel)
 

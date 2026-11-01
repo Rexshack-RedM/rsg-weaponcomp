@@ -1,5 +1,4 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 ----------------------------------------
 -- Component whitelist (built from config)
@@ -45,7 +44,7 @@ AddEventHandler('playerDropped', function()
 end)
 
 local function notify(src, title, description, nType)
-    TriggerClientEvent('ox_lib:notify', src, {
+    TriggerClientEvent('RSGCore:Client:Notify', src, {
         title = title,
         description = description,
         type = nType or 'inform',
@@ -63,6 +62,16 @@ end
 
 --- Finds the weapon item a customisation applies to.
 --- Serialised weapons match on serial; melee/bows (serial == weapon hash) match on item name.
+--- True when the player stands at a placed gunsmith workbench.
+local function nearWorkbench(src)
+    local pos = GetEntityCoords(GetPlayerPed(src))
+    local maxDist = Config.UseDistance or 6.0
+    for _, prop in ipairs(Config.PlayerProps) do
+        if #(pos - vector3(prop.x, prop.y, prop.z)) <= maxDist then return true end
+    end
+    return false
+end
+
 local function findWeaponItem(Player, serial, weaponName)
     if type(serial) ~= 'string' and type(serial) ~= 'number' then return nil end
     serial = tostring(serial)
@@ -178,6 +187,10 @@ RegisterNetEvent('rsg-weaponcomp:server:purchase', function(serial, wHash, weapo
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player or onCooldown(src, 'purchase', 3000) then return end
     if type(wHash) ~= 'number' or RestrictedWeapons[wHash] then return end
+    if not nearWorkbench(src) then
+        Discord.Security(src, locale('sv_sec_no_bench'), locale('sv_sec_no_bench_desc'))
+        return
+    end
 
     local item = findWeaponItem(Player, serial, weaponName)
     if not item then
@@ -210,6 +223,10 @@ RegisterNetEvent('rsg-weaponcomp:server:reset', function(serial, wHash, weaponNa
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player or onCooldown(src, 'purchase', 3000) then return end
     if type(wHash) ~= 'number' then return end
+    if not nearWorkbench(src) then
+        Discord.Security(src, locale('sv_sec_no_bench'), locale('sv_sec_no_bench_desc'))
+        return
+    end
 
     local item = findWeaponItem(Player, serial, weaponName)
     if not item then
@@ -234,12 +251,13 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
     if not Player then return cb(nil) end
 
     local item = findWeaponItem(Player, serial, weaponName)
+    local quality = item and math.floor(tonumber(item.info.quality) or 100) or 100
     if item and item.info.componentshash and next(item.info.componentshash) then
-        return cb({ components = item.info.componentshash })
+        return cb({ components = item.info.componentshash, quality = quality })
     end
 
     local key = Player.PlayerData.citizenid .. ':' .. tostring(serial)
-    if DbChecked[key] then return cb(nil) end
+    if DbChecked[key] then return cb({ quality = quality }) end
     DbChecked[key] = true
 
     -- Fallback to the database (e.g. inventory data lost) and sync it back
@@ -252,10 +270,10 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
             item.info.components = buildLabels(comps)
             Player.Functions.SetInventory(Player.PlayerData.items)
         end
-        return cb({ components = comps })
+        return cb({ components = comps, quality = quality })
     end
 
-    cb(nil)
+    cb({ quality = quality })
 end)
 
 ----------------------------------------
@@ -421,6 +439,12 @@ RegisterNetEvent('rsg-weaponcomp:server:removegunsiteprops', function(propid)
         return
     end
 
+    -- refuse when the item can't be returned, otherwise the workbench would be lost
+    if not exports['rsg-inventory']:CanAddItem(src, Config.Gunsmithitem, 1) then
+        notify(src, locale('cl_lang_23'), locale('sv_inventory_full'), 'error')
+        return
+    end
+
     -- remove from memory first (index is only valid before any await), then the DB
     table.remove(Config.PlayerProps, index)
     syncProps()
@@ -447,8 +471,20 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:useRepairKit', function(
     if not Player or not Config.RepairItem or onCooldown(source, 'inspectkit', 8000) then return cb(false) end
     local item = findWeaponItem(Player, serial)
     if not item then return cb(false) end
-    if not Player.Functions.RemoveItem(Config.RepairItem, 1, nil, 'weapon-cleaned') then return cb(false) end
+    if (tonumber(item.info.quality) or 100) >= 100 then
+        notify(source, locale('cl_notify_13'), locale('cl_already_repaired'), 'inform')
+        return cb(false)
+    end
+    if not Player.Functions.RemoveItem(Config.RepairItem, 1, nil, 'weapon-cleaned') then
+        local it = RSGCore.Shared.Items[Config.RepairItem]
+        notify(source, locale('cl_notify_13'), locale('cl_no_repair_item', it and it.label or Config.RepairItem), 'error')
+        return cb(false)
+    end
     TriggerClientEvent('rsg-inventory:client:ItemBox', source, RSGCore.Shared.Items[Config.RepairItem], 'remove', 1)
+
+    -- restore weapon condition (rsg-weapons stores it in info.quality)
+    item.info.quality = 100
+    Player.Functions.SetInventory(Player.PlayerData.items)
     cb(true)
 
     Discord.Log('repair', source, locale('sv_dc_repair'), {
@@ -457,6 +493,32 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:useRepairKit', function(
         { locale('sv_dc_used'), RSGCore.Shared.Items[Config.RepairItem] and RSGCore.Shared.Items[Config.RepairItem].label or Config.RepairItem },
     })
 end)
+
+--- Gun oil: takes one oil; the client then clears dirt/soot (purely visual, no condition change).
+RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:useGunOil', function(source, cb, serial)
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player or not Config.GunOilItem or onCooldown(source, 'gunoil', 5000) then return cb(false) end
+    local item = findWeaponItem(Player, serial)
+    if not item then return cb(false) end
+    if not Player.Functions.RemoveItem(Config.GunOilItem, 1, nil, 'weapon-oiled') then
+        local it = RSGCore.Shared.Items[Config.GunOilItem]
+        notify(source, locale('cl_notify_13'), locale('cl_no_gun_oil', it and it.label or Config.GunOilItem), 'error')
+        return cb(false)
+    end
+    TriggerClientEvent('rsg-inventory:client:ItemBox', source, RSGCore.Shared.Items[Config.GunOilItem], 'remove', 1)
+    cb(true)
+
+    Discord.Log('repair', source, locale('sv_dc_oiled'), {
+        { locale('sv_dc_weapon'), RSGCore.Shared.Items[item.name] and RSGCore.Shared.Items[item.name].label or item.name },
+        { locale('sv_dc_serial'), tostring(serial) },
+    })
+end)
+
+if Config.GunOilItem then
+    RSGCore.Functions.CreateUseableItem(Config.GunOilItem, function(source)
+        TriggerClientEvent('rsg-weaponcomp:client:oilWeapon', source)
+    end)
+end
 
 RSGCore.Commands.Add(Config.Commandinspect, locale('cl_lang_30'), {}, false, function(source)
     TriggerClientEvent('rsg-weaponcomp:client:InspectionWeapon', source)

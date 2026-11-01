@@ -13,27 +13,33 @@ Weapon customisation for **RSG Framework** (RedM). Players place a portable guns
 - Removing a modification costs a configurable percentage of its price; **Reset** strips everything back to factory
 - Components are saved on the weapon item, backed up in the database, and re-applied whenever the weapon is drawn
 - Scope equip/unequip commands
+- **Weapon condition in the gunsmith menu:** condition and cleanliness bars, plus **Clean (Gun Oil)** and **Repair (Repair Kit)** options at the workbench
+- **Gun oil:** a cheap quick clean that removes dirt and soot anywhere (use the item with a weapon in hand); repair kits restore condition
 - Weapon inspection and cleaning with the game's inspection UI and stats (uses a repair kit)
 - Discord webhook logging for purchases, resets, workbenches, repairs and suspicious activity (optional `rsg-log` mirror)
 - Optional job restriction and weapon blacklist
-- Fully translated through ox_lib locales — notifications, NUI, prompts, component names and Discord logs: `en`, `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`
+- No ox_lib: notifications, callbacks, progress bars, text UI and locales all use rsg-core; targeting uses rsg-target
+- Fully translated through rsg-core JSON locales — notifications, NUI, prompts, component names and Discord logs: `en`, `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`
 
 ## Dependencies
 
 - [rsg-core](https://github.com/Rexshack-RedM/rsg-core)
 - [rsg-weapons](https://github.com/Rexshack-RedM/rsg-weapons)
 - [rsg-inventory](https://github.com/Rexshack-RedM/rsg-inventory)
-- [ox_lib](https://github.com/overextended/ox_lib)
-- [ox_target](https://github.com/overextended/ox_target)
+- [rsg-target](https://github.com/Rexshack-RedM/rsg-target)
 - [oxmysql](https://github.com/overextended/oxmysql)
 
 ## Installation
 
 1. Drop `rsg-weaponcomp` into your resources folder.
 2. Import `installation/database.sql`.
-3. Make sure the `gunsmith` and `weapon_repair_kit` items exist in `rsg-core/shared/items.lua`, or change `Config.Gunsmithitem` / `Config.RepairItem`.
+3. Make sure the `gunsmith`, `weapon_repair_kit` and `weapon_gun_oil` items exist in `rsg-core/shared/items.lua`, or change `Config.Gunsmithitem` / `Config.RepairItem` / `Config.GunOilItem` (set `Config.GunOilItem = nil` to turn gun oil off). Gun oil is new, so add it:
+
+```lua
+weapon_gun_oil = { name = 'weapon_gun_oil', label = 'Gun Oil', weight = 100, type = 'item', image = 'weapon_gun_oil.png', unique = false, useable = true, shouldClose = true, description = 'Cleans dirt and soot off a weapon', category = 'tools' },
+```
 4. Add `ensure rsg-weaponcomp` to your `server.cfg` **after** the dependencies.
-5. Set your language in `server.cfg`, for example `setr ox:locale en`.
+5. Set your language in `server.cfg`, for example `setr rsg:locale en`.
 
 ## Usage
 
@@ -45,6 +51,8 @@ Weapon customisation for **RSG Framework** (RedM). Players place a portable guns
 | Toggle auto part focus | Click **Auto Focus** in the menu's controls bar |
 | Remove all modifications | **Reset** in the menu |
 | Pack up a workbench | Main menu → **Pack Up Workbench** (owner only, the item is returned) |
+| Quick clean (gun oil) | Use `weapon_gun_oil` with a weapon in hand, or **Clean Weapon** in the gunsmith menu |
+| Repair at the bench | **Repair Weapon** in the gunsmith menu (uses one repair kit) |
 | Inspect / clean weapon | `/w_inspect` (cleaning uses one repair kit) |
 | Re-apply components | `/loadweapon` |
 | Equip / remove scope | `/scope` / `/unscope` |
@@ -54,6 +62,7 @@ Weapon customisation for **RSG Framework** (RedM). Players place a portable guns
 Everything lives in `shared/config.lua`:
 
 - **Workbench:** `Config.Gunsmithitem`, `Config.Gunsmithprop`, `Config.MaxGunsites`, `Config.PlaceDistance`, `Config.SetupTime`
+- **Workbench use:** `Config.UseDistance` is the server-checked max distance from a workbench for buying or resetting parts
 - **Access:** `Config.RequiredJob` restricts placing workbenches to one job (`nil` = everyone)
 - **Pricing:** `Config.PaymentType`, `Config.price` (per category), `Config.RemovePrice` (share of the price charged to remove a part)
 - **Blacklist:** `Config.WeaponRestriction` lists weapons that can't be customised
@@ -91,9 +100,24 @@ The server handles all money, items and components:
 
 - The client never sends a price. The server checks every component against the config whitelist, works out the price itself and charges only for what changed.
 - The server checks that the weapon being modified is in the player's own inventory, and checks the blacklist against the item rather than the client's weapon hash.
-- Workbench placement checks distance, limits and overlap. The server takes the item before creating the workbench and gives it back only to the owner on pack-up.
-- Weapon cleaning only repairs the weapon after the server has taken a repair kit.
+- Buying and resetting parts only work within `Config.UseDistance` of a placed workbench (checked on the server).
+- Workbench placement checks distance, limits and overlap. The server takes the item before creating the workbench and gives it back only to the owner on pack-up, and refuses pack-up when the owner's inventory is full so the workbench is never lost.
+- Weapon cleaning only repairs the weapon after the server has taken a repair kit; the server restores the weapon's quality itself.
 - Events have per-player cooldowns.
+
+## Changelog
+
+### 3.4.0
+- New: weapon condition and cleanliness shown in the gunsmith menu, with Clean (gun oil) and Repair (repair kit) options
+- New: `weapon_gun_oil` usable item for a quick dirt/soot clean (`Config.GunOilItem`, `Config.GunOilTime`)
+- Repair kits are no longer used up on weapons already at 100% condition
+
+### 3.3.0
+- Removed ox_lib and ox_target: rsg-core notify, progress bar, model/anim loading, DrawText and locales; rsg-target for the workbench target
+- Pack-up confirmation is now an in-menu NUI dialog (Esc cancels)
+- Fix: cleaning a weapon now restores its quality (the old `rsg-weapons:server:repairweapon` event no longer exists)
+- Security: purchase/reset require being at a workbench; pack-up checks inventory space first
+- NUI uses Roboto; UI notify messages are type-checked and length-capped
 
 ## Upgrading from older versions
 

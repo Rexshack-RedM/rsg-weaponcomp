@@ -1035,5 +1035,20 @@
     "sv_sec_distance": "%.1fm van speler",
     "sv_sec_not_owner": "Probeerde de werkbank van iemand anders op te ruimen",
     "sv_sec_owner": "%s (eigenaar %s)",
-    "sv_sec_pack_range": "Werkbank buiten bereik opgeruimd"
+    "sv_sec_pack_range": "Werkbank buiten bereik opgeruimd",
+    "sv_sec_no_bench": "Geen werkbank in de buurt",
+    "sv_sec_no_bench_desc": "Aankoop/reset geprobeerd buiten bereik van een wapensmid-werkbank",
+    "sv_inventory_full": "Je inventaris is vol, maak ruimte voordat je de werkbank inpakt",
+    "ui_condition": "Staat",
+    "ui_cleanliness": "Schoonheid",
+    "ui_clean_oil": "Wapen reinigen (Wapenolie)",
+    "ui_repair_kit": "Wapen repareren (Reparatieset)",
+    "ui_maintenance": "Onderhoud",
+    "cl_oil_cleaning": "Wapen wordt geolied...",
+    "cl_no_gun_oil": "Je hebt %s nodig",
+    "cl_oil_done": "Wapen gereinigd",
+    "cl_repair_done": "Wapen gerepareerd",
+    "cl_already_clean": "Je wapen is al schoon",
+    "cl_already_repaired": "Je wapen is al in perfecte staat",
+    "sv_dc_oiled": "Wapen geolied"
 }
