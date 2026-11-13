@@ -112,4 +112,4 @@ Purchases and resets are validated on the server (distance to a workbench, owner
 | Can't place a workbench | Check `MaxGunsites`, `RequiredJob` and the item |
 | No Discord logs | Set webhook URLs in `server/config.lua` |
 
-Support: https://buymeacoffee.com/rexshack
+Support the Project : https://rexshack.tebex.store/
