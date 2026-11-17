@@ -4,8 +4,8 @@ Weapon customisation for **RSG Framework** (RedM). Players place a portable guns
 
 ## Features
 
-- Portable gunsmith workbench (usable item) with a placement preview, rotation, range indicator, cancellable set-up and per-player limits
-- NUI customisation menu with a live 3D preview of the weapon
+- Portable gunsmith workbench (usable item) placed with the rsg-gizmo placement gizmo, with a cancellable set-up and per-player limits
+- NUI customisation menu with a live 3D preview of the weapon; each category shows its price and the total turns red when the player can't afford it (the menu stays open instead of closing on a purchase that can't work)
 - Orbit camera centred on the weapon: rotate with ← / →, zoom, random angle and reset
 - Auto part focus: the camera moves to the part being changed (players can switch it off; their choice is remembered)
 - The player is frozen, hidden and blocked from all other actions while customising
@@ -17,6 +17,15 @@ Weapon customisation for **RSG Framework** (RedM). Players place a portable guns
 - **Gun oil:** a cheap quick clean that removes dirt and soot anywhere (use the item with a weapon in hand); repair kits restore condition
 - Weapon inspection and cleaning with the game's inspection UI and stats (uses a repair kit)
 - Discord webhook logging for purchases, resets, workbenches, repairs and suspicious activity (optional `rsg-log` mirror)
+- **Edit tools:** undo / redo, **Compare** with the weapon as it is now, **Revert** unsaved changes, and a purchase confirmation showing the total, discount, balance after paying and materials
+- **Presets:** save up to `Config.MaxPresets` loadouts per weapon and load them later
+- **Weapon identity:** give a weapon a custom name and an engraving (stored on the item and in the database)
+- **Workbench access:** owners choose who may use their bench (everyone, owner only, their job, their gang); unused benches can expire automatically
+- **Admin workbenches:** `/createworkbench` places a public bench anyone can use; `/listworkbenches`, `/removeworkbench`
+- **Gunsmith job discount** and optional **gunsmith skill levels** (XP per purchase, parts unlocked by level) and **material items** per part
+- Other scripts can react to changes with the `rsg-weaponcomp:server:weaponCustomised` event and read a weapon's record with the `GetWeaponRecord` export
+- Push-to-talk keeps working while the menu is open (`Config.AllowPushToTalkWhileOpen`)
+- Database tables are created automatically on start
 - Optional job restriction and weapon blacklist
 - No ox_lib: notifications, callbacks, progress bars, text UI and locales all use rsg-core; targeting uses rsg-target
 - Fully translated through rsg-core JSON locales — notifications, NUI, prompts, component names and Discord logs: `en`, `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`
@@ -27,12 +36,13 @@ Weapon customisation for **RSG Framework** (RedM). Players place a portable guns
 - [rsg-weapons](https://github.com/Rexshack-RedM/rsg-weapons)
 - [rsg-inventory](https://github.com/Rexshack-RedM/rsg-inventory)
 - [rsg-target](https://github.com/Rexshack-RedM/rsg-target)
+- [rsg-gizmo](https://github.com/Rexshack-RedM/rsg-gizmo)
 - [oxmysql](https://github.com/overextended/oxmysql)
 
 ## Installation
 
 1. Drop `rsg-weaponcomp` into your resources folder.
-2. Import `installation/database.sql`.
+2. Start the resource. The database tables are created automatically on first start (`Config.AutoDatabase = true`). To install manually instead, set `Config.AutoDatabase = false` and import `installation/database.sql`.
 3. Make sure the `gunsmith`, `weapon_repair_kit` and `weapon_gun_oil` items exist in `rsg-core/shared/items.lua`, or change `Config.Gunsmithitem` / `Config.RepairItem` / `Config.GunOilItem` (set `Config.GunOilItem = nil` to turn gun oil off). Gun oil is new, so add it:
 
 ```lua
@@ -45,11 +55,17 @@ weapon_gun_oil = { name = 'weapon_gun_oil', label = 'Gun Oil', weight = 100, typ
 
 | Action | How |
 | --- | --- |
-| Place a workbench | Use the `gunsmith` item, aim, rotate with ← / →, hold to place (the ghost fades when out of range) |
+| Place a workbench | Use the `gunsmith` item, then position and rotate it with the rsg-gizmo gizmo and confirm (see rsg-gizmo for its controls) |
 | Customise a weapon | Hold the weapon and target the workbench → **Use Gunsmith** → **Parts & Attachments** |
 | Rotate / zoom the camera | ← / → to rotate, scroll to zoom, C for a random angle, hold V to reset |
 | Toggle auto part focus | Click **Auto Focus** in the menu's controls bar |
 | Remove all modifications | **Reset** in the menu |
+| Undo / redo / compare / revert | Buttons under the price panel |
+| Save or load a preset | Main menu → **Presets** |
+| Name or engrave a weapon | Main menu → **Personalise** |
+| Change who can use your workbench | Main menu → **Workbench access** (click to cycle; owner only) |
+| Place a public workbench (admin) | `/createworkbench` |
+| List / remove workbenches (admin) | `/listworkbenches`, `/removeworkbench [id]` (no id = nearest within 5 m) |
 | Pack up a workbench | Main menu → **Pack Up Workbench** (owner only, the item is returned) |
 | Quick clean (gun oil) | Use `weapon_gun_oil` with a weapon in hand, or **Clean Weapon** in the gunsmith menu |
 | Repair at the bench | **Repair Weapon** in the gunsmith menu (uses one repair kit) |
@@ -63,7 +79,14 @@ Everything lives in `shared/config.lua`:
 
 - **Workbench:** `Config.Gunsmithitem`, `Config.Gunsmithprop`, `Config.MaxGunsites`, `Config.PlaceDistance`, `Config.SetupTime`
 - **Workbench use:** `Config.UseDistance` is the server-checked max distance from a workbench for buying or resetting parts
-- **Access:** `Config.RequiredJob` restricts placing workbenches to one job (`nil` = everyone)
+- **Access:** `Config.RequiredJob` restricts placing workbenches to one job (`nil` = everyone); `Config.DefaultAccess` is who may use a new bench (`everyone`, `owner`, `job`, `gang`); `Config.WorkbenchExpireDays` removes player benches unused for that many days (`0` = never)
+- **Database:** `Config.AutoDatabase` creates the tables on start (set `false` to import `installation/database.sql` yourself)
+- **Push-to-talk:** `Config.AllowPushToTalkWhileOpen` and `Config.PushToTalkControls` keep voice usable while the menu is open
+- **Admin:** `Config.AdminPermission` (default `admin`) and `Config.CommandAdminPlace` / `CommandAdminList` / `CommandAdminRemove`
+- **Gunsmith job:** `Config.GunsmithJobs = { jobname = { discount = 0.25, requireDuty = true } }`
+- **Skill:** `Config.Skill` (`Enabled`, `MetaKey`, `XPPerPurchase`, `XPJobBonus`, `Levels`, `Unlocks` = category → level). Off by default
+- **Materials:** `Config.PartItems = { BARREL = { { item = 'steel', amount = 1 } } }` takes those items for each part bought in that category
+- **Presets / identity:** `Config.MaxPresets`, `Config.Identity` (`Enabled`, `NamePrice`, `EngravePrice`, max lengths)
 - **Pricing:** `Config.PaymentType`, `Config.price` (per category), `Config.RemovePrice` (share of the price charged to remove a part)
 - **Blacklist:** `Config.WeaponRestriction` lists weapons that can't be customised
 - **Camera:** `Config.distBack` (distance as a multiple of weapon length), `Config.distFov`, `Config.camRotateSpeed`, `Config.prompts` (camera keys)
@@ -98,16 +121,35 @@ Structural slots (`BARREL`, `GRIP` — the wood stock on long arms — `SIGHT`, 
 
 The server handles all money, items and components:
 
-- The client never sends a price. The server checks every component against the config whitelist, works out the price itself and charges only for what changed.
+- The client never sends a price. The server checks every component against the config whitelist **for that weapon** (a part that only exists for one weapon can't be applied to another), works out the price itself and charges only for what changed. A request with any part that isn't offered is refused and logged to the `security` channel.
 - The server checks that the weapon being modified is in the player's own inventory, and checks the blacklist against the item rather than the client's weapon hash.
 - Buying and resetting parts only work within `Config.UseDistance` of a placed workbench (checked on the server).
-- Workbench placement checks distance, limits and overlap. The server takes the item before creating the workbench and gives it back only to the owner on pack-up, and refuses pack-up when the owner's inventory is full so the workbench is never lost.
+- Workbench placement validates its inputs (finite numbers only), then checks distance, limits and overlap. The server takes the item before creating the workbench and gives it back only to the owner on pack-up, and refuses pack-up when the owner's inventory is full so the workbench is never lost.
 - Weapon cleaning only repairs the weapon after the server has taken a repair kit; the server restores the weapon's quality itself.
 - Events have per-player cooldowns.
 
 ## Changelog
 
+### 3.5.0
+- Database tables are created automatically on start (`Config.AutoDatabase`); `installation/database.sql` is kept for manual installs and now includes the new table and columns
+- New: undo / redo, compare, revert, purchase confirmation (total, discount, balance after, materials)
+- New: presets (`player_weapons_presets`), custom weapon name and engraving (`customname` / `engraving` columns)
+- New: workbench access modes, expiry (`Config.WorkbenchExpireDays`), public admin workbenches and the `/createworkbench`, `/listworkbenches`, `/removeworkbench` commands
+- New: gunsmith job discount, optional skill levels and per-part material items
+- New: `rsg-weaponcomp:server:weaponCustomised` event and `GetWeaponRecord` export
+- New: push-to-talk stays usable while the menu is open
+- Fix: the parts menu no longer forgets your selection when you go back to the main menu and return
+- 46 new locale keys in all 10 languages
+- Security: presets only for real weapon items (no junk rows under invented names); skill XP only for purchases that cost money; stored price capped to the column size
+- Fix: workbenches placed before expiry existed are no longer wiped the first time `WorkbenchExpireDays` is enabled
+- Cleanup: removed the unused in-menu toast markup and about 25 dead CSS rules; `DbChecked` no longer grows forever; `/removeworkbench <id>` works from the server console
+
 ### 3.4.0
+- Workbench placement now uses rsg-gizmo instead of the built-in placement preview; the server re-validates the placement with `IsPlacementValid`
+- Security: components are validated per weapon on the server, and a purchase containing any part that isn't offered is refused (it used to be charged for the valid parts)
+- Security: workbench placement rejects NaN / infinite coordinates and heading, and tells the player when they have no workbench item
+- UX: price shown per category, total turns red when over budget, and the menu stays open (with a "not enough money" notification) instead of closing on a purchase or reset that can't work
+- Cleanup: `shared/config.lua` component lists use `seq()` / `join()` helpers and shared lists (about 2000 lines down to about 1000, same data); removed the unused `Config.WeaponDamageModifiers`, an unused locale key and unused UI code
 - New: weapon condition and cleanliness shown in the gunsmith menu, with Clean (gun oil) and Repair (repair kit) options
 - New: `weapon_gun_oil` usable item for a quick dirt/soot clean (`Config.GunOilItem`, `Config.GunOilTime`)
 - Repair kits are no longer used up on weapons already at 100% condition

@@ -6,7 +6,6 @@ const App = {
     components: {},
     filteredComponents: {},
     selectedComponents: {},
-    selectedLabels: {},
     savedComponents: {},
     prices: {},
     totalPrice: 0,
@@ -14,6 +13,13 @@ const App = {
     categoryLabels: {},
     drag: null,
     autoFocus: true,
+    canAfford: true,
+    features: {},
+    currentSel: {},
+    price: {},
+    comparing: false,
+    presets: [],
+    subKind: null,
 
     init() {
         // Ensure app is hidden on load
@@ -64,6 +70,25 @@ const App = {
             });
         }
 
+        // Edit tools
+        const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+        on('btnUndo', () => this.postToGame('undo', {}));
+        on('btnRedo', () => this.postToGame('redo', {}));
+        on('btnCompare', () => {
+            this.comparing = !this.comparing;
+            this.updateTools();
+            this.postToGame('compare', { on: this.comparing });
+        });
+        on('btnRevert', () => this.postToGame('revert', {}));
+        on('btnSubBack', () => this.showMainMenu());
+
+        // Text inputs: while typing the game must not receive the keys
+        const sub = document.getElementById('subMenuBody');
+        if (sub) {
+            sub.addEventListener('focusin', (e) => { if (e.target.tagName === 'INPUT') this.postToGame('inputFocus', { focused: true }); });
+            sub.addEventListener('focusout', (e) => { if (e.target.tagName === 'INPUT') this.postToGame('inputFocus', { focused: false }); });
+        }
+
         // Exit button
         const btnExit = document.getElementById('btnExit');
         if (btnExit) {
@@ -90,10 +115,13 @@ const App = {
                 // Handle ESC for menu navigation
                 if (e.key === 'Escape') {
                     e.preventDefault();
-                    const modal = document.getElementById('confirmModal');
-                    if (modal && !modal.classList.contains('hidden')) {
-                        modal.classList.add('hidden');
-                        return;
+                    const modals = ['purchaseModal', 'confirmModal'];
+                    for (const id of modals) {
+                        const m = document.getElementById(id);
+                        if (m && !m.classList.contains('hidden')) {
+                            m.classList.add('hidden');
+                            return;
+                        }
                     }
                     if (this.currentMenu !== 'main') {
                         this.showMainMenu();
@@ -118,9 +146,31 @@ const App = {
                     this.hide();
                     break;
                 case 'updatePrice':
+                    this.price = data;
                     this.totalPrice = Number(data.price) || 0;
                     this.hasChanges = !!data.changed;
+                    this.canAfford = data.canAfford !== false;
+                    this.comparing = !!data.comparing;
                     this.updatePriceDisplay(this.totalPrice);
+                    this.updateTools();
+                    break;
+                case 'selection':
+                    this.applySelection(data.selected);
+                    break;
+                case 'presets':
+                    this.presets = Array.isArray(data.list) ? data.list : [];
+                    if (this.subKind === 'presets') this.renderPresets();
+                    break;
+                case 'identity':
+                    if (this.features.identity && data.identity) {
+                        this.features.identity.name = data.identity.name || '';
+                        this.features.identity.engraving = data.identity.engraving || '';
+                        if (this.subKind === 'identity') this.renderIdentity();
+                    }
+                    break;
+                case 'access':
+                    this.features.access = data.access || this.features.access;
+                    this.buildMainMenu();
                     break;
                 case 'notify':
                     this.showNotification(data.type, data.message);
@@ -156,11 +206,18 @@ const App = {
         // Reset state
         this.weaponData = data;
         this.selectedComponents = {};
-        this.selectedLabels = {};
         this.totalPrice = 0;
         this.hasChanges = false;
+        this.canAfford = true;
         this.filteredComponents = {};
-        this.savedComponents = data.savedComponents || {};
+        this.savedComponents = (data.savedComponents && !Array.isArray(data.savedComponents)) ? data.savedComponents : {};
+        this.currentSel = Object.assign({}, this.savedComponents);
+        this.features = data.features || {};
+        ['locked', 'materials'].forEach((k) => { if (Array.isArray(this.features[k])) this.features[k] = {}; });
+        this.price = {};
+        this.comparing = false;
+        this.presets = [];
+        this.subKind = null;
 
         // Components arrive as an ordered array of { category, label, items }
         this.components = {};
@@ -185,6 +242,8 @@ const App = {
         }
         if (weaponSerialEl) {
             weaponSerialEl.innerHTML = '<i class="fas fa-fingerprint"></i> ' + this.escape(this.t('ui_serial')) + ': #' + this.escape(data.serial || '000000');
+            const sk = this.features && this.features.skill;
+            if (sk) weaponSerialEl.innerHTML += ' &middot; ' + this.escape(this.t('ui_skill') + ' ' + this.t('ui_level') + ' ' + sk.level);
         }
 
         // Build main menu
@@ -192,6 +251,7 @@ const App = {
         
         // Update price display
         this.updatePriceDisplay(0);
+        this.updateTools();
         
         // Show UI
         this.show();
@@ -209,8 +269,11 @@ const App = {
     },
 
     hide() {
-        const cm = document.getElementById('confirmModal');
-        if (cm) cm.classList.add('hidden');
+        ['confirmModal', 'purchaseModal'].forEach((id) => {
+            const m = document.getElementById(id);
+            if (m) m.classList.add('hidden');
+        });
+        this.subKind = null;
         const app = document.getElementById('app');
         if (app) {
             app.classList.add('hidden');
@@ -271,7 +334,15 @@ const App = {
             menuItems.push({ action: 'repair', icon: 'fa-screwdriver-wrench', label: this.t('ui_repair_kit'), badge: 'x' + (c.kitCount || 0),
                 disabled: !c.kitCount || (c.quality != null && c.quality >= 100) });
         }
-        menuItems.push({ action: 'packup', icon: 'fa-box-open', label: this.t('ui_packup') });
+        const f = this.features || {};
+        menuItems.push({ action: 'presets', icon: 'fa-bookmark', label: this.t('ui_presets') });
+        if (f.identity && f.identity.enabled) {
+            menuItems.push({ action: 'identity', icon: 'fa-signature', label: this.t('ui_identity') });
+        }
+        if (f.access && f.access.canManage) {
+            menuItems.push({ action: 'access', icon: 'fa-lock', label: this.t('ui_access'), badge: this.t('ui_access_' + (f.access.mode || 'everyone')) });
+            menuItems.push({ action: 'packup', icon: 'fa-box-open', label: this.t('ui_packup') });
+        }
 
         const container = document.getElementById('mainMenuItems');
         if (!container) return;
@@ -301,7 +372,109 @@ const App = {
             case 'packup':
                 this.packup();
                 break;
+            case 'presets':
+                this.showSubMenu('presets');
+                break;
+            case 'identity':
+                this.showSubMenu('identity');
+                break;
+            case 'access': {
+                const order = ['everyone', 'owner', 'job', 'gang'];
+                const cur = (this.features.access && this.features.access.mode) || 'everyone';
+                this.postToGame('setAccess', { mode: order[(order.indexOf(cur) + 1) % order.length] });
+                break;
+            }
         }
+    },
+
+    updateTools() {
+        const p = this.price || {};
+        const set = (id, disabled) => { const el = document.getElementById(id); if (el) el.disabled = !!disabled; };
+        set('btnUndo', !p.canUndo || this.comparing);
+        set('btnRedo', !p.canRedo || this.comparing);
+        set('btnRevert', this.comparing);
+        const cmp = document.getElementById('btnCompare');
+        if (cmp) cmp.classList.toggle('active', this.comparing);
+    },
+
+    // Selection pushed by the game (undo/redo/compare/preset): move every slider without posting back
+    applySelection(sel) {
+        if (!sel || Array.isArray(sel)) sel = {};
+        this.currentSel = Object.assign({}, sel);
+        const cats = Object.keys(this.filteredComponents);
+        for (const category of cats) {
+            const items = this.filteredComponents[category];
+            const want = sel[category] || '';
+            let idx = items.findIndex((it) => it.name === want);
+            if (idx < 0) idx = 0;
+            this.selectedComponents[category] = { index: idx, hash: items[idx].hash, name: items[idx].name };
+            this.updateSliderUI(category, idx, items.length, items[idx]);
+        }
+    },
+
+    showSubMenu(kind) {
+        this.subKind = kind;
+        document.getElementById('mainMenu').classList.add('hidden');
+        document.getElementById('componentMenu').classList.add('hidden');
+        document.getElementById('subMenu').classList.remove('hidden');
+        document.getElementById('subMenuTitle').textContent = this.t(kind === 'presets' ? 'ui_presets' : 'ui_identity');
+        this.currentMenu = 'sub';
+        if (kind === 'presets') {
+            this.renderPresets();
+            this.postToGame('listPresets', {});
+        } else {
+            this.renderIdentity();
+        }
+    },
+
+    renderPresets() {
+        const body = document.getElementById('subMenuBody');
+        if (!body) return;
+        const max = this.features.maxPresets || 5;
+        let html = '';
+        if (!this.presets.length) {
+            html += '<div class="sub-empty">' + this.escape(this.t('ui_preset_empty')) + '</div>';
+        }
+        for (const pr of this.presets) {
+            html += '<div class="sub-row"><span class="sub-row-name">' + this.escape(pr.name) + '</span>' +
+                '<button class="btn-mini" data-load="' + Number(pr.id) + '" type="button">' + this.escape(this.t('ui_preset_load')) + '</button>' +
+                '<button class="btn-mini" data-del="' + Number(pr.id) + '" type="button"><i class="fas fa-trash"></i></button></div>';
+        }
+        if (this.presets.length < max) {
+            html += '<div class="sub-label">' + this.escape(this.t('ui_preset_name')) + ' (' + this.presets.length + '/' + max + ')</div>' +
+                '<input class="text-input" id="presetName" maxlength="32" autocomplete="off">' +
+                '<button class="btn-western" id="presetSave" type="button">' + this.escape(this.t('ui_preset_save')) + '</button>';
+        }
+        body.innerHTML = html;
+        body.querySelectorAll('[data-load]').forEach((b) => b.addEventListener('click', () => this.postToGame('loadPreset', { id: Number(b.dataset.load) })));
+        body.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => this.postToGame('deletePreset', { id: Number(b.dataset.del) })));
+        const save = document.getElementById('presetSave');
+        if (save) save.addEventListener('click', () => {
+            const input = document.getElementById('presetName');
+            const name = input ? input.value.trim() : '';
+            if (name) this.postToGame('savePreset', { name: name });
+        });
+    },
+
+    renderIdentity() {
+        const body = document.getElementById('subMenuBody');
+        const id = this.features.identity;
+        if (!body || !id) return;
+        const cur = this.t('ui_currency');
+        body.innerHTML =
+            '<div class="sub-label">' + this.escape(this.t('ui_custom_name')) + '</div>' +
+            '<input class="text-input" id="idName" maxlength="' + Number(id.maxName) + '" autocomplete="off" value="' + this.escape(id.name) + '">' +
+            '<div class="sub-hint">' + this.escape(cur + Number(id.namePrice).toFixed(2)) + '</div>' +
+            '<div class="sub-label">' + this.escape(this.t('ui_engraving')) + '</div>' +
+            '<input class="text-input" id="idEngr" maxlength="' + Number(id.maxEngraving) + '" autocomplete="off" value="' + this.escape(id.engraving) + '">' +
+            '<div class="sub-hint">' + this.escape(cur + Number(id.engravePrice).toFixed(2)) + '</div>' +
+            '<button class="btn-western btn-purchase" id="idSave" type="button">' + this.escape(this.t('ui_identity_save')) + '</button>';
+        document.getElementById('idSave').addEventListener('click', () => {
+            this.postToGame('saveIdentity', {
+                name: document.getElementById('idName').value,
+                engraving: document.getElementById('idEngr').value
+            });
+        });
     },
 
     showMainMenu() {
@@ -310,6 +483,10 @@ const App = {
         
         if (mainMenu) mainMenu.classList.remove('hidden');
         if (componentMenu) componentMenu.classList.add('hidden');
+        const subMenu = document.getElementById('subMenu');
+        if (subMenu) subMenu.classList.add('hidden');
+        if (this.subKind) this.postToGame('inputFocus', { focused: false });
+        this.subKind = null;
         
         this.currentMenu = 'main';
     },
@@ -320,6 +497,8 @@ const App = {
         const menuTitle = document.getElementById('componentMenuTitle');
         
         if (mainMenu) mainMenu.classList.add('hidden');
+        const subM = document.getElementById('subMenu');
+        if (subM) subM.classList.add('hidden');
         if (componentMenu) componentMenu.classList.remove('hidden');
         if (menuTitle) menuTitle.textContent = title;
         
@@ -386,7 +565,7 @@ const App = {
             
             // Find the correct index based on saved components
             let currentIndex = 0;
-            const savedCompName = this.savedComponents ? this.savedComponents[category] : null;
+            const savedCompName = this.currentSel ? this.currentSel[category] : null;
             
             if (savedCompName) {
                 // Find the index of the saved component
@@ -404,17 +583,25 @@ const App = {
                 hash: items[currentIndex] ? items[currentIndex].hash : 0,
                 name: items[currentIndex] ? items[currentIndex].name : ''
             };
-            this.selectedLabels[category] = items[currentIndex] ? (items[currentIndex].label || items[currentIndex].name) : '';
             
             const currentItem = items[currentIndex] || items[0];
             const displayName = this.formatLabel(currentItem.label || currentItem.name || category);
             const progress = ((currentIndex + 1) / items.length) * 100;
             
-            html += '<div class="component-category" data-category="' + category + '" data-index="' + currentIndex + '">' +
+            const price = Number(this.prices[category]) || 0;
+            const priceTag = price > 0 ? '<span class="category-price">' + this.escape(this.t('ui_currency') + price.toFixed(2)) + '</span>' : '';
+
+            const lockedLevel = (this.features.locked || {})[category];
+            const lockTag = lockedLevel ? '<span class="category-lock"><i class="fas fa-lock"></i> ' + this.escape(this.t('ui_level') + ' ' + lockedLevel) + '</span>' : '';
+            const mats = (this.features.materials || {})[category];
+            const matRow = mats && mats.length ? '<div class="mat-row">' + mats.map((m) =>
+                '<span class="mat-tag">' + this.escape(m.label + ' x' + m.amount) + '</span>').join('') + '</div>' : '';
+
+            html += '<div class="component-category' + (lockedLevel ? ' locked' : '') + '" data-category="' + category + '" data-index="' + currentIndex + '">' +
                 '<div class="category-header">' +
-                    '<span class="category-name">' + this.escape(this.categoryLabels[category] || this.formatLabel(category)) + '</span>' +
+                    '<span class="category-name">' + this.escape(this.categoryLabels[category] || this.formatLabel(category)) + priceTag + lockTag + '</span>' +
                     '<span class="category-value">' + this.escape(displayName) + '</span>' +
-                '</div>' +
+                '</div>' + matRow +
                 '<div class="slider-container">' +
                     '<button class="slider-btn left" data-cat="' + category + '" data-dir="left"><i class="fas fa-chevron-left"></i></button>' +
                     '<div class="slider-track">' +
@@ -451,9 +638,10 @@ const App = {
         const current = this.selectedComponents[category];
         if (current && current.index === newIndex) return;
 
+        if (this.comparing || (this.features.locked || {})[category]) return;
         const selectedItem = items[newIndex];
         this.selectedComponents[category] = { index: newIndex, hash: selectedItem.hash, name: selectedItem.name };
-        this.selectedLabels[category] = selectedItem.label || selectedItem.name;
+        this.currentSel[category] = selectedItem.name;
         this.updateSliderUI(category, newIndex, items.length, selectedItem);
         this.postToGame('componentChanged', { category: category, component: selectedItem.name });
     },
@@ -537,7 +725,11 @@ const App = {
         const priceEl = document.getElementById('totalPrice');
         if (priceEl) {
             const displayPrice = typeof price === 'number' ? price.toFixed(2) : '0.00';
-            priceEl.textContent = this.t('ui_currency') + displayPrice;
+            const base = Number(this.price && this.price.base) || 0;
+            const old = (this.price && this.price.discount > 0 && base > price)
+                ? '<span class="price-old">' + this.escape(this.t('ui_currency') + base.toFixed(2)) + '</span>' : '';
+            priceEl.innerHTML = old + this.escape(this.t('ui_currency') + displayPrice);
+            priceEl.classList.toggle('over', !this.canAfford);
         }
     },
 
@@ -564,7 +756,39 @@ const App = {
             this.showNotification('error', this.t('ui_no_mods_selected'));
             return;
         }
-        this.postToGame('purchase', {});
+        this.confirmPurchase();
+    },
+
+    confirmPurchase() {
+        const modal = document.getElementById('purchaseModal');
+        const lines = document.getElementById('purchaseLines');
+        if (!modal || !lines) return this.postToGame('purchase', {});
+        const p = this.price || {};
+        const cur = this.t('ui_currency');
+        const money = (v) => this.escape(cur + (Number(v) || 0).toFixed(2));
+        let html = '<div class="confirm-line"><span class="dim">' + this.escape(this.t('ui_confirm_total')) + '</span><span>' + money(p.price) + '</span></div>';
+        if (p.discount > 0) {
+            html += '<div class="confirm-line"><span class="dim">' + this.escape(this.t('ui_confirm_discount')) + '</span><span class="ok">-' + Math.round(p.discount * 100) + '%</span></div>';
+        }
+        if (p.balance != null) {
+            const after = Number(p.balance) - Number(p.price || 0);
+            html += '<div class="confirm-line"><span class="dim">' + this.escape(this.t('ui_confirm_balance')) + '</span><span>' + money(p.balance) + '</span></div>' +
+                '<div class="confirm-line"><span class="dim">' + this.escape(this.t('ui_confirm_after')) + '</span><span class="' + (after < 0 ? 'bad' : 'ok') + '">' + money(after) + '</span></div>';
+        }
+        for (const m of (p.materials || [])) {
+            html += '<div class="confirm-line"><span class="dim">' + this.escape(this.t('ui_confirm_materials')) + ': ' + this.escape(m.label) + '</span>' +
+                '<span class="' + (m.have < m.amount ? 'bad' : 'ok') + '">' + Number(m.have) + ' / ' + Number(m.amount) + '</span></div>';
+        }
+        lines.innerHTML = html;
+        modal.classList.remove('hidden');
+        const done = (yes) => {
+            modal.classList.add('hidden');
+            document.getElementById('purchaseYes').onclick = null;
+            document.getElementById('purchaseNo').onclick = null;
+            if (yes) this.postToGame('purchase', {});
+        };
+        document.getElementById('purchaseYes').onclick = () => done(true);
+        document.getElementById('purchaseNo').onclick = () => done(false);
     },
 
     reset() {

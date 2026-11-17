@@ -86,6 +86,26 @@
                 </div>
             </div>
 
+            <!-- Sub menu (presets / identity) -->
+            <div id="subMenu" class="menu-panel hidden">
+                <div class="menu-header">
+                    <div class="menu-corner tl"></div>
+                    <div class="menu-corner tr"></div>
+                    <div class="menu-title">
+                        <i class="fas fa-bookmark"></i>
+                        <span id="subMenuTitle"></span>
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                </div>
+                <div class="sub-body" id="subMenuBody"></div>
+                <div class="menu-footer">
+                    <button class="btn-western btn-back" id="btnSubBack">
+                        <i class="fas fa-arrow-left"></i>
+                        <span data-i18n="ui_back"></span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Price Summary -->
             <div class="price-panel">
                 <div class="price-frame">
@@ -95,6 +115,14 @@
                     </div>
                     <div class="price-value" id="totalPrice"></div>
                 </div>
+            </div>
+
+            <!-- Edit tools -->
+            <div class="extras-bar" id="extrasBar">
+                <button class="btn-mini" id="btnUndo" type="button" disabled><i class="fas fa-rotate-left"></i><span data-i18n="ui_undo"></span></button>
+                <button class="btn-mini" id="btnRedo" type="button" disabled><i class="fas fa-rotate-right"></i><span data-i18n="ui_redo"></span></button>
+                <button class="btn-mini" id="btnCompare" type="button"><i class="fas fa-code-compare"></i><span data-i18n="ui_compare"></span></button>
+                <button class="btn-mini" id="btnRevert" type="button"><i class="fas fa-eraser"></i><span data-i18n="ui_revert"></span></button>
             </div>
 
             <!-- Bottom Actions -->
@@ -156,17 +184,17 @@
             </div>
         </div>
 
-        <!-- Notification Toast -->
-        <div id="notification" class="notification hidden">
-            <div class="notification-inner">
-                <div class="notification-icon-box">
-                    <i class="fas"></i>
-                </div>
-                <div class="notification-text-box">
-                    <span class="notification-text"></span>
+        <!-- Purchase confirmation -->
+        <div id="purchaseModal" class="confirm-modal hidden">
+            <div class="confirm-card">
+                <div class="confirm-title" data-i18n="ui_confirm_title"></div>
+                <div class="ink-divider"></div>
+                <div class="confirm-lines" id="purchaseLines"></div>
+                <div class="confirm-actions">
+                    <button class="btn-western btn-purchase" id="purchaseYes" data-i18n="cl_lang_26"></button>
+                    <button class="btn-western" id="purchaseNo" data-i18n="cl_lang_27"></button>
                 </div>
             </div>
-            <div class="notification-shine"></div>
         </div>
 
     </div>

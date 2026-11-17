@@ -61,3 +61,19 @@ function WeaponComp.ChangePrice(current, new)
     end
     return math.floor(total * 100 + 0.5) / 100, changed
 end
+
+--- True when a weapon-type (shared) category applies to this weapon (see Config.SharedRequires).
+--- `specific` is the weapon's Config.Specific table (or nil), `weaponName` is upper case.
+function WeaponComp.SharedCategoryAllowed(cat, weaponName, specific)
+    local rule = Config.SharedRequires and Config.SharedRequires[cat]
+    if not rule then return true end
+    if rule.part and not (specific and specific[rule.part]) then return false end
+    if rule.weapon then
+        local ok = false
+        for _, pattern in ipairs(rule.weapon) do
+            if weaponName:find(pattern, 1, true) then ok = true break end
+        end
+        if not ok then return false end
+    end
+    return true
+end

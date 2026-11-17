@@ -3,13 +3,19 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 ----------------------------------------
 -- State
 ----------------------------------------
-local SpawnedProps = {}     -- [propid] = { obj = entity, zone = zone }
+local SpawnedProps = {}     -- [propid] = { obj = entity }
 local isBusy = false
 local wepObj = nil
 local camera = nil
 local selectedCache = {}    -- current selection in the menu
 local baselineCache = {}    -- what the weapon had when the menu opened
 local currentWeaponData = nil
+local extras = { discount = 0.0, level = 0, xp = 0, identity = { name = '', engraving = '' } }
+local history, redoStack = {}, {}   -- undo/redo of part changes ({ cat, prev, next })
+local comparing, compareSaved = false, nil
+local typing = false                -- a text input in the menu has keyboard focus
+local presetCache = {}
+local buildFeatures                 -- defined below, needs helpers declared after openWeaponUI
 local promptThreadActive = false
 local promptGroup = GetRandomIntInRange(0, 0xffffff)
 local cameraPrompts = {}
@@ -25,6 +31,12 @@ local UI_LOCALE_KEYS = {
     'ui_key_random', 'ui_key_reset', 'ui_notify_title',
     'cl_lang_23', 'cl_lang_25', 'cl_lang_26', 'cl_lang_27',
     'ui_condition', 'ui_cleanliness', 'ui_clean_oil', 'ui_repair_kit', 'ui_maintenance',
+    'ui_undo', 'ui_redo', 'ui_compare', 'ui_revert', 'ui_presets', 'ui_preset_name',
+    'ui_preset_save', 'ui_preset_load', 'ui_preset_delete', 'ui_preset_empty', 'ui_identity',
+    'ui_custom_name', 'ui_engraving', 'ui_identity_save', 'ui_access',
+    'ui_access_everyone', 'ui_access_owner', 'ui_access_job', 'ui_access_gang', 'ui_confirm_title',
+    'ui_confirm_total', 'ui_confirm_balance', 'ui_confirm_after', 'ui_confirm_discount',
+    'ui_confirm_materials', 'ui_level', 'ui_skill', 'cl_lang_26', 'cl_lang_27',
 }
 
 -- Auto part focus is a per-player preference, remembered between sessions (client KVP)
@@ -112,21 +124,6 @@ local function setPlayerFrozen(state)
     SetPedCanRagdoll(ped, not state)
 end
 
---- True when a weapon-type (shared) category applies to this weapon (see Config.SharedRequires).
-local function sharedCategoryAllowed(cat, weaponName, specific)
-    local rule = Config.SharedRequires and Config.SharedRequires[cat]
-    if not rule then return true end
-    if rule.part and not (specific and specific[rule.part]) then return false end
-    if rule.weapon then
-        local ok = false
-        for _, pattern in ipairs(rule.weapon) do
-            if weaponName:find(pattern, 1, true) then ok = true break end
-        end
-        if not ok then return false end
-    end
-    return true
-end
-
 local function copyList(list)
     local out, seen = {}, {}
     for _, comp in ipairs(list or {}) do
@@ -155,7 +152,7 @@ function GetAvailableComponents(weaponName, wHash)
         end
     end
     for cat, list in pairs(shared or {}) do
-        if not merged[cat] and cat ~= 'FRAME_VERTDATA' and #list > 0 and sharedCategoryAllowed(cat, weaponName, specific) then
+        if not merged[cat] and cat ~= 'FRAME_VERTDATA' and #list > 0 and WeaponComp.SharedCategoryAllowed(cat, weaponName, specific) then
             merged[cat] = copyList(list)
             order[#order + 1] = { cat = cat, specific = false }
         end
@@ -382,17 +379,30 @@ local function startPromptThread()
             -- and re-enable only the camera prompt keys
             DisableAllControlActions(0)
             DisableAllControlActions(1)
-            for _, control in pairs(controls) do EnableControlAction(0, control, true) end
+            DisableAllControlActions(2)
+            if not typing then
+                for _, control in pairs(controls) do EnableControlAction(0, control, true) end
+            end
+            -- keep push-to-talk usable while the menu has focus
+            if Config.AllowPushToTalkWhileOpen then
+                for _, control in ipairs(Config.PushToTalkControls or {}) do
+                    EnableControlAction(0, control, true)
+                    EnableControlAction(1, control, true)
+                    EnableControlAction(2, control, true)
+                end
+            end
 
-            if pressed(controls.zoIn) then adjustZoom(true) end
-            if pressed(controls.zoOut) then adjustZoom(false) end
-            if pressed(controls.re) then focusToken = focusToken + 1 startCamOnWeapon(wepObj, Config.distFov or 75.0) end
-            if pressed(controls.ranPos) then setRandomCameraAroundWeapon() end
+            if not typing then
+                if pressed(controls.zoIn) then adjustZoom(true) end
+                if pressed(controls.zoOut) then adjustZoom(false) end
+                if pressed(controls.re) then focusToken = focusToken + 1 startCamOnWeapon(wepObj, Config.distFov or 75.0) end
+                if pressed(controls.ranPos) then setRandomCameraAroundWeapon() end
 
-            -- hold left/right to orbit around the weapon
-            local step = rotateSpeed * GetFrameTime()
-            if held(controls.rotLeft) then rotateCamera(-step) end
-            if held(controls.rotRight) then rotateCamera(step) end
+                -- hold left/right to orbit around the weapon
+                local step = rotateSpeed * GetFrameTime()
+                if held(controls.rotLeft) then rotateCamera(-step) end
+                if held(controls.rotRight) then rotateCamera(step) end
+            end
             Wait(0)
         end
         clearCameraPrompts()
@@ -409,9 +419,21 @@ local function getUILocales()
     return t
 end
 
+-- All NUI focus changes go through here. KeepInput is always on while the menu is open because the
+-- camera keys are read by the game; Config.AllowPushToTalkWhileOpen decides whether voice keys stay enabled.
+local function applyNuiFocus(enable)
+    if enable then
+        SetNuiFocus(true, true)
+        SetNuiFocusKeepInput(true)
+    else
+        SetNuiFocusKeepInput(false)
+        SetNuiFocus(false, false)
+    end
+end
+
 local function closeWeaponUI()
-    SetNuiFocus(false, false)
-    SetNuiFocusKeepInput(false)
+    typing = false
+    applyNuiFocus(false)
     SendNUIMessage({ action = 'close' })
 end
 
@@ -441,6 +463,33 @@ local function conditionPayload()
     }
 end
 
+--- Whether the local player may use a workbench record (mirrors the server check).
+local function canUseBench(prop)
+    if not prop then return false end
+    if prop.public or type(prop.access) ~= 'table' then return true end
+    local pd = RSGCore.Functions.GetPlayerData()
+    local mode = prop.access.type
+    if mode == 'owner' then return prop.citizenid == pd.citizenid end
+    if mode == 'job' then return pd.job and pd.job.name == prop.access.value end
+    if mode == 'gang' then return pd.gang and pd.gang.name == prop.access.value end
+    return true
+end
+
+local function findProp(propid)
+    for _, p in ipairs(Config.PlayerProps) do
+        if p.propid == propid then return p end
+    end
+end
+
+local function accessPayload()
+    local prop = currentWeaponData and findProp(currentWeaponData.propid)
+    local pd = RSGCore.Functions.GetPlayerData()
+    return {
+        canManage = prop ~= nil and not prop.public and prop.citizenid == pd.citizenid,
+        mode = prop and type(prop.access) == 'table' and prop.access.type or 'everyone',
+    }
+end
+
 local function openWeaponUI(weaponName, wHash, serial, comps, order)
     -- Weapon-specific categories first, then weapon-type categories, each group in CATEGORY_ORDER
     local cats = {}
@@ -466,10 +515,10 @@ local function openWeaponUI(weaponName, wHash, serial, comps, order)
         formatted[#formatted + 1] = { category = cat, label = locale(cat), items = items }
     end
 
-    SetNuiFocus(true, true)
-    SetNuiFocusKeepInput(true)
+    applyNuiFocus(true)
     SendNUIMessage({
         action = 'open',
+        features = buildFeatures(),
         weaponName = getWeaponLabel(weaponName),
         serial = serial or '000000',
         components = formatted,
@@ -506,6 +555,7 @@ local function exitCustomisation()
         end)
     end
     selectedCache, baselineCache = {}, {}
+    history, redoStack, comparing, compareSaved, presetCache = {}, {}, false, nil, {}
     currentWeaponData = nil
 end
 
@@ -553,13 +603,71 @@ local function reapplyFinishes(wHash)
     end
 end
 
-RegisterNUICallback('componentChanged', function(data, cb)
-    cb('ok')
-    if not currentWeaponData or not wepObj or not DoesEntityExist(wepObj) then return end
+--- Cash/bank balance of the payment account, or nil when the client doesn't know it.
+local function paymentBalance()
+    local money = RSGCore.Functions.GetPlayerData().money
+    return money and tonumber(money[Config.PaymentType or 'cash']) or nil
+end
 
-    local category, compName = data.category, data.component
-    if type(category) ~= 'string' or type(compName) ~= 'string' or not isValidOption(category, compName) then return end
+--- The server stays authoritative; this only keeps the menu open instead of closing it on a purchase that can't work.
+local function canAfford(price)
+    local balance = paymentBalance()
+    return balance == nil or balance >= price
+end
 
+local function notifyNotEnoughMoney(price)
+    RSGCore.Functions.Notify({ title = locale('sv_lang_10'), description = locale('sv_lang_11', price), type = 'error', duration = 5000 })
+end
+
+local function round2(v) return math.floor(v * 100 + 0.5) / 100 end
+
+--- Price after the gunsmith discount (the server applies the same rule).
+local function discounted(price) return round2(price * (1 - (extras.discount or 0))) end
+
+--- Material items needed for the parts that differ from the weapon's current setup.
+local function materialsNeeded()
+    local need = {}
+    for cat, comp in pairs(selectedCache) do
+        if baselineCache[cat] ~= comp and Config.PartItems and Config.PartItems[cat] then
+            for _, m in ipairs(Config.PartItems[cat]) do need[m.item] = (need[m.item] or 0) + (tonumber(m.amount) or 1) end
+        end
+    end
+    local list, missing = {}, nil
+    for item, amount in pairs(need) do
+        local have, it = getItemCount(item), RSGCore.Shared.Items[item]
+        list[#list + 1] = { label = it and it.label or item, amount = amount, have = have }
+        if have < amount and not missing then missing = list[#list] end
+    end
+    return list, missing
+end
+
+local function isLocked(category)
+    local need = Config.Skill and Config.Skill.Enabled and Config.Skill.Unlocks and Config.Skill.Unlocks[category]
+    return need and (extras.level or 0) < need or false
+end
+
+local function priceMessage()
+    local base, changed = calculatePrice()
+    local price = discounted(base)
+    local mats, missing = materialsNeeded()
+    return {
+        action = 'updatePrice', price = price, base = base, discount = extras.discount or 0, changed = changed,
+        balance = paymentBalance(), canAfford = canAfford(price), materials = mats, missing = missing ~= nil,
+        canUndo = #history > 0, canRedo = #redoStack > 0, comparing = comparing,
+    }
+end
+
+local function pushState()
+    SendNUIMessage(priceMessage())
+end
+
+local function pushSelection()
+    SendNUIMessage({ action = 'selection', selected = cloneTable(selectedCache) })
+    pushState()
+end
+
+--- Applies one part to the preview weapon and updates selectedCache ('' = factory finish).
+local function setCategory(category, compName)
     local wHash = currentWeaponData.wHash
     local list = currentWeaponData.comps[category]
     local isFactoryPart = WeaponComp.IsFactoryCategory(category) and compName == list[1]
@@ -580,21 +688,115 @@ RegisterNUICallback('componentChanged', function(data, cb)
     if WeaponComp.Priority(category) < 20 or compName == '' then
         reapplyFinishes(wHash)
     end
+end
 
+local function recordChange(category, prev)
+    local nextValue = selectedCache[category] or ''
+    if prev == nextValue then return end
+    history[#history + 1] = { cat = category, prev = prev, next = nextValue }
+    if #history > 50 then table.remove(history, 1) end
+    redoStack = {}
+end
+
+--- Moves the preview to `target` (category -> part). Missing categories go back to the factory part.
+local function applySelection(target, record)
+    for category, list in pairs(currentWeaponData.comps) do
+        local want = target[category] or ''
+        if want ~= '' and not isValidOption(category, want) then want = '' end
+        local have = selectedCache[category] or ''
+        if want ~= have then
+            local prev = have
+            if want == '' and WeaponComp.IsFactoryCategory(category) then
+                setCategory(category, list[1])
+            else
+                setCategory(category, want)
+            end
+            if record then recordChange(category, prev) end
+        end
+    end
+end
+
+RegisterNUICallback('componentChanged', function(data, cb)
+    cb('ok')
+    if not currentWeaponData or not wepObj or not DoesEntityExist(wepObj) or comparing then return end
+
+    local category, compName = data.category, data.component
+    if type(category) ~= 'string' or type(compName) ~= 'string' or not isValidOption(category, compName) then return end
+    if isLocked(category) then return pushSelection() end
+
+    local prev = selectedCache[category] or ''
+    setCategory(category, compName)
+    recordChange(category, prev)
     focusOnCategory(category)
+    pushState()
+end)
 
-    local price, changed = calculatePrice()
-    SendNUIMessage({ action = 'updatePrice', price = price, changed = changed })
+RegisterNUICallback('undo', function(_, cb)
+    cb('ok')
+    if not currentWeaponData or comparing or #history == 0 then return end
+    local h = table.remove(history)
+    setCategory(h.cat, (h.prev == '' and WeaponComp.IsFactoryCategory(h.cat)) and currentWeaponData.comps[h.cat][1] or h.prev)
+    redoStack[#redoStack + 1] = h
+    pushSelection()
+end)
+
+RegisterNUICallback('redo', function(_, cb)
+    cb('ok')
+    if not currentWeaponData or comparing or #redoStack == 0 then return end
+    local h = table.remove(redoStack)
+    setCategory(h.cat, (h.next == '' and WeaponComp.IsFactoryCategory(h.cat)) and currentWeaponData.comps[h.cat][1] or h.next)
+    history[#history + 1] = h
+    pushSelection()
+end)
+
+--- Shows the weapon as it is now (on) or restores the player's selection (off).
+RegisterNUICallback('compare', function(data, cb)
+    cb('ok')
+    if not currentWeaponData then return end
+    if data.on and not comparing then
+        compareSaved = cloneTable(selectedCache)
+        comparing = true
+        applySelection(baselineCache, false)
+    elseif not data.on and comparing then
+        applySelection(compareSaved or {}, false)
+        comparing, compareSaved = false, nil
+    end
+    pushSelection()
+end)
+
+--- Drops every unsaved change and goes back to how the weapon was when the menu opened.
+RegisterNUICallback('revert', function(_, cb)
+    cb('ok')
+    if not currentWeaponData or comparing then return end
+    applySelection(baselineCache, false)
+    history, redoStack = {}, {}
+    pushSelection()
+end)
+
+RegisterNUICallback('inputFocus', function(data, cb)
+    cb('ok')
+    typing = data and data.focused == true
+    if currentWeaponData then SetNuiFocusKeepInput(not typing) end
 end)
 
 RegisterNUICallback('purchase', function(_, cb)
     cb('ok')
     if not currentWeaponData then return end
+    if comparing then
+        applySelection(compareSaved or {}, false)
+        comparing, compareSaved = false, nil
+    end
 
-    local _, changed = calculatePrice()
+    local price, changed = calculatePrice()
+    price = discounted(price)
     if not changed then
         RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = locale('cl_notify_10'), type = 'error' })
         return
+    end
+    if not canAfford(price) then return notifyNotEnoughMoney(price) end
+    local _, missing = materialsNeeded()
+    if missing then
+        return RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = locale('sv_missing_material', missing.amount, missing.label), type = 'error', duration = 5000 })
     end
 
     local data = currentWeaponData
@@ -607,10 +809,114 @@ RegisterNUICallback('resetWeapon', function(_, cb)
     cb('ok')
     if not currentWeaponData then return end
 
+    if not next(baselineCache) then
+        return RSGCore.Functions.Notify({ title = locale('ui_notify_title'), description = locale('cl_notify_12'), type = 'error' })
+    end
+    local removePrice = discounted(WeaponComp.ChangePrice(baselineCache, {}))
+    if not canAfford(removePrice) then return notifyNotEnoughMoney(removePrice) end
+
     local data = currentWeaponData
     exitCustomisation()
     TriggerServerEvent('rsg-weaponcomp:server:reset', data.serial, data.wHash, data.weaponName)
 end)
+
+----------------------------------------
+-- Presets, identity, access
+----------------------------------------
+local function refreshPresets()
+    if not currentWeaponData then return end
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:listPresets', function(list)
+        presetCache = list or {}
+        SendNUIMessage({ action = 'presets', list = presetCache })
+    end, currentWeaponData.weaponName)
+end
+
+RegisterNUICallback('listPresets', function(_, cb)
+    cb('ok')
+    refreshPresets()
+end)
+
+RegisterNUICallback('savePreset', function(data, cb)
+    cb('ok')
+    if not currentWeaponData or type(data.name) ~= 'string' then return end
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:savePreset', function()
+        refreshPresets()
+    end, currentWeaponData.weaponName, data.name, cloneTable(selectedCache))
+end)
+
+RegisterNUICallback('deletePreset', function(data, cb)
+    cb('ok')
+    if not currentWeaponData then return end
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:deletePreset', function()
+        refreshPresets()
+    end, tonumber(data.id))
+end)
+
+RegisterNUICallback('loadPreset', function(data, cb)
+    cb('ok')
+    if not currentWeaponData or comparing then return end
+    for _, preset in ipairs(presetCache) do
+        if preset.id == tonumber(data.id) then
+            local target = {}
+            for cat, comp in pairs(preset.components or {}) do
+                if not isLocked(cat) then target[cat] = comp end
+            end
+            applySelection(target, true)
+            pushSelection()
+            return
+        end
+    end
+end)
+
+RegisterNUICallback('saveIdentity', function(data, cb)
+    cb('ok')
+    if not currentWeaponData then return end
+    local d = currentWeaponData
+    RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:setIdentity', function(ok, identity)
+        if ok and identity then
+            extras.identity = identity
+            SendNUIMessage({ action = 'identity', identity = identity })
+        end
+    end, d.serial, d.weaponName, tostring(data.name or ''), tostring(data.engraving or ''))
+end)
+
+RegisterNUICallback('setAccess', function(data, cb)
+    cb('ok')
+    if not currentWeaponData or type(data.mode) ~= 'string' then return end
+    TriggerServerEvent('rsg-weaponcomp:server:setaccess', currentWeaponData.propid, data.mode)
+end)
+
+buildFeatures = function()
+    local cfg = Config.Identity or {}
+    local locked, materials = {}, {}
+    if Config.Skill and Config.Skill.Enabled then
+        for cat, need in pairs(Config.Skill.Unlocks or {}) do
+            if (extras.level or 0) < need then locked[cat] = need end
+        end
+    end
+    for cat, list in pairs(Config.PartItems or {}) do
+        local out = {}
+        for _, m in ipairs(list) do
+            local it = RSGCore.Shared.Items[m.item]
+            out[#out + 1] = { label = it and it.label or m.item, amount = m.amount or 1 }
+        end
+        if #out > 0 then materials[cat] = out end
+    end
+    return {
+        discount = extras.discount or 0,
+        skill = (Config.Skill and Config.Skill.Enabled) and { level = extras.level or 0, xp = extras.xp or 0 } or nil,
+        locked = locked,
+        materials = materials,
+        identity = {
+            enabled = cfg.Enabled == true,
+            namePrice = cfg.NamePrice or 0, engravePrice = cfg.EngravePrice or 0,
+            maxName = cfg.MaxNameLength or 24, maxEngraving = cfg.MaxEngravingLength or 40,
+            name = extras.identity.name or '', engraving = extras.identity.engraving or '',
+        },
+        maxPresets = Config.MaxPresets or 5,
+        access = accessPayload(),
+    }
+end
 
 local maintaining = false
 RegisterNUICallback('maintain', function(data, cb)
@@ -713,10 +1019,17 @@ local function startCustomisation(propid, wHash, serial, weaponName)
     local comps, order = GetAvailableComponents(weaponName, wHash)
     currentWeaponData = { weaponName = weaponName, wHash = wHash, serial = serial, propid = propid, comps = comps, dirt = dirt }
     selectedCache, baselineCache = {}, {}
+    history, redoStack, comparing, compareSaved = {}, {}, false, nil
 
     RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(result)
         if currentWeaponData and wepObj then
             currentWeaponData.quality = result and result.quality or 100
+            extras = {
+                discount = result and tonumber(result.discount) or 0.0,
+                level = result and tonumber(result.level) or 0,
+                xp = result and tonumber(result.xp) or 0,
+                identity = result and result.identity or { name = '', engraving = '' },
+            }
             applyComponents(wepObj, wHash, comps, result and result.components or {})
             openWeaponUI(weaponName, wHash, serial, comps, order)
         end
@@ -725,6 +1038,9 @@ local function startCustomisation(propid, wHash, serial, weaponName)
 end
 
 local function onUseGunsmith(propid)
+    if not canUseBench(findProp(propid)) then
+        return RSGCore.Functions.Notify({ title = locale('sv_access_denied'), type = 'error' })
+    end
     local wHash = GetPedCurrentHeldWeapon(PlayerPedId())
     if wHash == 0 or wHash == UNARMED then
         return RSGCore.Functions.Notify({ title = locale('cl_notify_13'), description = locale('cl_no_weapon'), type = 'error' })
@@ -834,6 +1150,7 @@ local function spawnProp(v)
             icon = 'far fa-eye',
             label = locale('cl_lang_14'),
             distance = 2.0,
+            canInteract = function() return canUseBench(findProp(v.propid)) end,
             onSelect = function() onUseGunsmith(v.propid) end,
         },
     })
@@ -880,6 +1197,7 @@ end)
 
 RegisterNetEvent('rsg-weaponcomp:client:updatePropData', function(data)
     Config.PlayerProps = data or {}
+    if currentWeaponData then SendNUIMessage({ action = 'access', access = accessPayload() }) end
 end)
 
 local function requestProps()
