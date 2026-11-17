@@ -167,7 +167,7 @@ end
 --- to also require that each part is offered for that weapon.
 local function sanitizeComponents(comps, weaponName)
     if type(comps) ~= 'table' then return nil end
-    weaponName = weaponName and weaponName:upper()
+    weaponName = type(weaponName) == 'string' and weaponName:upper() or nil
     local clean, invalid, count = {}, {}, 0
     for cat, comp in pairs(comps) do
         count = count + 1
@@ -439,7 +439,7 @@ RSGCore.Functions.CreateCallback('rsg-weaponcomp:server:getPlayerWeaponComponent
     -- Fallback to the database (e.g. inventory data lost) and sync it back
     local row = MySQL.single.await('SELECT components FROM player_weapons WHERE serial = ? AND citizenid = ?',
         { tostring(serial), Player.PlayerData.citizenid })
-    local comps = row and sanitizeComponents(json.decode(row.components or '{}'))
+    local comps = row and sanitizeComponents((json.decode(row.components or '{}')))
     if comps and next(comps) then
         if item then
             item.info.componentshash = comps
