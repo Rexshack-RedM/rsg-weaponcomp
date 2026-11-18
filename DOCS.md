@@ -710,3 +710,182 @@ if rec then print(rec.citizenid, rec.customname, rec.engraving, json.encode(rec.
 ---
 
 Support: https://rexshack.tebex.store
+
+<!-- BEGIN AUTO-REFERENCE (generated from the code; re-run the generator instead of editing by hand) -->
+
+## Technical reference
+
+Generated from the source of **rsg-weaponcomp 3.5.1**. Names, arguments and defaults below are read straight from the code.
+
+### Dependencies
+
+`rsg-core`, `rsg-inventory`, `rsg-weapons`, `rsg-target`, `rsg-gizmo`, `oxmysql`
+
+### Database
+
+Tables: `player_weapons`, `player_weapons_custom`, `player_weapons_presets`.
+
+Tables are created automatically on start while `Config.AutoDatabase = true` (default). Nothing is ever dropped or overwritten.
+For a manual install set `Config.AutoDatabase = false` and import `installation/database.sql` once.
+
+```lua
+-- shared/config.lua
+Config.AutoDatabase = true -- false = import the SQL file yourself
+```
+
+### Configuration
+
+| Option | Default | Notes |
+|---|---|---|
+| `Config.PlayerProps` | `{}` |  |
+| `Config.PlaceDistance` | `5.0` | Placement settings |
+| `Config.UseDistance` | `6.0` | max distance (server-checked) from a workbench to buy/reset modifications |
+| `Config.SetupTime` | `10000` | ms to set up a workbench after placing it (cancellable) |
+| `Config.RepairItem` | `'weapon_repair_kit'` | Items and limits |
+| `Config.GunOilItem` | `'weapon_gun_oil'` | quick clean: removes dirt/soot only (does not restore condition) |
+| `Config.GunOilTime` | `6000` | ms the oiling animation takes |
+| `Config.Gunsmithitem` | `'gunsmith'` |  |
+| `Config.RequiredJob` | `nil` | Job name required to use gunsmith item (set to nil to disable) |
+| `Config.Gunsmithprop` | ``p_gunsmithprops09x`` |  |
+| `Config.MaxGunsites` | `6` |  |
+| `Config.PaymentType` | `'cash'` |  |
+| `Config.animationSave` | `10000` |  |
+| `Config.AutoDatabase` | `true` | Database: tables are created automatically on start. Set false to import installation/database.sql manually. |
+| `Config.AllowPushToTalkWhileOpen` | `true` | Push-to-talk: keep voice chat usable while the customisation menu has focus. |
+| `Config.PushToTalkControls` | `table` |  |
+| `Config.DefaultAccess` | `'everyone'` | who may use a new player workbench: 'everyone' \| 'owner' \| 'job' \| 'gang' |
+| `Config.WorkbenchExpireDays` | `0` | remove player workbenches unused for this many days (0 = never) |
+| `Config.AdminPermission` | `'admin'` | Admin tools (public workbenches: anyone can use them, they never expire and do not count toward MaxGunsites) |
+| `Config.CommandAdminPlace` | `'createworkbench'` |  |
+| `Config.CommandAdminList` | `'listworkbenches'` |  |
+| `Config.CommandAdminRemove` | `'removeworkbench'` |  |
+| `Config.GunsmithJobs` | `table` | Gunsmith job: discount on every purchase while the player holds the job |
+| `Config.Skill` | `table` | Gunsmith skill: buying parts earns XP; higher levels unlock categories (disabled by default) |
+| `Config.Enabled` | `false` |  |
+| `Config.MetaKey` | `'gunsmithxp'` |  |
+| `Config.XPPerPurchase` | `10` |  |
+| `Config.XPJobBonus` | `5` |  |
+| `Config.Levels` | `{ 0, 100, 300, 600, 1000 }` |  |
+| `Config.Unlocks` | `table` |  |
+| `Config.PartItems` | `table` | Materials: items consumed per category when buying a part (empty = no materials needed) |
+| `Config.MaxPresets` | `5` | Saved loadouts per weapon |
+| `Config.Identity` | `table` | Weapon identity (custom name and engraving written to the weapon item) |
+| `Config.NamePrice` | `5.0` |  |
+| `Config.EngravePrice` | `10.0` |  |
+| `Config.MaxNameLength` | `24` |  |
+| `Config.MaxEngravingLength` | `40` |  |
+| `Config.gunZoneActive` | `false` | Zone settings |
+| `Config.gunZoneSize` | `3.0` |  |
+| `Config.showTextZone` | `false` |  |
+| `Config.distBack` | `0.7` | camera distance as a multiple of the weapon's length |
+| `Config.distFov` | `60.0` |  |
+| `Config.showStats` | `true` |  |
+| `Config.Commandinspect` | `"w_inspect"` |  |
+| `Config.Commandloadweapon` | `"loadweapon"` |  |
+| `Config.Commandequipscope` | `"scope"` |  |
+| `Config.Commanddesequipscope` | `"unscope"` |  |
+| `Config.prompts` | `table` | Prompt controls |
+| `Config.camRotateSpeed` | `90.0` | camera orbit speed in degrees per second |
+| `Config.AutoFocusDefault` | `true` | players can toggle it in the menu; their choice is remembered |
+| `Config.PartFocus` | `table` |  |
+| `Config.BARREL` | `{ at = 0.80, zoom = 0.40 }` |  |
+| `Config.SIGHT` | `{ at = 0.90, zoom = 0.30 }` |  |
+| `Config.SCOPE` | `{ at = 0.50, zoom = 0.35 }` |  |
+| `Config.TUBE` | `{ at = 0.75, zoom = 0.40 }` |  |
+| `Config.MAG` | `{ at = 0.45, zoom = 0.35 }` |  |
+| `Config.CLIP` | `{ at = 0.45, zoom = 0.35 }` |  |
+| `Config.CYLINDER` | `{ at = 0.55, zoom = 0.30 }` |  |
+| `Config.FRAME` | `{ at = 0.45, zoom = 0.40 }` |  |
+| `Config.HAMMER` | `{ at = 0.40, zoom = 0.25 }` |  |
+| `Config.TRIGGER` | `{ at = 0.40, zoom = 0.25 }` |  |
+| `Config.GRIP` | `{ at = 0.15, zoom = 0.35 }` |  |
+| `Config.GRIPSTOCK` | `{ at = 0.15, zoom = 0.35 }` |  |
+| `Config.STOCK` | `{ at = 0.10, zoom = 0.35 }` |  |
+| `Config.WRAP` | `{ at = 0.60, zoom = 0.40 }` |  |
+| `Config.STRAP` | `{ at = 0.45, zoom = 0.50 }` |  |
+| `Config.MELEE_BLADE` | `{ at = 0.70, zoom = 0.45 }` |  |
+| `Config.WeaponRestriction` | `table` | Weapons that can not be customised at the gunsmith |
+| `Config.RemovePrice` | `0.3` |  |
+| `Config.price` | `table` |  |
+| `Config.SharedRequires` | `table` |  |
+| `Config.WRAP_MATERIAL` | `{ part = 'WRAP' }` |  |
+| `Config.WRAP_TINT` | `{ part = 'WRAP' }` |  |
+| `Config.CYLINDER_MATERIAL` | `{ weapon = { 'REVOLVER' } }` |  |
+| `Config.CYLINDER_ENGRAVING` | `{ weapon = { 'REVOLVER' } }` |  |
+| `Config.CYLINDER_ENGRAVING_MATERIAL` | `{ weapon = { 'REVOLVER' } }` |  |
+| `Config.Shared` | `table` |  |
+| `Config.Specific` | `table` |  |
+
+### Exports
+
+**Server**
+
+| Export | Arguments | File |
+|---|---|---|
+| `GetWeaponRecord` | `serial` | `server/server.lua` |
+
+```lua
+-- example
+local result = exports['rsg-weaponcomp']:GetWeaponRecord(serial)
+```
+
+### Callbacks
+
+| Callback | Side | Arguments | File |
+|---|---|---|---|
+| `rsg-weaponcomp:server:getPlayerWeaponComponents` | server | `source, cb, serial, weaponName` | `server/server.lua` |
+| `rsg-weaponcomp:server:equipScope` | server | `source, cb, serial` | `server/server.lua` |
+| `rsg-weaponcomp:server:unequipScope` | server | `source, cb, serial` | `server/server.lua` |
+| `rsg-weaponcomp:server:getProps` | server | `_, cb` | `server/server.lua` |
+| `rsg-weaponcomp:server:countprop` | server | `source, cb` | `server/server.lua` |
+| `rsg-weaponcomp:server:setIdentity` | server | `source, cb, serial, weaponName, name, engraving` | `server/server.lua` |
+| `rsg-weaponcomp:server:listPresets` | server | `source, cb, weaponName` | `server/server.lua` |
+| `rsg-weaponcomp:server:savePreset` | server | `source, cb, weaponName, name, comps` | `server/server.lua` |
+| `rsg-weaponcomp:server:deletePreset` | server | `source, cb, id` | `server/server.lua` |
+| `rsg-weaponcomp:server:useRepairKit` | server | `source, cb, serial` | `server/server.lua` |
+| `rsg-weaponcomp:server:useGunOil` | server | `source, cb, serial` | `server/server.lua` |
+
+```lua
+-- client side
+RSGCore.Functions.TriggerCallback('rsg-weaponcomp:server:getPlayerWeaponComponents', function(result)
+    -- use result
+end, serial, weaponName)
+```
+
+### Events
+
+Server events can be fired by any client, so every handler re-validates the player, the arguments and any permission, distance or cooldown on the server. Never add a reward to a handler without those checks.
+
+| Event | Side | Arguments | File |
+|---|---|---|---|
+| `rsg-weaponcomp:client:ExitCam` | client | `` | `client/client.lua` |
+| `rsg-weaponcomp:client:animationSaved` | client | `wHash` | `client/client.lua` |
+| `rsg-weaponcomp:client:updatePropData` | client | `data` | `client/client.lua` |
+| `RSGCore:Client:OnPlayerLoaded` | client | `` | `client/client.lua` |
+| `rsg-weaponcomp:client:setupgunzone` | client | `coords, heading` | `client/client.lua` |
+| `rsg-weaponcomp:client:confirmpackup` | client | `propid` | `client/client.lua` |
+| `rsg-weaponcomp:client:reloadWeapon` | client | `` | `client/inhands.lua` |
+| `rsg-weaponcomp:client:InspectionWeapon` | client | `` | `client/inspect.lua` |
+| `rsg-weaponcomp:client:oilWeapon` | client | `` | `client/maintenance.lua` |
+| `rsg-weaponcomp:client:createprop` | client | `data` | `client/propplace.lua` |
+| `rsg-weaponcomp:client:adminplace` | client | `` | `client/propplace.lua` |
+| `rsg-weaponcomp:client:printlist` | client | `lines` | `client/propplace.lua` |
+| `rsg-weaponcomp:server:purchase` | server | `serial, wHash, weaponName, comps` | `server/server.lua` |
+| `rsg-weaponcomp:server:reset` | server | `serial, wHash, weaponName` | `server/server.lua` |
+| `rsg-weaponcomp:server:createnewprop` | server | `coords, heading` | `server/server.lua` |
+| `rsg-weaponcomp:server:removegunsiteprops` | server | `propid` | `server/server.lua` |
+| `rsg-weaponcomp:server:setaccess` | server | `propid, mode` | `server/server.lua` |
+| `rsg-weaponcomp:server:adminplace` | server | `coords, heading` | `server/server.lua` |
+
+```lua
+-- from a client script
+TriggerServerEvent('rsg-weaponcomp:server:purchase', serial, wHash, weaponName, comps)
+-- from a server script
+TriggerClientEvent('rsg-weaponcomp:client:ExitCam', source)
+```
+
+### Locales
+
+Language files in `locales/`: `de`, `el`, `en`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`. Set the language with `setr rsg:locale "en"`.
+
+<!-- END AUTO-REFERENCE -->
