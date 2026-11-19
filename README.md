@@ -28,7 +28,7 @@ Weapon customisation for **RSG Framework** (RedM). Players place a portable guns
 - Database tables are created automatically on start
 - Optional job restriction and weapon blacklist
 - No ox_lib: notifications, callbacks, progress bars, text UI and locales all use rsg-core; targeting uses rsg-target
-- Fully translated through rsg-core JSON locales — notifications, NUI, prompts, component names and Discord logs: `en`, `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`
+- Fully translated through rsg-core JSON locales — notifications, NUI, prompts, component names and Discord logs: `en`, `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`, `ru`
 
 ## Dependencies
 
@@ -139,7 +139,7 @@ The server handles all money, items and components:
 - New: `rsg-weaponcomp:server:weaponCustomised` event and `GetWeaponRecord` export
 - New: push-to-talk stays usable while the menu is open
 - Fix: the parts menu no longer forgets your selection when you go back to the main menu and return
-- 46 new locale keys in all 10 languages
+- 46 new locale keys in all 11 languages
 - Security: presets only for real weapon items (no junk rows under invented names); skill XP only for purchases that cost money; stored price capped to the column size
 - Fix: workbenches placed before expiry existed are no longer wiped the first time `WorkbenchExpireDays` is enabled
 - Cleanup: removed the unused in-menu toast markup and about 25 dead CSS rules; `DbChecked` no longer grows forever; `/removeworkbench <id>` works from the server console

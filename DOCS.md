@@ -55,7 +55,7 @@ There is no ox_lib or ox_target dependency. Optional: `rsg-log` (mirror of the D
 | `server/versionchecker.lua` | server | GitHub version check |
 | `html/index.html`, `script.js`, `style.css` | NUI | Customisation menu |
 | `installation/database.sql` | – | Database schema (manual install; identical to what `database.lua` creates) |
-| `locales/*.json` | shared | `en`, `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro` |
+| `locales/*.json` | shared | `en`, `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`, `ru` |
 
 Load order (from `fxmanifest.lua`): `shared/config.lua` → `shared/utils.lua` → `client/*.lua`; on the server `server/config.lua` → `server/discord.lua` → `server/database.lua` → `server/server.lua` → `server/versionchecker.lua`.
 
@@ -463,7 +463,7 @@ end)
 ```
 
 ### 8.7 Add a new weapon (or new parts) to the menu
-Add the weapon to `Config.Specific` and give every new component a locale entry in all 10 files:
+Add the weapon to `Config.Specific` and give every new component a locale entry in all 11 files:
 ```lua
 -- shared/config.lua
 Config.Specific["WEAPON_RIFLE_SPRINGFIELD"]["GRIP"] = {
@@ -596,7 +596,7 @@ Locales are handled by rsg-core: `@rsg-core/shared/locale.lua` in `shared_script
 ```cfg
 setr rsg:locale "de"
 ```
-Languages: `en` (master), `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`. Every file has the same keys. Key groups: `ui_*` (NUI), `cl_*` (client messages), `sv_*` (server messages and Discord logs), and one key per category name (`BARREL`, `WRAP_TINT`, ...) and per component (`COMPONENT_...`). Add every new key to all 10 files.
+Languages: `en` (master), `de`, `el`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`, `ru`. Every file has the same keys. Key groups: `ui_*` (NUI), `cl_*` (client messages), `sv_*` (server messages and Discord logs), and one key per category name (`BARREL`, `WRAP_TINT`, ...) and per component (`COMPONENT_...`). Add every new key to all 10 files.
 
 ---
 
@@ -704,7 +704,7 @@ if rec then print(rec.citizenid, rec.customname, rec.engraving, json.encode(rec.
 | Players can't use a bench | Its access mode may be `owner`, `job` or `gang`; the owner changes it under **Workbench access**, an admin can place a public bench with `/createworkbench` |
 | Can't type a name or preset | Push-to-talk is unavailable while a text box has focus; click outside the box to use it again |
 | No Discord logs | Set the webhook URL for each channel in `server/config.lua` and keep `Enabled = true` |
-| Wrong language | `setr rsg:locale "xx"` in `server.cfg`; make sure all 10 locale files have the same keys |
+| Wrong language | `setr rsg:locale "xx"` in `server.cfg`; make sure all 11 locale files have the same keys |
 | Item box not showing | The `gunsmith`, `weapon_repair_kit` and `weapon_gun_oil` items must exist in `rsg-core/shared/items.lua` |
 
 ---
@@ -886,6 +886,6 @@ TriggerClientEvent('rsg-weaponcomp:client:ExitCam', source)
 
 ### Locales
 
-Language files in `locales/`: `de`, `el`, `en`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`. Set the language with `setr rsg:locale "en"`.
+Language files in `locales/`: `de`, `el`, `en`, `es`, `fr`, `ja`, `nl`, `pl`, `pt-br`, `ro`, `ru`. Set the language with `setr rsg:locale "en"`.
 
 <!-- END AUTO-REFERENCE -->
